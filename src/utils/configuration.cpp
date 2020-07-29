@@ -1,4 +1,4 @@
-#include "configuration.hpp"
+#include "utils/configuration.hpp"
 
 namespace flex {
 Configuration::Configuration()
