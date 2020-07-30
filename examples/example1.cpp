@@ -1,8 +1,6 @@
 #include <iostream>
 #include <string>
 
-#include <libconfig.h++>
-
 #include <flexEngine.hpp>
 
 int main() {
