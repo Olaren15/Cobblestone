@@ -17,7 +17,7 @@ else()
   target_compile_options(flex-engine PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 
-target_link_libraries(flex-engine PRIVATE ${LIBCONFIG++_LIBRARIES} ${SDL2_LIBRARY})
+target_link_libraries(flex-engine PRIVATE config++ SDL2::SDL2)
 
 target_include_directories(flex-engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include>)
 

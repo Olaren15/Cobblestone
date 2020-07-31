@@ -1,5 +1,7 @@
+#include <chrono>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include <flexEngine.hpp>
 
@@ -16,6 +18,10 @@ int main() {
   std::cout << "Width : " << width << std::endl
             << "Height : " << height << std::endl
             << "Fullscreen : " << (fullscreen ? "true" : "false") << std::endl;
+
+  flex::Window window("window", width, height, fullscreen);
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
   return 0;
 }
