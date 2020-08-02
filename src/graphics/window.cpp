@@ -3,7 +3,7 @@
 namespace flex {
 Window::Window()
     : mWidth(800), mHeight(600), mFullscreen(false), mTitle("Flex Engine"),
-      mRenderAPI(RenderAPI::OpenGL) {
+      mRenderAPI(RenderAPI::OpenGL), mShouldExit(false) {
 
   initSDL();
   mSdlWindow = createSDLWindow();
@@ -12,7 +12,7 @@ Window::Window()
 Window::Window(const std::string &title, const unsigned int &width,
                const unsigned int &height, const bool &fullscreen)
     : mWidth(width), mHeight(height), mFullscreen(fullscreen), mTitle(title),
-      mRenderAPI(RenderAPI::OpenGL) {
+      mRenderAPI(RenderAPI::OpenGL), mShouldExit(false) {
 
   initSDL();
   mSdlWindow = createSDLWindow();
@@ -64,10 +64,12 @@ SDL_Window *Window::createSDLWindow() const {
 void Window::update() {
   SDL_Event event;
 
-  EventHandler::get().clearEvents();
-
   while (SDL_PollEvent(&event)) {
-    EventHandler::get().consumeEvent(event);
+    if (event.type == SDL_EventType::SDL_QUIT) {
+      mShouldExit = true;
+    }
   }
 }
+
+bool Window::shouldExit() const { return mShouldExit; }
 } // namespace flex

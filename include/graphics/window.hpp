@@ -4,7 +4,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "core/eventHandler.hpp"
+#include "core/inputHandler.hpp"
 #include "renderAPI.hpp"
 
 namespace flex {
@@ -18,6 +18,7 @@ private:
   RenderAPI mRenderAPI;
 
   SDL_Window *mSdlWindow;
+  bool mShouldExit;
 
   void initSDL() const;
 
@@ -30,5 +31,7 @@ public:
   ~Window();
 
   void update();
+
+  bool shouldExit() const;
 };
 } // namespace flex

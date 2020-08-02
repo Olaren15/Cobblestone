@@ -21,10 +21,10 @@ int main() {
 
   flex::Window window("window", width, height, fullscreen);
 
-  while (!flex::EventHandler::get().shouldExit()) {
+  while (!window.shouldExit()) {
     window.update();
 
-    if (flex::EventHandler::get().keyPressed("Escape")) {
+    if (flex::InputHandler::keyPressed("Escape")) {
       std::cout << "ree" << std::endl;
     }
   }

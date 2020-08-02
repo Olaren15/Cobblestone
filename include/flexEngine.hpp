@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/eventHandler.hpp"
+#include "core/inputHandler.hpp"
 
 #include "utils/configuration.hpp"
 
