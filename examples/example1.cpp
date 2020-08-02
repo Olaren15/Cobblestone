@@ -21,7 +21,13 @@ int main() {
 
   flex::Window window("window", width, height, fullscreen);
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+  while (!flex::EventHandler::get().shouldExit()) {
+    window.update();
+
+    if (flex::EventHandler::get().keyPressed("Escape")) {
+      std::cout << "ree" << std::endl;
+    }
+  }
 
   return 0;
 }

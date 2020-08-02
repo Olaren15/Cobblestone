@@ -6,7 +6,7 @@ Window::Window()
       mRenderAPI(RenderAPI::OpenGL) {
 
   initSDL();
-  mSdlWindow = createSdlWindow();
+  mSdlWindow = createSDLWindow();
 }
 
 Window::Window(const std::string &title, const unsigned int &width,
@@ -15,7 +15,7 @@ Window::Window(const std::string &title, const unsigned int &width,
       mRenderAPI(RenderAPI::OpenGL) {
 
   initSDL();
-  mSdlWindow = createSdlWindow();
+  mSdlWindow = createSDLWindow();
 }
 
 Window::~Window() { SDL_Quit(); }
@@ -24,12 +24,12 @@ void Window::initSDL() const {
   int success = SDL_Init(SDL_INIT_EVERYTHING);
 
   if (success != 0) {
-    throw std::runtime_error(std::string("Failed to initialize SDL") +
+    throw std::runtime_error(std::string("Failed to initialize SDL ") +
                              SDL_GetError());
   }
 }
 
-SDL_Window *Window::createSdlWindow() const {
+SDL_Window *Window::createSDLWindow() const {
   SDL_Window *window;
 
   uint32_t windowFlags = SDL_WindowFlags::SDL_WINDOW_SHOWN;
@@ -54,10 +54,20 @@ SDL_Window *Window::createSdlWindow() const {
                        SDL_WINDOWPOS_UNDEFINED, mWidth, mHeight, windowFlags);
 
   if (window == NULL) {
-    throw std::runtime_error(std::string("Failed to create SDL window") +
+    throw std::runtime_error(std::string("Failed to create SDL window ") +
                              SDL_GetError());
   }
 
   return window;
+}
+
+void Window::update() {
+  SDL_Event event;
+
+  EventHandler::get().clearEvents();
+
+  while (SDL_PollEvent(&event)) {
+    EventHandler::get().consumeEvent(event);
+  }
 }
 } // namespace flex

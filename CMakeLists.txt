@@ -7,6 +7,7 @@ find_package(libconfig++ REQUIRED)
 find_package(SDL2 REQUIRED)
 
 add_library(flex-engine SHARED
+  src/core/eventHandler.cpp
   src/graphics/window.cpp
   src/utils/configuration.cpp
 )

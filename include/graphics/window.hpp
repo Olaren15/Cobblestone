@@ -4,6 +4,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "core/eventHandler.hpp"
 #include "renderAPI.hpp"
 
 namespace flex {
@@ -20,12 +21,14 @@ private:
 
   void initSDL() const;
 
-  SDL_Window *createSdlWindow() const;
+  SDL_Window *createSDLWindow() const;
 
 public:
   Window();
   Window(const std::string &title, const unsigned int &width,
          const unsigned int &height, const bool &fullscreen);
   ~Window();
+
+  void update();
 };
 } // namespace flex
