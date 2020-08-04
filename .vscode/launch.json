@@ -11,14 +11,14 @@
             "program": "${workspaceFolder}/build/examples/example1",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/examples",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",  
+                    "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
             ]
