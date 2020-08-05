@@ -10,13 +10,11 @@ class InputHandler {
 private:
 public:
   InputHandler() = delete;
-  InputHandler(InputHandler const &) = delete;
+  InputHandler(const InputHandler &) = delete;
   ~InputHandler() = delete;
 
-  void operator=(InputHandler const &) = delete;
-  void operator=(InputHandler) = delete;
-
-  static InputHandler &get();
+  void operator=(const InputHandler &) = delete;
+  void operator=(const InputHandler) = delete;
 
   static bool keyPressed(const std::string &keyCode);
 };

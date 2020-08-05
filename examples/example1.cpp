@@ -11,12 +11,13 @@ int main() {
   bool fullscreen = config.getBool("display.window.fullscreen");
 
   flex::Window window("window", width, height, fullscreen);
+  flex::VulkanRenderer vulkanRenderer(window);
 
   while (!window.shouldExit()) {
     window.update();
 
-    if (flex::InputHandler::keyPressed("Escape")) {
-      std::cout << "ree" << std::endl;
+    if (flex::InputHandler::keyPressed("Space")) {
+      std::cout << "pew pew !" << std::endl;
     }
   }
 

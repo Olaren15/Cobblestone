@@ -3,19 +3,19 @@
 namespace flex {
 Window::Window()
     : mWidth(800), mHeight(600), mFullscreen(false), mTitle("Flex Engine"),
-      mRenderAPI(RenderAPI::OpenGL), mShouldExit(false) {
+      mRenderAPI(RenderAPI::Vulkan), mShouldExit(false) {
 
   initSDL();
-  mSdlWindow = createSDLWindow();
+  mSDLWindow = createSDLWindow();
 }
 
 Window::Window(const std::string &title, const unsigned int &width,
                const unsigned int &height, const bool &fullscreen)
     : mWidth(width), mHeight(height), mFullscreen(fullscreen), mTitle(title),
-      mRenderAPI(RenderAPI::OpenGL), mShouldExit(false) {
+      mRenderAPI(RenderAPI::Vulkan), mShouldExit(false) {
 
   initSDL();
-  mSdlWindow = createSDLWindow();
+  mSDLWindow = createSDLWindow();
 }
 
 Window::~Window() { SDL_Quit(); }
@@ -72,4 +72,22 @@ void Window::update() {
 }
 
 bool Window::shouldExit() const { return mShouldExit; }
+std::string Window::getTitle() const { return mTitle; }
+RenderAPI Window::getRenderAPI() const { return mRenderAPI; }
+std::vector<const char *> Window::getRequiredVulkanExtensions() const {
+  unsigned int count;
+
+  if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, nullptr)) {
+    throw std::runtime_error("FFailed to get required Vulkan extensions");
+  }
+
+  std::vector<const char *> extensions{};
+
+  if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count,
+                                        extensions.data())) {
+    throw std::runtime_error("Failed to get required Vulkan extensions");
+  }
+
+  return extensions;
+}
 } // namespace flex
