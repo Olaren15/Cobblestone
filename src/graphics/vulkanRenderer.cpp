@@ -17,11 +17,17 @@ void VulkanRenderer::createVulkanInstance(const Window &window) {
                               VK_MAKE_VERSION(1, 0, 0), "Flex Engine",
                               VK_MAKE_VERSION(0, 0, 1), VK_API_VERSION_1_0);
 
-  std::vector<const char *> requiredSDLExtensions =
+  std::vector<const char *> enabledExtensions =
       window.getRequiredVulkanExtensions();
 
-  vk::InstanceCreateInfo instanceCreateInfo({}, &appInfo, requiredSDLExtensions,
-                                            {});
+  std::vector<const char *> enabledLayers{};
+
+  if (mEnableValidationLayers) {
+    enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+  }
+
+  vk::InstanceCreateInfo instanceCreateInfo({}, &appInfo, enabledLayers,
+                                            enabledExtensions);
 
   mVulkanInstance = vk::createInstance(instanceCreateInfo);
 }

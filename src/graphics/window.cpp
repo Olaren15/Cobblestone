@@ -81,7 +81,7 @@ std::vector<const char *> Window::getRequiredVulkanExtensions() const {
     throw std::runtime_error("FFailed to get required Vulkan extensions");
   }
 
-  std::vector<const char *> extensions{};
+  std::vector<const char *> extensions(count);
 
   if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count,
                                         extensions.data())) {

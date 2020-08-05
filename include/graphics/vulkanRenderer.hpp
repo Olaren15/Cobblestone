@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 
 #include <vulkan/vulkan.hpp>
@@ -10,6 +11,11 @@
 namespace flex {
 class VulkanRenderer {
 private:
+#ifdef NDEBUG
+  const bool mEnableValidationLayers = false;
+#else
+  const bool mEnableValidationLayers = true;
+#endif
   vk::Instance mVulkanInstance;
 
   void createVulkanInstance(const Window &window);
