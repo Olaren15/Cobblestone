@@ -17,7 +17,7 @@ public:
   ~Configuration();
 
   int getInt(std::string const &key) const;
-  unsigned int getUsignedInt(std::string const &key) const;
+  unsigned int getUnsignedInt(std::string const &key) const;
   float getFloat(std::string const &key) const;
   double getDouble(std::string const &key) const;
   bool getBool(std::string const &key) const;

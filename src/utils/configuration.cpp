@@ -21,7 +21,7 @@ int Configuration::getInt(std::string const &key) const {
   return value;
 }
 
-unsigned int Configuration::getUsignedInt(std::string const &key) const {
+unsigned int Configuration::getUnsignedInt(std::string const &key) const {
   unsigned int value = 0u;
 
   try {

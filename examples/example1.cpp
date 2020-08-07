@@ -6,8 +6,8 @@ int main() {
 
   flex::Configuration config;
 
-  int width = config.getInt("display.window.width");
-  int height = config.getInt("display.window.height");
+  unsigned int width = config.getUnsignedInt("display.window.width");
+  unsigned int height = config.getUnsignedInt("display.window.height");
   bool fullscreen = config.getBool("display.window.fullscreen");
 
   flex::Window window{"window", width, height, fullscreen};

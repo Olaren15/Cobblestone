@@ -33,7 +33,7 @@ public:
          unsigned int const &height, bool const &fullscreen);
   ~Window();
 
-  void operator=(Window &const) = delete;
+  void operator=(Window const &) = delete;
   void operator=(Window const) = delete;
 
   void update();
