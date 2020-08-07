@@ -11,9 +11,6 @@ class Configuration {
 private:
   libconfig::Config mConfigSettings;
 
-  libconfig::Setting &
-  loadConfigFile(const std::filesystem::path &configFilePath);
-
 public:
   Configuration();
   Configuration(const std::filesystem::path &configFilePath);

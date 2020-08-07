@@ -12,9 +12,9 @@ namespace flex {
 class VulkanRenderer {
 private:
 #ifdef NDEBUG
-  const bool mEnableValidationLayers = false;
+  static constexpr bool mEnableValidationLayers = false;
 #else
-  const bool mEnableValidationLayers = true;
+  static constexpr bool mEnableValidationLayers = true;
 #endif
   vk::Instance mVulkanInstance;
 

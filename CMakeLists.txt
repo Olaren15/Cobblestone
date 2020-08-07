@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.2)
 set(CMAKE_CXX_STANDARD 17)
 
-project(flex-engine VERSION 0.0.1 LANGUAGES CXX)
+project(flex-engine VERSION 1 LANGUAGES CXX)
 
 find_package(libconfig++ REQUIRED)
 find_package(SDL2 REQUIRED)
