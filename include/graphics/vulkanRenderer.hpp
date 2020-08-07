@@ -18,15 +18,15 @@ private:
 #endif
   vk::Instance mVulkanInstance;
 
-  void createVulkanInstance(const Window &window);
+  void createVulkanInstance(Window const &window);
 
 public:
   VulkanRenderer() = delete;
-  VulkanRenderer(const VulkanRenderer &) = delete;
-  VulkanRenderer(const Window &window);
+  VulkanRenderer(VulkanRenderer const &) = delete;
+  VulkanRenderer(Window const &window);
   ~VulkanRenderer();
 
-  void operator=(const VulkanRenderer &) = delete;
-  void operator=(const VulkanRenderer) = delete;
+  void operator=(VulkanRenderer const &) = delete;
+  void operator=(VulkanRenderer const) = delete;
 };
 } // namespace flex

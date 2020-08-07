@@ -13,14 +13,14 @@ private:
 
 public:
   Configuration();
-  Configuration(const std::filesystem::path &configFilePath);
+  Configuration(std::filesystem::path const &configFilePath);
   ~Configuration();
 
-  int getInt(const std::string &key) const;
-  unsigned int getUsignedInt(const std::string &key) const;
-  float getFloat(const std::string &key) const;
-  double getDouble(const std::string &key) const;
-  bool getBool(const std::string &key) const;
-  std::string getString(const std::string &key) const;
+  int getInt(std::string const &key) const;
+  unsigned int getUsignedInt(std::string const &key) const;
+  float getFloat(std::string const &key) const;
+  double getDouble(std::string const &key) const;
+  bool getBool(std::string const &key) const;
+  std::string getString(std::string const &key) const;
 };
 } // namespace flex

@@ -3,13 +3,13 @@
 namespace flex {
 Configuration::Configuration() { mConfigSettings.readFile("settings.cfg"); }
 
-Configuration::Configuration(const std::filesystem::path &configFilePath) {
+Configuration::Configuration(std::filesystem::path const &configFilePath) {
   mConfigSettings.readFile(configFilePath.c_str());
 }
 
 Configuration::~Configuration() {}
 
-int Configuration::getInt(const std::string &key) const {
+int Configuration::getInt(std::string const &key) const {
   int value = 0;
 
   try {
@@ -21,7 +21,7 @@ int Configuration::getInt(const std::string &key) const {
   return value;
 }
 
-unsigned int Configuration::getUsignedInt(const std::string &key) const {
+unsigned int Configuration::getUsignedInt(std::string const &key) const {
   unsigned int value = 0u;
 
   try {
@@ -33,7 +33,7 @@ unsigned int Configuration::getUsignedInt(const std::string &key) const {
   return value;
 }
 
-float Configuration::getFloat(const std::string &key) const {
+float Configuration::getFloat(std::string const &key) const {
   float value = 0.0f;
 
   try {
@@ -45,7 +45,7 @@ float Configuration::getFloat(const std::string &key) const {
   return value;
 }
 
-double Configuration::getDouble(const std::string &key) const {
+double Configuration::getDouble(std::string const &key) const {
   double value = 0.0L;
 
   try {
@@ -57,7 +57,7 @@ double Configuration::getDouble(const std::string &key) const {
   return value;
 }
 
-bool Configuration::getBool(const std::string &key) const {
+bool Configuration::getBool(std::string const &key) const {
   bool value = false;
 
   try {
@@ -69,7 +69,7 @@ bool Configuration::getBool(const std::string &key) const {
   return value;
 }
 
-std::string Configuration::getString(const std::string &key) const {
+std::string Configuration::getString(std::string const &key) const {
   std::string value = "";
 
   try {

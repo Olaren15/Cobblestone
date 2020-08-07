@@ -2,9 +2,9 @@
 
 namespace flex {
 
-bool InputHandler::keyPressed(const std::string &keyName) {
+bool InputHandler::keyPressed(std::string const &keyName) {
 
-  const Uint8 *keystates = SDL_GetKeyboardState(NULL);
+  Uint8 const *keystates = SDL_GetKeyboardState(NULL);
   SDL_Scancode scanCode = SDL_GetScancodeFromName(keyName.c_str());
 
   if (scanCode == SDL_Scancode::SDL_SCANCODE_UNKNOWN) {

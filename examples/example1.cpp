@@ -10,8 +10,8 @@ int main() {
   int height = config.getInt("display.window.height");
   bool fullscreen = config.getBool("display.window.fullscreen");
 
-  flex::Window window("window", width, height, fullscreen);
-  flex::VulkanRenderer vulkanRenderer(window);
+  flex::Window window{"window", width, height, fullscreen};
+  flex::VulkanRenderer vulkanRenderer{window};
 
   while (!window.shouldExit()) {
     window.update();

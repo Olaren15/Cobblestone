@@ -1,37 +1,33 @@
 #include "graphics/window.hpp"
 
 namespace flex {
-Window::Window()
-    : mWidth(800), mHeight(600), mFullscreen(false), mTitle("Flex Engine"),
-      mRenderAPI(RenderAPI::Vulkan), mShouldExit(false) {
-
+Window::Window() {
   initSDL();
   mSDLWindow = createSDLWindow();
 }
 
-Window::Window(const std::string &title, const unsigned int &width,
-               const unsigned int &height, const bool &fullscreen)
-    : mWidth(width), mHeight(height), mFullscreen(fullscreen), mTitle(title),
-      mRenderAPI(RenderAPI::Vulkan), mShouldExit(false) {
-
+Window::Window(std::string const &title, unsigned int const &width,
+               unsigned int const &height, bool const &fullscreen) {
   initSDL();
+
+  mWidth = width;
+  mHeight = height;
+  mFullscreen = fullscreen;
+  mTitle = title;
   mSDLWindow = createSDLWindow();
 }
 
 Window::~Window() { SDL_Quit(); }
 
 void Window::initSDL() const {
-  int success = SDL_Init(SDL_INIT_EVERYTHING);
 
-  if (success != 0) {
+  if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
     throw std::runtime_error(std::string("Failed to initialize SDL ") +
                              SDL_GetError());
   }
 }
 
 SDL_Window *Window::createSDLWindow() const {
-  SDL_Window *window;
-
   uint32_t windowFlags = SDL_WindowFlags::SDL_WINDOW_SHOWN;
 
   if (mFullscreen) {
@@ -49,11 +45,11 @@ SDL_Window *Window::createSDLWindow() const {
     break;
   }
 
-  window =
+  SDL_Window *window =
       SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
                        SDL_WINDOWPOS_UNDEFINED, mWidth, mHeight, windowFlags);
 
-  if (window == NULL) {
+  if (window == nullptr) {
     throw std::runtime_error(std::string("Failed to create SDL window ") +
                              SDL_GetError());
   }
@@ -62,7 +58,7 @@ SDL_Window *Window::createSDLWindow() const {
 }
 
 void Window::update() {
-  SDL_Event event;
+  SDL_Event event{};
 
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_EventType::SDL_QUIT) {
@@ -74,14 +70,14 @@ void Window::update() {
 bool Window::shouldExit() const { return mShouldExit; }
 std::string Window::getTitle() const { return mTitle; }
 RenderAPI Window::getRenderAPI() const { return mRenderAPI; }
-std::vector<const char *> Window::getRequiredVulkanExtensions() const {
-  unsigned int count;
+std::vector<char const *> Window::getRequiredVulkanExtensions() const {
+  unsigned int count = 0;
 
   if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, nullptr)) {
-    throw std::runtime_error("FFailed to get required Vulkan extensions");
+    throw std::runtime_error("Failed to get required Vulkan extensions");
   }
 
-  std::vector<const char *> extensions(count);
+  std::vector<char const *> extensions(count);
 
   if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count,
                                         extensions.data())) {

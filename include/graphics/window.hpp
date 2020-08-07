@@ -12,15 +12,15 @@
 namespace flex {
 class Window {
 private:
-  unsigned int mWidth;
-  unsigned int mHeight;
-  bool mFullscreen;
-  std::string mTitle;
+  unsigned int mWidth = 800;
+  unsigned int mHeight = 600;
+  bool mFullscreen = false;
+  std::string mTitle = "Flex Engine";
 
-  RenderAPI mRenderAPI;
+  RenderAPI mRenderAPI = RenderAPI::Vulkan;
 
   SDL_Window *mSDLWindow;
-  bool mShouldExit;
+  bool mShouldExit = false;
 
   void initSDL() const;
 
@@ -28,19 +28,19 @@ private:
 
 public:
   Window();
-  Window(const Window &) = delete;
-  Window(const std::string &title, const unsigned int &width,
-         const unsigned int &height, const bool &fullscreen);
+  Window(Window const &) = delete;
+  Window(std::string const &title, unsigned int const &width,
+         unsigned int const &height, bool const &fullscreen);
   ~Window();
 
-  void operator=(const Window &) = delete;
-  void operator=(const Window) = delete;
+  void operator=(Window &const) = delete;
+  void operator=(Window const) = delete;
 
   void update();
 
   bool shouldExit() const;
   std::string getTitle() const;
   RenderAPI getRenderAPI() const;
-  std::vector<const char *> getRequiredVulkanExtensions() const;
+  std::vector<char const *> getRequiredVulkanExtensions() const;
 };
 } // namespace flex
