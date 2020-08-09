@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 project(flex-engine VERSION 1 LANGUAGES CXX)
 
@@ -10,7 +10,8 @@ find_package(Vulkan REQUIRED)
 add_library(flex-engine SHARED
   src/core/inputHandler.cpp
   src/graphics/window.cpp
-  src/graphics/vulkanRenderer.cpp
+  src/graphics/vulkan/vulkanRenderer.cpp
+  src/graphics/vulkan/vulkanDeviceQueueFamilyIndices.cpp
   src/utils/configuration.cpp
 )
 

@@ -6,13 +6,13 @@ Window::Window() {
   mSDLWindow = createSDLWindow();
 }
 
-Window::Window(std::string const &title, unsigned int const &width,
-               unsigned int const &height, bool const &fullscreen) {
+Window::Window(std::string const &title, unsigned int const &width, unsigned int const &height,
+               bool const &fullscreen) {
   initSDL();
 
   mWidth = width;
   mHeight = height;
-  mFullscreen = fullscreen;
+  mFullScreen = fullscreen;
   mTitle = title;
   mSDLWindow = createSDLWindow();
 }
@@ -22,15 +22,14 @@ Window::~Window() { SDL_Quit(); }
 void Window::initSDL() const {
 
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-    throw std::runtime_error(std::string("Failed to initialize SDL ") +
-                             SDL_GetError());
+    throw std::runtime_error(std::string("Failed to initialize SDL ") + SDL_GetError());
   }
 }
 
 SDL_Window *Window::createSDLWindow() const {
   uint32_t windowFlags = SDL_WindowFlags::SDL_WINDOW_SHOWN;
 
-  if (mFullscreen) {
+  if (mFullScreen) {
     windowFlags |= SDL_WindowFlags::SDL_WINDOW_FULLSCREEN;
   }
 
@@ -46,12 +45,10 @@ SDL_Window *Window::createSDLWindow() const {
   }
 
   SDL_Window *window =
-      SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
-                       SDL_WINDOWPOS_UNDEFINED, mWidth, mHeight, windowFlags);
+      SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mWidth, mHeight, windowFlags);
 
   if (window == nullptr) {
-    throw std::runtime_error(std::string("Failed to create SDL window ") +
-                             SDL_GetError());
+    throw std::runtime_error(std::string("Failed to create SDL window ") + SDL_GetError());
   }
 
   return window;
@@ -79,8 +76,7 @@ std::vector<char const *> Window::getRequiredVulkanExtensions() const {
 
   std::vector<char const *> extensions(count);
 
-  if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count,
-                                        extensions.data())) {
+  if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, extensions.data())) {
     throw std::runtime_error("Failed to get required Vulkan extensions");
   }
 

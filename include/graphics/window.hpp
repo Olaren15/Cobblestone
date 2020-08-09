@@ -14,7 +14,7 @@ class Window {
 private:
   unsigned int mWidth = 800;
   unsigned int mHeight = 600;
-  bool mFullscreen = false;
+  bool mFullScreen = false;
   std::string mTitle = "Flex Engine";
 
   RenderAPI mRenderAPI = RenderAPI::Vulkan;
@@ -29,8 +29,7 @@ private:
 public:
   Window();
   Window(Window const &) = delete;
-  Window(std::string const &title, unsigned int const &width,
-         unsigned int const &height, bool const &fullscreen);
+  Window(std::string const &title, unsigned int const &width, unsigned int const &height, bool const &fullscreen);
   ~Window();
 
   void operator=(Window const &) = delete;
