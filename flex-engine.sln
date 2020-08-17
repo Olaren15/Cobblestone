@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30406.217
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flex-engine", "flex-engine.vcxproj", "{AA8842B1-844A-4D4F-9D7A-8086A9F66325}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "examples\examples.vcxproj", "{B620CFFF-B227-4FA0-B772-1764F126B2CC}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AA8842B1-844A-4D4F-9D7A-8086A9F66325} = {AA8842B1-844A-4D4F-9D7A-8086A9F66325}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA8842B1-844A-4D4F-9D7A-8086A9F66325}.Debug|x64.ActiveCfg = Debug|x64
+		{AA8842B1-844A-4D4F-9D7A-8086A9F66325}.Debug|x64.Build.0 = Debug|x64
+		{AA8842B1-844A-4D4F-9D7A-8086A9F66325}.Release|x64.ActiveCfg = Release|x64
+		{AA8842B1-844A-4D4F-9D7A-8086A9F66325}.Release|x64.Build.0 = Release|x64
+		{B620CFFF-B227-4FA0-B772-1764F126B2CC}.Debug|x64.ActiveCfg = Debug|x64
+		{B620CFFF-B227-4FA0-B772-1764F126B2CC}.Debug|x64.Build.0 = Debug|x64
+		{B620CFFF-B227-4FA0-B772-1764F126B2CC}.Release|x64.ActiveCfg = Release|x64
+		{B620CFFF-B227-4FA0-B772-1764F126B2CC}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F5070C13-8D15-4C75-85DE-42F0E7BC5AC2}
+	EndGlobalSection
+EndGlobal

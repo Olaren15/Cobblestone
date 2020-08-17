@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(flex-engine VERSION 1 LANGUAGES CXX)
@@ -16,11 +16,7 @@ add_library(flex-engine SHARED
   src/utils/configuration.cpp
 )
 
-if(MSVC)
-  target_compile_options(flex-engine PRIVATE /W4 /WX)
-else()
-  target_compile_options(flex-engine PRIVATE -Wall -Wextra -pedantic -Werror)
-endif()
+target_compile_options(flex-engine PRIVATE -Wall -Wextra -pedantic -Werror)
 
 target_link_libraries(flex-engine PRIVATE config++ SDL2::SDL2 vulkan)
 

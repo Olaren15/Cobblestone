@@ -20,7 +20,7 @@ Window::Window(std::string const &title, unsigned int const &width, unsigned int
 Window::~Window() { SDL_Quit(); }
 
 void Window::initSDL() const {
-
+  SDL_SetMainReady();
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
     throw std::runtime_error(std::string("Failed to initialize SDL ") + SDL_GetError());
   }
@@ -48,7 +48,7 @@ SDL_Window *Window::createSDLWindow() const {
       SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mWidth, mHeight, windowFlags);
 
   if (window == nullptr) {
-    throw std::runtime_error(std::string("Failed to create SDL window ") + SDL_GetError());
+    throw std::runtime_error("Failed to create SDL window ");
   }
 
   return window;

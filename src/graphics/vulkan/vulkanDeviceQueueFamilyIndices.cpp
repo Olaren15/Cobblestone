@@ -4,7 +4,8 @@ namespace flex {
 VulkanDeviceQueueFamilyIndices::VulkanDeviceQueueFamilyIndices(vk::PhysicalDevice const &physicalDevice) {
   std::vector<vk::QueueFamilyProperties> deviceQueueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 
-  for (uint32_t i = 0; vk::QueueFamilyProperties const &queueFamilyProperty : deviceQueueFamilyProperties) {
+  uint32_t i = 0;
+  for (vk::QueueFamilyProperties const &queueFamilyProperty : deviceQueueFamilyProperties) {
     if (queueFamilyProperty.queueFlags & vk::QueueFlagBits::eGraphics) {
       graphics = i;
     }
