@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "flex-engine", "flex-engine.vcxproj", "{AA8842B1-844A-4D4F-9D7A-8086A9F66325}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "examples", "examples\examples.vcxproj", "{B620CFFF-B227-4FA0-B772-1764F126B2CC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example1", "examples\example1.vcxproj", "{B620CFFF-B227-4FA0-B772-1764F126B2CC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AA8842B1-844A-4D4F-9D7A-8086A9F66325} = {AA8842B1-844A-4D4F-9D7A-8086A9F66325}
 	EndProjectSection

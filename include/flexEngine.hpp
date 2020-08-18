@@ -4,6 +4,6 @@
 
 #include "core/inputHandler.hpp"
 #include "graphics/renderAPI.hpp"
-#include "graphics/vulkan/vulkanRenderer.hpp"
 #include "graphics/window.hpp"
+#include "graphics/vulkan/vulkanRenderer.hpp"
 #include "utils/configuration.hpp"

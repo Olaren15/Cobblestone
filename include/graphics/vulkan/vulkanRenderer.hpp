@@ -2,8 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "graphics/vulkan/vulkanDeviceQueueFamilyIndices.hpp"
 #include "graphics/window.hpp"
+#include "graphics/vulkan/vulkanDeviceQueueFamilyIndices.hpp"
 
 namespace flex {
 class VulkanRenderer {

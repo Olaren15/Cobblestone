@@ -4,8 +4,8 @@
 
 #include <SDL2/SDL.h>
 
-#include "core/inputHandler.hpp"
 #include "renderAPI.hpp"
+#include "core/inputHandler.hpp"
 
 namespace flex {
 class Window {
