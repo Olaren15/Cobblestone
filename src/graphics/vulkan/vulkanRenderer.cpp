@@ -54,7 +54,7 @@ vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(vk::Instance const &vulk
 }
 
 unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice) {
-  unsigned int score = 0u;
+  unsigned int score = 1u;
 
   const vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
 
