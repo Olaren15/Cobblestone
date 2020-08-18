@@ -4,7 +4,9 @@
 
 #include <iostream>
 
+#pragma warning(push, 0)
 #include <libconfig.h++>
+#pragma warning(pop)
 
 namespace flex {
 class Configuration {

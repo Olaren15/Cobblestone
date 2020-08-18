@@ -40,7 +40,7 @@ SDL_Window *Window::createSDLWindow() const {
   case RenderAPI::Vulkan:
     windowFlags |= SDL_WindowFlags::SDL_WINDOW_VULKAN;
     break;
-  default:
+  case RenderAPI::DirecX11:
     break;
   }
 
