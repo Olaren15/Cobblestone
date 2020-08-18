@@ -2,8 +2,6 @@
 
 #include <filesystem>
 
-#include <iostream>
-
 #pragma warning(push, 0)
 #include <libconfig.h++>
 #pragma warning(pop)
@@ -15,14 +13,14 @@ private:
 
 public:
   Configuration();
-  Configuration(std::filesystem::path const &configFilePath);
+  explicit Configuration(std::filesystem::path const &configFilePath);
   ~Configuration();
 
-  int getInt(std::string const &key) const;
-  unsigned int getUnsignedInt(std::string const &key) const;
-  float getFloat(std::string const &key) const;
-  double getDouble(std::string const &key) const;
-  bool getBool(std::string const &key) const;
-  std::string getString(std::string const &key) const;
+  [[nodiscard]] int getInt(std::string const &key) const;
+  [[nodiscard]] unsigned int getUnsignedInt(std::string const &key) const;
+  [[nodiscard]] float getFloat(std::string const &key) const;
+  [[nodiscard]] double getDouble(std::string const &key) const;
+  [[nodiscard]] bool getBool(std::string const &key) const;
+  [[nodiscard]] std::string getString(std::string const &key) const;
 };
 } // namespace flex

@@ -1,3 +1,3 @@
 #pragma once
 
-enum class RenderAPI { OpenGL, Vulkan, DirecX11 };
+enum class RenderAPI { OpenGL, Vulkan, DirectX11 };

@@ -7,7 +7,7 @@ Configuration::Configuration(std::filesystem::path const &configFilePath) {
   mConfigSettings.readFile(configFilePath.string().c_str());
 }
 
-Configuration::~Configuration() {}
+Configuration::~Configuration() = default;
 
 int Configuration::getInt(std::string const &key) const {
   int value = 0;
@@ -70,10 +70,10 @@ bool Configuration::getBool(std::string const &key) const {
 }
 
 std::string Configuration::getString(std::string const &key) const {
-  std::string value = "";
+  std::string value;
 
   try {
-    value = (const char *)mConfigSettings.lookup(key);
+    value = static_cast<const char *>(mConfigSettings.lookup(key));
   } catch (...) {
     // return default value previously assigned
   }

@@ -1,9 +1,6 @@
 #pragma once
 
-#include <stdexcept>
 #include <string>
-
-#include <SDL2/SDL.h>
 
 namespace flex {
 class InputHandler {
@@ -14,8 +11,7 @@ public:
   ~InputHandler() = delete;
 
   void operator=(InputHandler const &) = delete;
-  void operator=(InputHandler const) = delete;
 
-  static bool keyPressed(std::string const &keyCode);
+  static bool keyPressed(std::string const &keyName);
 };
 } // namespace flex

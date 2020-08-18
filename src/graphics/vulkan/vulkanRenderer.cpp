@@ -1,5 +1,11 @@
 #include "graphics/vulkan/vulkanRenderer.hpp"
 
+#include <iostream>
+#include <map>
+#include <vector>
+
+#include "graphics/renderAPI.hpp"
+
 namespace flex {
 VulkanRenderer::VulkanRenderer(Window const &window) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
@@ -14,7 +20,7 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
 
 VulkanRenderer::~VulkanRenderer() { mVulkanInstance.destroy(); }
 
-vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) {
+vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) const {
   vk::ApplicationInfo appInfo{window.getTitle().c_str(), VK_MAKE_VERSION(1, 0, 0), "Flex Engine",
                               VK_MAKE_VERSION(0, 0, 1), VK_API_VERSION_1_0};
 
@@ -26,9 +32,9 @@ vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) {
     enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
   }
 
-  vk::InstanceCreateInfo instanceCreateInfo({}, &appInfo, enabledLayers, enabledExtensions);
+  const vk::InstanceCreateInfo instanceCreateInfo({}, &appInfo, enabledLayers, enabledExtensions);
 
-  return vk::createInstance(instanceCreateInfo);
+  return createInstance(instanceCreateInfo);
 }
 
 vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(vk::Instance const &vulkanInstance) {
@@ -43,21 +49,21 @@ vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(vk::Instance const &vulk
 
   if (rankedPhysicalDevices.rbegin()->first > 0) {
     return rankedPhysicalDevices.rbegin()->second;
-  } else {
-    throw std::runtime_error("No suitable device supporting vulkan found");
   }
+  throw std::runtime_error("No suitable device supporting vulkan found");
 }
 
 unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice) {
   unsigned int score = 0u;
 
-  vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
+  const vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
 
   if (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
     score += 1000u;
   }
 
-  if (VulkanDeviceQueueFamilyIndices queueFamilyIndices = {physicalDevice}; !queueFamilyIndices.graphics.has_value()) {
+  if (const VulkanDeviceQueueFamilyIndices queueFamilyIndices = {physicalDevice};
+      !queueFamilyIndices.graphics.has_value()) {
     score = 0u;
   }
 

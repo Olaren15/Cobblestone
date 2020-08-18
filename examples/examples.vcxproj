@@ -24,6 +24,7 @@
     <ProjectGuid>{b620cfff-b227-4fa0-b772-1764f126b2cc}</ProjectGuid>
     <RootNamespace>examples</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>example1</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -167,6 +168,11 @@
     <ProjectReference Include="..\flex-engine.vcxproj">
       <Project>{aa8842b1-844a-4d4f-9d7a-8086a9f66325}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="settings.cfg">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

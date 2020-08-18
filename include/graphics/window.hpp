@@ -1,10 +1,8 @@
 #pragma once
 
-#include <stdexcept>
 #include <vector>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_vulkan.h>
 
 #include "core/inputHandler.hpp"
 #include "renderAPI.hpp"
@@ -22,9 +20,9 @@ private:
   SDL_Window *mSDLWindow;
   bool mShouldExit = false;
 
-  void initSDL() const;
+  static void initSDL();
 
-  SDL_Window *createSDLWindow() const;
+  [[nodiscard]] SDL_Window *createSDLWindow() const;
 
 public:
   Window();
@@ -33,13 +31,13 @@ public:
   ~Window();
 
   void operator=(Window const &) = delete;
-  void operator=(Window const) = delete;
+  void operator=(Window) = delete;
 
   void update();
 
-  bool shouldExit() const;
-  std::string getTitle() const;
-  RenderAPI getRenderAPI() const;
-  std::vector<char const *> getRequiredVulkanExtensions() const;
+  [[nodiscard]] bool shouldExit() const;
+  [[nodiscard]] std::string getTitle() const;
+  [[nodiscard]] RenderAPI getRenderAPI() const;
+  [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
 };
 } // namespace flex

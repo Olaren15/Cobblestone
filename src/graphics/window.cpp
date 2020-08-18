@@ -1,5 +1,9 @@
 #include "graphics/window.hpp"
 
+#include <stdexcept>
+
+#include <SDL2/SDL_vulkan.h>
+
 namespace flex {
 Window::Window() {
   initSDL();
@@ -19,7 +23,7 @@ Window::Window(std::string const &title, unsigned int const &width, unsigned int
 
 Window::~Window() { SDL_Quit(); }
 
-void Window::initSDL() const {
+void Window::initSDL() {
   SDL_SetMainReady();
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
     throw std::runtime_error(std::string("Failed to initialize SDL ") + SDL_GetError());
@@ -27,25 +31,25 @@ void Window::initSDL() const {
 }
 
 SDL_Window *Window::createSDLWindow() const {
-  uint32_t windowFlags = SDL_WindowFlags::SDL_WINDOW_SHOWN;
+  uint32_t windowFlags = SDL_WINDOW_SHOWN;
 
   if (mFullScreen) {
-    windowFlags |= SDL_WindowFlags::SDL_WINDOW_FULLSCREEN;
+    windowFlags |= SDL_WINDOW_FULLSCREEN;
   }
 
   switch (mRenderAPI) {
   case RenderAPI::OpenGL:
-    windowFlags |= SDL_WindowFlags::SDL_WINDOW_OPENGL;
+    windowFlags |= SDL_WINDOW_OPENGL;
     break;
   case RenderAPI::Vulkan:
-    windowFlags |= SDL_WindowFlags::SDL_WINDOW_VULKAN;
+    windowFlags |= SDL_WINDOW_VULKAN;
     break;
-  case RenderAPI::DirecX11:
+  case RenderAPI::DirectX11:
     break;
   }
 
-  SDL_Window *window =
-      SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, mWidth, mHeight, windowFlags);
+  SDL_Window *window = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                        static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
 
   if (window == nullptr) {
     throw std::runtime_error("Failed to create SDL window ");
@@ -58,7 +62,7 @@ void Window::update() {
   SDL_Event event{};
 
   while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_EventType::SDL_QUIT) {
+    if (event.type == SDL_QUIT) {
       mShouldExit = true;
     }
   }
@@ -67,6 +71,7 @@ void Window::update() {
 bool Window::shouldExit() const { return mShouldExit; }
 std::string Window::getTitle() const { return mTitle; }
 RenderAPI Window::getRenderAPI() const { return mRenderAPI; }
+
 std::vector<char const *> Window::getRequiredVulkanExtensions() const {
   unsigned int count = 0;
 
