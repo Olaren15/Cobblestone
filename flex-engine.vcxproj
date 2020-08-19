@@ -195,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\inputHandler.hpp" />
+    <ClInclude Include="include\core\main.hpp" />
     <ClInclude Include="include\flexEngine.hpp" />
     <ClInclude Include="include\graphics\renderAPI.hpp" />
     <ClInclude Include="include\graphics\vulkan\vulkanDeviceQueueFamilyIndices.hpp" />

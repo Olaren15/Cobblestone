@@ -2,15 +2,7 @@
 
 #include <flexEngine.hpp>
 
-#ifdef _WIN32
-#include <Windows.h>
-// ReSharper disable once CppInconsistentNaming
-int wWinMain([[maybe_unused]] _In_ HINSTANCE hInstance, [[maybe_unused]] _In_opt_ HINSTANCE hPrevInstance,
-             [[maybe_unused]] _In_ LPWSTR lpCmdLine, [[maybe_unused]] _In_ int nShowCmd) {
-#else
-int main() {
-#endif // _WIN32
-
+int flexMain() {
   const flex::Configuration config;
 
   const unsigned int width = config.getUnsignedInt("display.window.width");
@@ -23,9 +15,7 @@ int main() {
   while (!window.shouldExit()) {
     window.update();
 
-    if (flex::InputHandler::keyPressed("Space")) {
-      std::cout << "pew pew !" << std::endl;
-    }
+    if (flex::InputHandler::keyPressed("Space")) { std::cout << "pew pew !" << std::endl; }
   }
 
   return 0;
