@@ -27,7 +27,8 @@ private:
 public:
   Window();
   Window(Window const &) = delete;
-  Window(std::string const &title, unsigned int const &width, unsigned int const &height, bool const &fullscreen);
+  Window(std::string const &title, unsigned int const &width,
+         unsigned int const &height, bool const &fullscreen);
   ~Window();
 
   void operator=(Window const &) = delete;

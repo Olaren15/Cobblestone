@@ -188,7 +188,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\inputHandler.cpp" />
-    <ClCompile Include="src\graphics\vulkan\vulkanDeviceQueueFamilyIndices.cpp" />
+    <ClCompile Include="src\graphics\vulkan\QueueFamilyIndices.cpp" />
     <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp" />
     <ClCompile Include="src\graphics\window.cpp" />
     <ClCompile Include="src\utils\configuration.cpp" />
@@ -198,10 +198,13 @@
     <ClInclude Include="include\core\main.hpp" />
     <ClInclude Include="include\flexEngine.hpp" />
     <ClInclude Include="include\graphics\renderAPI.hpp" />
-    <ClInclude Include="include\graphics\vulkan\vulkanDeviceQueueFamilyIndices.hpp" />
+    <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp" />
     <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp" />
     <ClInclude Include="include\graphics\window.hpp" />
     <ClInclude Include="include\utils\configuration.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

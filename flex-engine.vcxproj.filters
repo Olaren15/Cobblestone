@@ -42,9 +42,6 @@
     <ClCompile Include="src\core\inputHandler.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\vulkanDeviceQueueFamilyIndices.cpp">
-      <Filter>Source Files\graphics\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
@@ -53,6 +50,9 @@
     </ClCompile>
     <ClCompile Include="src\utils\configuration.cpp">
       <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\QueueFamilyIndices.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -64,9 +64,6 @@
     </ClInclude>
     <ClInclude Include="include\graphics\window.hpp">
       <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\vulkanDeviceQueueFamilyIndices.hpp">
-      <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
@@ -80,5 +77,11 @@
     <ClInclude Include="include\core\main.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
   </ItemGroup>
 </Project>

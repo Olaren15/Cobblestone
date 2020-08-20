@@ -15,7 +15,9 @@ int flexMain() {
   while (!window.shouldExit()) {
     window.update();
 
-    if (flex::InputHandler::keyPressed("Space")) { std::cout << "pew pew !" << std::endl; }
+    if (flex::InputHandler::keyPressed("Space")) {
+      std::cout << "pew pew !" << std::endl;
+    }
   }
 
   return 0;

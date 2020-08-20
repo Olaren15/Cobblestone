@@ -3,7 +3,8 @@
 #include <vulkan/vulkan.hpp>
 
 #include "graphics/window.hpp"
-#include "graphics/vulkan/vulkanDeviceQueueFamilyIndices.hpp"
+#include "graphics/vulkan/QueueFamilyIndices.hpp"
+#include "graphics/vulkan/VulkanQueueFamily.hpp"
 
 namespace flex {
 class VulkanRenderer {
@@ -16,11 +17,25 @@ private:
 
   vk::Instance mVulkanInstance;
   vk::PhysicalDevice mPhysicalDevice;
-  VulkanDeviceQueueFamilyIndices mQueueFamilyIndices;
+  QueueFamilyIndices mQueueFamilyIndices;
+  vk::Device mDevice;
 
-  vk::Instance createVulkanInstance(Window const &window) const;
-  static vk::PhysicalDevice selectPhysicalDevice(vk::Instance const &vulkanInstance);
-  static unsigned int ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice);
+  vk::Queue mGraphicsQueue;
+
+  [[nodiscard]] static vk::Instance createVulkanInstance(Window const &window);
+  [[nodiscard]] static vk::PhysicalDevice selectPhysicalDevice(
+      vk::Instance const &vulkanInstance);
+  [[nodiscard]] static unsigned int ratePhysicalDevice(
+      vk::PhysicalDevice const &physicalDevice);
+  [[nodiscard]] static vk::Device createVulkanDevice(
+      vk::PhysicalDevice const &physicalDevice,
+      QueueFamilyIndices const &queueFamilyIndices);
+
+  [[nodiscard]] static vk::Queue retrieveQueue(vk::Device const &device,
+                                               QueueFamilyIndices
+                                               const &
+                                               queueFamilyIndices,
+                                               QueueFamily const &queueFamily);
 
 public:
   VulkanRenderer() = delete;
