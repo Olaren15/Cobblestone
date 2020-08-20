@@ -1,8 +1,8 @@
-// ReSharper disable CppNonInlineFunctionDefinitionInHeaderFile
+﻿// ReSharper disable CppNonInlineFunctionDefinitionInHeaderFile
 #pragma once
 
 #define SDL_MAIN_HANDLED
-#if defined  _WIN32 && !defined NDEBUG
+#if defined _WIN32 && !defined NDEBUG
 #include <Windows.h>
 #endif
 

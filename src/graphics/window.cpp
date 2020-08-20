@@ -1,4 +1,4 @@
-#include "graphics/window.hpp"
+﻿#include "graphics/window.hpp"
 
 #include <stdexcept>
 
@@ -10,8 +10,7 @@ Window::Window() {
   mSDLWindow = createSDLWindow();
 }
 
-Window::Window(std::string const &title, unsigned int const &width,
-               unsigned int const &height,
+Window::Window(std::string const &title, unsigned int const &width, unsigned int const &height,
                bool const &fullscreen) {
   initSDL();
 
@@ -27,15 +26,16 @@ Window::~Window() { SDL_Quit(); }
 void Window::initSDL() {
   SDL_SetMainReady();
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-    throw std::runtime_error(
-        std::string("Failed to initialize SDL ") + SDL_GetError());
+    throw std::runtime_error(std::string("Failed to initialize SDL ") + SDL_GetError());
   }
 }
 
 SDL_Window *Window::createSDLWindow() const {
   uint32_t windowFlags = SDL_WINDOW_SHOWN;
 
-  if (mFullScreen) { windowFlags |= SDL_WINDOW_FULLSCREEN; }
+  if (mFullScreen) {
+    windowFlags |= SDL_WINDOW_FULLSCREEN;
+  }
 
   switch (mRenderAPI) {
   case RenderAPI::OpenGL:
@@ -48,10 +48,9 @@ SDL_Window *Window::createSDLWindow() const {
     break;
   }
 
-  SDL_Window *window = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
-                                        SDL_WINDOWPOS_UNDEFINED,
-                                        static_cast<int>(mWidth),
-                                        static_cast<int>(mHeight), windowFlags);
+  SDL_Window *window =
+      SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                       static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
 
   if (window == nullptr) {
     throw std::runtime_error("Failed to create SDL window ");
@@ -64,12 +63,16 @@ void Window::update() {
   SDL_Event event{};
 
   while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_QUIT) { mShouldExit = true; }
+    if (event.type == SDL_QUIT) {
+      mShouldExit = true;
+    }
   }
 }
 
 bool Window::shouldExit() const { return mShouldExit; }
+
 std::string Window::getTitle() const { return mTitle; }
+
 RenderAPI Window::getRenderAPI() const { return mRenderAPI; }
 
 std::vector<char const *> Window::getRequiredVulkanExtensions() const {
@@ -85,24 +88,33 @@ std::vector<char const *> Window::getRequiredVulkanExtensions() const {
 
   std::vector<char const *> extensions(count);
 
-  if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, extensions.data())
-  ) { throw std::runtime_error("Failed to get required Vulkan extensions"); }
+  if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, extensions.data())) {
+    throw std::runtime_error("Failed to get required Vulkan extensions");
+  }
 
   return extensions;
 }
 
-vk::SurfaceKHR Window::getDrawableVulkanSurface(
-    vk::Instance const &vulkanInstance) const {
+vk::SurfaceKHR Window::getDrawableVulkanSurface(vk::Instance const &vulkanInstance) const {
   if (mRenderAPI != RenderAPI::Vulkan)
-    throw InvalidRenderAPIException{
-        "Cannot get drawable vulkan surface if render API is not set to vulkan"};
+    throw InvalidRenderAPIException{"Cannot get drawable vulkan surface if "
+                                    "render API is not set to vulkan"};
 
   VkSurfaceKHR surface;
 
-  if (SDL_Vulkan_CreateSurface(mSDLWindow, {vulkanInstance}, &surface) !=
-      SDL_TRUE) { throw std::runtime_error("Failed to create vulkan surface"); }
+  if (SDL_Vulkan_CreateSurface(mSDLWindow, {vulkanInstance}, &surface) != SDL_TRUE) {
+    throw std::runtime_error("Failed to create vulkan surface");
+  }
 
   return vk::SurfaceKHR{surface};
+}
+
+vk::Extent2D Window::getDrawableVulkanSurfaceSize() const {
+  int width = 0;
+  int height = 0;
+  SDL_Vulkan_GetDrawableSize(mSDLWindow, &width, &height);
+
+  return vk::Extent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 }
 
 } // namespace flex

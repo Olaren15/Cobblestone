@@ -1,4 +1,4 @@
-#include "utils/configuration.hpp"
+﻿#include "utils/configuration.hpp"
 
 namespace flex {
 Configuration::Configuration() { mConfigSettings.readFile("settings.cfg"); }
@@ -12,7 +12,9 @@ Configuration::~Configuration() = default;
 int Configuration::getInt(std::string const &key) const {
   int value = 0;
 
-  try { value = mConfigSettings.lookup(key); } catch (...) {
+  try {
+    value = mConfigSettings.lookup(key);
+  } catch (...) {
     // return default value previously assigned
   }
 
@@ -22,7 +24,9 @@ int Configuration::getInt(std::string const &key) const {
 unsigned int Configuration::getUnsignedInt(std::string const &key) const {
   unsigned int value = 0u;
 
-  try { value = mConfigSettings.lookup(key); } catch (...) {
+  try {
+    value = mConfigSettings.lookup(key);
+  } catch (...) {
     // return default value previously assigned
   }
 
@@ -32,7 +36,9 @@ unsigned int Configuration::getUnsignedInt(std::string const &key) const {
 float Configuration::getFloat(std::string const &key) const {
   float value = 0.0f;
 
-  try { value = mConfigSettings.lookup(key); } catch (...) {
+  try {
+    value = mConfigSettings.lookup(key);
+  } catch (...) {
     // return default value previously assigned
   }
 
@@ -42,7 +48,9 @@ float Configuration::getFloat(std::string const &key) const {
 double Configuration::getDouble(std::string const &key) const {
   double value = 0.0L;
 
-  try { value = mConfigSettings.lookup(key); } catch (...) {
+  try {
+    value = mConfigSettings.lookup(key);
+  } catch (...) {
     // return default value previously assigned
   }
 
@@ -52,7 +60,9 @@ double Configuration::getDouble(std::string const &key) const {
 bool Configuration::getBool(std::string const &key) const {
   bool value = false;
 
-  try { value = mConfigSettings.lookup(key); } catch (...) {
+  try {
+    value = mConfigSettings.lookup(key);
+  } catch (...) {
     // return default value previously assigned
   }
 

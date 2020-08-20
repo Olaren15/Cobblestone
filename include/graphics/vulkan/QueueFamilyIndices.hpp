@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <optional>
 
@@ -11,9 +11,10 @@ struct QueueFamilyIndices {
   std::optional<uint32_t> present;
 
   QueueFamilyIndices() = default;
+  QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndices);
   explicit QueueFamilyIndices(vk::PhysicalDevice const &physicalDevice,
                               vk::SurfaceKHR const &surface);
-  QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndices);
+  ~QueueFamilyIndices() = default;
 
   [[nodiscard]] bool isComplete() const;
 };

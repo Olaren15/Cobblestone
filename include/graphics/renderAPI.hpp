@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <exception>
 #include <string>
@@ -16,10 +16,10 @@ public:
     : mErrorMessage("The chosen render API does not support this feature") {}
 
   explicit InvalidRenderAPIException(std::string errorMessage)
-    : mErrorMessage(std::move(errorMessage)) { }
+    : mErrorMessage(std::move(errorMessage)) {}
 
   [[nodiscard]] const char *what() const override {
     return mErrorMessage.c_str();
   }
 };
-}
+} // namespace flex

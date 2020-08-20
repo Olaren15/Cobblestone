@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <vector>
 
@@ -27,8 +27,8 @@ private:
 public:
   Window();
   Window(Window const &) = delete;
-  Window(std::string const &title, unsigned int const &width,
-         unsigned int const &height, bool const &fullscreen);
+  Window(std::string const &title, unsigned int const &width, unsigned int const &height,
+         bool const &fullscreen);
   ~Window();
 
   void operator=(Window const &) = delete;
@@ -40,7 +40,7 @@ public:
   [[nodiscard]] std::string getTitle() const;
   [[nodiscard]] RenderAPI getRenderAPI() const;
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
-  [[nodiscard]] vk::SurfaceKHR getDrawableVulkanSurface(
-      vk::Instance const &vulkanInstance) const;
+  [[nodiscard]] vk::SurfaceKHR getDrawableVulkanSurface(vk::Instance const &vulkanInstance) const;
+  [[nodiscard]] vk::Extent2D getDrawableVulkanSurfaceSize() const;
 };
 } // namespace flex
