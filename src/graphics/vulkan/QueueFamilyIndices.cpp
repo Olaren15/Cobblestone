@@ -2,7 +2,7 @@
 
 namespace flex {
 QueueFamilyIndices::QueueFamilyIndices(
-    vk::PhysicalDevice const &physicalDevice) {
+    vk::PhysicalDevice const &physicalDevice, vk::SurfaceKHR const &surface) {
   std::vector<vk::QueueFamilyProperties> deviceQueueFamilyProperties =
       physicalDevice.getQueueFamilyProperties();
 
@@ -12,6 +12,15 @@ QueueFamilyIndices::QueueFamilyIndices(
     if (queueFamilyProperty.queueFlags & vk::QueueFlagBits::eGraphics) {
       graphics = i;
     }
+
+    if (queueFamilyProperty.queueFlags & vk::QueueFlagBits::eTransfer) {
+      transfer = i;
+    }
+
+    if (physicalDevice.getSurfaceSupportKHR(i, surface) == VK_TRUE) {
+      present = i;
+    }
+
     i++;
   }
 }
@@ -20,6 +29,11 @@ QueueFamilyIndices::QueueFamilyIndices(
     QueueFamilyIndices const &queueFamilyIndices) {
   graphics = queueFamilyIndices.graphics;
   transfer = queueFamilyIndices.transfer;
+  present = queueFamilyIndices.present;
+}
+
+bool QueueFamilyIndices::isComplete() const {
+  return graphics.has_value() && transfer.has_value() && present.has_value();
 }
 
 } // namespace flex

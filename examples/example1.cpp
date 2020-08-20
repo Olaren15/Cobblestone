@@ -12,11 +12,13 @@ int flexMain() {
   flex::Window window{"window", width, height, fullscreen};
   flex::VulkanRenderer vulkanRenderer{window};
 
+  unsigned int i = 0;
+
   while (!window.shouldExit()) {
     window.update();
 
     if (flex::InputHandler::keyPressed("Space")) {
-      std::cout << "pew pew !" << std::endl;
+      std::cout << i++ << std::endl;
     }
   }
 

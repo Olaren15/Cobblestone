@@ -73,6 +73,10 @@ std::string Window::getTitle() const { return mTitle; }
 RenderAPI Window::getRenderAPI() const { return mRenderAPI; }
 
 std::vector<char const *> Window::getRequiredVulkanExtensions() const {
+  if (mRenderAPI != RenderAPI::Vulkan)
+    throw InvalidRenderAPIException{
+        "Cannot get vulkan extensions if render API is not set to vulkan"};
+
   unsigned int count = 0;
 
   if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, nullptr)) {
@@ -86,4 +90,19 @@ std::vector<char const *> Window::getRequiredVulkanExtensions() const {
 
   return extensions;
 }
+
+vk::SurfaceKHR Window::getDrawableVulkanSurface(
+    vk::Instance const &vulkanInstance) const {
+  if (mRenderAPI != RenderAPI::Vulkan)
+    throw InvalidRenderAPIException{
+        "Cannot get drawable vulkan surface if render API is not set to vulkan"};
+
+  VkSurfaceKHR surface;
+
+  if (SDL_Vulkan_CreateSurface(mSDLWindow, {vulkanInstance}, &surface) !=
+      SDL_TRUE) { throw std::runtime_error("Failed to create vulkan surface"); }
+
+  return vk::SurfaceKHR{surface};
+}
+
 } // namespace flex

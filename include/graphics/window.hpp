@@ -3,9 +3,9 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
+#include <vulkan/vulkan.hpp>
 
 #include "renderAPI.hpp"
-#include "core/inputHandler.hpp"
 
 namespace flex {
 class Window {
@@ -40,5 +40,7 @@ public:
   [[nodiscard]] std::string getTitle() const;
   [[nodiscard]] RenderAPI getRenderAPI() const;
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
+  [[nodiscard]] vk::SurfaceKHR getDrawableVulkanSurface(
+      vk::Instance const &vulkanInstance) const;
 };
 } // namespace flex

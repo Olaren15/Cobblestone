@@ -199,6 +199,7 @@
     <ClInclude Include="include\flexEngine.hpp" />
     <ClInclude Include="include\graphics\renderAPI.hpp" />
     <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp" />
+    <ClInclude Include="include\graphics\vulkan\QueueFamily.hpp" />
     <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp" />
     <ClInclude Include="include\graphics\window.hpp" />
     <ClInclude Include="include\utils\configuration.hpp" />

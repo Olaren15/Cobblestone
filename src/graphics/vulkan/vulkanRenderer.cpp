@@ -6,23 +6,30 @@
 
 #include "graphics/renderAPI.hpp"
 
+#include <set>
+
 namespace flex {
 VulkanRenderer::VulkanRenderer(Window const &window) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
-    throw std::runtime_error("Can't create vulkan renderer if window is not "
-        "initialized with the Vulkan render API");
+    throw InvalidRenderAPIException{
+        "Can't create vulkan renderer if window is not "
+        "initialized with the Vulkan render API"};
   }
 
   mVulkanInstance = createVulkanInstance(window);
-  mPhysicalDevice = selectPhysicalDevice(mVulkanInstance);
-  mQueueFamilyIndices = {mPhysicalDevice};
+  mDrawingSurface = window.getDrawableVulkanSurface(mVulkanInstance);
+  mPhysicalDevice = selectPhysicalDevice(mVulkanInstance, mDrawingSurface);
+  mQueueFamilyIndices = QueueFamilyIndices{mPhysicalDevice, mDrawingSurface};
   mDevice = createVulkanDevice(mPhysicalDevice, mQueueFamilyIndices);
   mGraphicsQueue = retrieveQueue(mDevice, mQueueFamilyIndices,
                                  QueueFamily::Graphics);
+  mPresentQueue = retrieveQueue(mDevice, mQueueFamilyIndices,
+                                QueueFamily::Present);
 }
 
 VulkanRenderer::~VulkanRenderer() {
   mDevice.destroy();
+  mVulkanInstance.destroySurfaceKHR(mDrawingSurface);
   mVulkanInstance.destroy();
 }
 
@@ -48,25 +55,28 @@ vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) {
 }
 
 vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(
-    vk::Instance const &vulkanInstance) {
+    vk::Instance const &vulkanInstance, vk::SurfaceKHR const &vulkanSurface) {
   std::vector<vk::PhysicalDevice> availablePhysicalDevices = vulkanInstance.
       enumeratePhysicalDevices();
 
   std::multimap<int, vk::PhysicalDevice> rankedPhysicalDevices = {};
 
   for (vk::PhysicalDevice const &physicalDevice : availablePhysicalDevices) {
-    unsigned int deviceScore = ratePhysicalDevice(physicalDevice);
+    unsigned int deviceScore =
+        ratePhysicalDevice(physicalDevice, vulkanSurface);
     rankedPhysicalDevices.insert(std::make_pair(deviceScore, physicalDevice));
   }
 
   if (rankedPhysicalDevices.rbegin()->first > 0) {
     return rankedPhysicalDevices.rbegin()->second;
   }
+
   throw std::runtime_error("No suitable device supporting vulkan found");
 }
 
 unsigned int VulkanRenderer::ratePhysicalDevice(
-    vk::PhysicalDevice const &physicalDevice) {
+    vk::PhysicalDevice const &physicalDevice,
+    vk::SurfaceKHR const &vulkanSurface) {
   unsigned int score = 1u;
 
   const vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.
@@ -75,9 +85,9 @@ unsigned int VulkanRenderer::ratePhysicalDevice(
   if (physicalDeviceProperties.deviceType ==
       vk::PhysicalDeviceType::eDiscreteGpu) { score += 1000u; }
 
-  if (const QueueFamilyIndices queueFamilyIndices = {physicalDevice}
+  if (const QueueFamilyIndices queueFamilyIndices{physicalDevice, vulkanSurface}
     ;
-    !queueFamilyIndices.graphics.has_value()) { score = 0u; }
+    !queueFamilyIndices.isComplete()) { score = 0u; }
 
   // TODO: add more checks
 
@@ -87,9 +97,20 @@ unsigned int VulkanRenderer::ratePhysicalDevice(
 vk::Device VulkanRenderer::createVulkanDevice(
     vk::PhysicalDevice const &physicalDevice,
     QueueFamilyIndices const &queueFamilyIndices) {
+
   float queuePriority = 1.0f;
-  std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos{
-      {{}, queueFamilyIndices.graphics.value(), 1, &queuePriority}};
+  std::set<uint32_t> uniqueQueueFamilyIndices = {
+      queueFamilyIndices.graphics.value(),
+      queueFamilyIndices.transfer.value(),
+      queueFamilyIndices.present.value()};
+
+  std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos{};
+  queueCreateInfos.reserve(uniqueQueueFamilyIndices.size());
+
+  for (uint32_t queueFamilyIndex : uniqueQueueFamilyIndices) {
+    queueCreateInfos.push_back(
+        vk::DeviceQueueCreateInfo{{}, queueFamilyIndex, 1, &queuePriority});
+  }
 
   vk::PhysicalDeviceFeatures enabledDeviceFeatures{};
 
@@ -103,17 +124,21 @@ vk::Queue VulkanRenderer::retrieveQueue(vk::Device const &device,
                                         queueFamilyIndices,
                                         QueueFamily const &
                                         queueFamily) {
-  vk::Queue queue{};
+
+  uint32_t queueFamilyIndex = 0u;
   switch (queueFamily) {
   case QueueFamily::Graphics:
-    queue = device.getQueue(queueFamilyIndices.graphics.value(), 0);
+    queueFamilyIndex = queueFamilyIndices.graphics.value();
     break;
   case QueueFamily::Transfer:
-    queue = device.getQueue(queueFamilyIndices.transfer.value(), 0);
+    queueFamilyIndex = queueFamilyIndices.transfer.value();
+    break;
+  case QueueFamily::Present:
+    queueFamilyIndex = queueFamilyIndices.present.value();
     break;
   }
 
-  return queue;
+  return device.getQueue(queueFamilyIndex, 0);
 }
 
 } // namespace flex
