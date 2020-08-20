@@ -25,13 +25,13 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
   mDevice = createVulkanDevice(mPhysicalDevice, mQueueFamilyIndices);
   mGraphicsQueue = retrieveQueue(mDevice, mQueueFamilyIndices, QueueFamily::Graphics);
   mPresentQueue = retrieveQueue(mDevice, mQueueFamilyIndices, QueueFamily::Present);
-  mSwapChainSupportDetails = SwapChainSupportDetails{mPhysicalDevice, mDrawingSurface};
-  mSwapChain = createSwapChain(mDevice, window, mDrawingSurface, mQueueFamilyIndices,
-                               mSwapChainSupportDetails, {});
+  mSwapChain =
+      SwapChain{mDevice, window, mDrawingSurface,
+                SwapChainSupportDetails{mPhysicalDevice, mDrawingSurface}, mQueueFamilyIndices};
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  mDevice.destroySwapchainKHR(mSwapChain);
+  mSwapChain.destroy(mDevice);
   mDevice.destroy();
   mVulkanInstance.destroySurfaceKHR(mDrawingSurface);
   mVulkanInstance.destroy();
@@ -163,92 +163,4 @@ vk::Queue VulkanRenderer::retrieveQueue(vk::Device const &device,
 
   return device.getQueue(queueFamilyIndex, 0);
 }
-
-vk::SurfaceFormatKHR VulkanRenderer::chooseSwapChainSurfaceFormat(
-    std::vector<vk::SurfaceFormatKHR> const &availableFormats) {
-  if (availableFormats.empty()) {
-    throw std::runtime_error("Cannot choose a format from an empty array");
-  }
-
-  for (vk::SurfaceFormatKHR const &availableFormat : availableFormats) {
-    if (availableFormat.format == vk::Format::eB8G8R8A8Srgb &&
-        availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
-      return availableFormat;
-    }
-  }
-
-  return availableFormats.front();
-}
-
-vk::PresentModeKHR VulkanRenderer::chooseSwapChainPresentMode(
-    std::vector<vk::PresentModeKHR> const &availablePresentModes) {
-  for (vk::PresentModeKHR const &availablePresentMode : availablePresentModes) {
-    if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
-      return availablePresentMode;
-    }
-  }
-
-  return vk::PresentModeKHR::eFifo;
-}
-
-vk::Extent2D VulkanRenderer::chooseSwapChainExtent(vk::SurfaceCapabilitiesKHR const &capabilities,
-                                                   Window const &window) {
-  if (capabilities.currentExtent.width != UINT32_MAX) {
-    // Cannot decide on the extent size
-    return capabilities.currentExtent;
-  }
-
-  vk::Extent2D const windowDrawableSize = window.getDrawableVulkanSurfaceSize();
-
-  uint32_t const actualWidth =
-      std::clamp(windowDrawableSize.width, capabilities.minImageExtent.width,
-                 capabilities.maxImageExtent.width);
-  uint32_t const actualHeight =
-      std::clamp(windowDrawableSize.height, capabilities.minImageExtent.height,
-                 capabilities.maxImageExtent.height);
-
-  return vk::Extent2D{actualWidth, actualHeight};
-}
-
-vk::SwapchainKHR VulkanRenderer::createSwapChain(
-    vk::Device const &device, Window const &window, vk::SurfaceKHR const &surface,
-    QueueFamilyIndices const &queueFamilyIndices,
-    SwapChainSupportDetails const &swapChainSupportDetails, vk::SwapchainKHR const &oldSwapChain) {
-
-  vk::SurfaceFormatKHR const surfaceFormat =
-      chooseSwapChainSurfaceFormat(swapChainSupportDetails.formats);
-  vk::PresentModeKHR const presentMode =
-      chooseSwapChainPresentMode(swapChainSupportDetails.presentModes);
-  vk::Extent2D const extent = chooseSwapChainExtent(swapChainSupportDetails.capabilities, window);
-
-  uint32_t const imageCount = swapChainSupportDetails.capabilities.maxImageCount > 0
-                                  ? std::min(swapChainSupportDetails.capabilities.minImageCount + 1,
-                                             swapChainSupportDetails.capabilities.maxImageCount)
-                                  : swapChainSupportDetails.capabilities.minImageCount + 1;
-
-  std::set<uint32_t> uniqueQueueFamilyIndices{queueFamilyIndices.graphics.value(),
-                                              queueFamilyIndices.transfer.value(),
-                                              queueFamilyIndices.present.value()};
-
-  vk::SwapchainCreateInfoKHR const swapChainCreateInfo{
-      {},
-      surface,
-      imageCount,
-      surfaceFormat.format,
-      surfaceFormat.colorSpace,
-      extent,
-      1,
-      vk::ImageUsageFlagBits::eColorAttachment,
-      uniqueQueueFamilyIndices.size() > 1 ? vk::SharingMode::eConcurrent
-                                          : vk::SharingMode::eExclusive,
-      std::vector<uint32_t>{uniqueQueueFamilyIndices.begin(), uniqueQueueFamilyIndices.end()},
-      swapChainSupportDetails.capabilities.currentTransform,
-      vk::CompositeAlphaFlagBitsKHR::eOpaque,
-      presentMode,
-      true,
-      oldSwapChain};
-
-  return device.createSwapchainKHR(swapChainCreateInfo);
-}
-
 } // namespace flex

@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 
 #include <flexEngine.hpp>
 
@@ -18,7 +18,7 @@ int flexMain() {
     window.update();
 
     if (flex::InputHandler::keyPressed("Space")) {
-      std::cout << i++ << std::endl;
+      std::cout << i++ << '\n';
     }
   }
 

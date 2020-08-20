@@ -6,7 +6,7 @@
 
 #include "graphics/vulkan/QueueFamily.hpp"
 #include "graphics/vulkan/QueueFamilyIndices.hpp"
-#include "graphics/vulkan/SwapChainSupportDetails.hpp"
+#include "graphics/vulkan/SwapChain.hpp"
 #include "graphics/window.hpp"
 
 namespace flex {
@@ -30,8 +30,7 @@ private:
   QueueFamilyIndices mQueueFamilyIndices;
   vk::Device mDevice;
 
-  SwapChainSupportDetails mSwapChainSupportDetails;
-  vk::SwapchainKHR mSwapChain;
+  SwapChain mSwapChain;
 
   vk::Queue mGraphicsQueue;
   vk::Queue mPresentQueue;
@@ -49,18 +48,6 @@ private:
   [[nodiscard]] static vk::Queue retrieveQueue(vk::Device const &device,
                                                QueueFamilyIndices const &queueFamilyIndices,
                                                QueueFamily const &queueFamily);
-
-  [[nodiscard]] static vk::SurfaceFormatKHR
-  chooseSwapChainSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const &availableFormats);
-  [[nodiscard]] static vk::PresentModeKHR
-  chooseSwapChainPresentMode(std::vector<vk::PresentModeKHR> const &availablePresentModes);
-  [[nodiscard]] static vk::Extent2D
-  chooseSwapChainExtent(vk::SurfaceCapabilitiesKHR const &capabilities, Window const &window);
-  [[nodiscard]] static vk::SwapchainKHR
-  createSwapChain(vk::Device const &device, Window const &window, vk::SurfaceKHR const &surface,
-                  QueueFamilyIndices const &queueFamilyIndices,
-                  SwapChainSupportDetails const &swapChainSupportDetails,
-                  vk::SwapchainKHR const &oldSwapChain);
 
 public:
   VulkanRenderer() = delete;
