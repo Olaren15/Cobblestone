@@ -124,7 +124,24 @@ SwapChain::SwapChain(vk::Device const &device, Window const &window, vk::Surface
   imageViews = createImageViews(device, images, format);
 }
 
+void SwapChain::createFrameBuffers(vk::Device const &device, vk::RenderPass renderPass) {
+  framebuffers.reserve(imageViews.size());
+
+  for (vk::ImageView const &imageView : imageViews) {
+    std::array<vk::ImageView, 1> attachments{imageView};
+
+    vk::FramebufferCreateInfo const framebufferCreateInfo{{},           renderPass,    attachments,
+                                                          extent.width, extent.height, 1};
+
+    framebuffers.push_back(device.createFramebuffer(framebufferCreateInfo));
+  }
+}
+
 void SwapChain::destroy(vk::Device const &device) const {
+  for (vk::Framebuffer const &framebuffer : framebuffers) {
+    device.destroyFramebuffer(framebuffer);
+  }
+
   for (vk::ImageView const &imageView : imageViews) {
     device.destroyImageView(imageView);
   }

@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <map>
 #include <set>
 #include <vector>
@@ -29,6 +28,7 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
       SwapChain{mDevice, window, mDrawingSurface,
                 SwapChainSupportDetails{mPhysicalDevice, mDrawingSurface}, mQueueFamilyIndices};
   mPipeline = Pipeline{mDevice, mSwapChain};
+  mSwapChain.createFrameBuffers(mDevice, mPipeline.renderPass);
 }
 
 VulkanRenderer::~VulkanRenderer() {

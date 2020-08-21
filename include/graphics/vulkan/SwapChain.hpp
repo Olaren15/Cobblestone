@@ -31,14 +31,17 @@ private:
 public:
   vk::SwapchainKHR swapChain;
   std::vector<vk::Image> images;
-  vk::Format format;
+  vk::Format format = vk::Format::eUndefined;
   vk::Extent2D extent;
   std::vector<vk::ImageView> imageViews;
+  std::vector<vk::Framebuffer> framebuffers;
 
   SwapChain() = default;
   SwapChain(vk::Device const &device, Window const &window, vk::SurfaceKHR const &surface,
             SwapChainSupportDetails const &swapChainSupportDetails,
             QueueFamilyIndices const &queueFamilyIndices);
+
+  void createFrameBuffers(vk::Device const &device, vk::RenderPass renderPass);
 
   void destroy(vk::Device const &device) const;
 };
