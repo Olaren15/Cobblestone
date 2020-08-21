@@ -8,7 +8,7 @@
 #include "renderAPI.hpp"
 
 namespace flex {
-class Window {
+struct Window {
 private:
   unsigned int mWidth = 800;
   unsigned int mHeight = 600;

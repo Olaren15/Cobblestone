@@ -60,6 +60,9 @@
     <ClCompile Include="src\graphics\vulkan\SwapChain.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\Pipeline.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\inputHandler.hpp">
@@ -93,6 +96,9 @@
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\SwapChain.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\Pipeline.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,8 +3,7 @@
 #include <string>
 
 namespace flex {
-class InputHandler {
-private:
+struct InputHandler {
 public:
   InputHandler() = delete;
   InputHandler(InputHandler const &) = delete;

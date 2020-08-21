@@ -1041,3 +1041,6 @@ dkms.conf
 
 # vs code clangd extension
 .clangd/
+
+# SPIR-V compiles shaders
+*.spv

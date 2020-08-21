@@ -7,7 +7,7 @@
 #pragma warning(pop)
 
 namespace flex {
-class Configuration {
+struct Configuration {
 private:
   libconfig::Config mConfigSettings;
 

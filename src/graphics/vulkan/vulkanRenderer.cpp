@@ -28,16 +28,18 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
   mSwapChain =
       SwapChain{mDevice, window, mDrawingSurface,
                 SwapChainSupportDetails{mPhysicalDevice, mDrawingSurface}, mQueueFamilyIndices};
+  mPipeline = Pipeline{mDevice, mSwapChain};
 }
 
 VulkanRenderer::~VulkanRenderer() {
+  mPipeline.destroy(mDevice);
   mSwapChain.destroy(mDevice);
   mDevice.destroy();
   mVulkanInstance.destroySurfaceKHR(mDrawingSurface);
   mVulkanInstance.destroy();
 }
 
-vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) {
+vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) const {
   vk::ApplicationInfo appInfo{window.getTitle().c_str(), VK_MAKE_VERSION(1, 0, 0), "Flex Engine",
                               VK_MAKE_VERSION(0, 0, 1), VK_API_VERSION_1_0};
 
@@ -56,7 +58,7 @@ vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) {
 }
 
 vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(vk::Instance const &vulkanInstance,
-                                                        vk::SurfaceKHR const &vulkanSurface) {
+                                                        vk::SurfaceKHR const &vulkanSurface) const {
   std::vector<vk::PhysicalDevice> availablePhysicalDevices =
       vulkanInstance.enumeratePhysicalDevices();
 
@@ -75,7 +77,7 @@ vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(vk::Instance const &vulk
 }
 
 unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice,
-                                                vk::SurfaceKHR const &vulkanSurface) {
+                                                vk::SurfaceKHR const &vulkanSurface) const {
 
   unsigned int score = 1u;
 
@@ -103,7 +105,7 @@ unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physic
 }
 
 bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
-    vk::PhysicalDevice const &physicalDevice) {
+    vk::PhysicalDevice const &physicalDevice) const {
   std::vector<vk::ExtensionProperties> availableExtensions =
       physicalDevice.enumerateDeviceExtensionProperties();
 
@@ -123,7 +125,7 @@ bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
 }
 
 vk::Device VulkanRenderer::createVulkanDevice(vk::PhysicalDevice const &physicalDevice,
-                                              QueueFamilyIndices const &queueFamilyIndices) {
+                                              QueueFamilyIndices const &queueFamilyIndices) const {
 
   float queuePriority = 1.0f;
   std::set<uint32_t> uniqueQueueFamilyIndices = {queueFamilyIndices.graphics.value(),
@@ -146,7 +148,7 @@ vk::Device VulkanRenderer::createVulkanDevice(vk::PhysicalDevice const &physical
 
 vk::Queue VulkanRenderer::retrieveQueue(vk::Device const &device,
                                         QueueFamilyIndices const &queueFamilyIndices,
-                                        QueueFamily const &queueFamily) {
+                                        QueueFamily const &queueFamily) const {
 
   uint32_t queueFamilyIndex = 0u;
   switch (queueFamily) {
