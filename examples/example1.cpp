@@ -22,10 +22,5 @@ int flexMain() {
     }
   }
 
-#ifndef NDEBUG
-  std::cout << "Press enter to continue.";
-  std::cin.ignore();
-#endif
-
   return 0;
 }
