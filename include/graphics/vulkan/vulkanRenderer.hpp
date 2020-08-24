@@ -31,11 +31,15 @@ private:
   QueueFamilyIndices mQueueFamilyIndices;
   vk::Device mDevice;
 
-  SwapChain mSwapChain;
-  Pipeline mPipeline;
-
   vk::Queue mGraphicsQueue;
   vk::Queue mPresentQueue;
+
+  SwapChain mSwapChain;
+  Pipeline mPipeline;
+  vk::RenderPass mRenderPass;
+
+  vk::CommandPool mCommandPool;
+  std::vector<vk::CommandBuffer> mCommandBuffers;
 
   [[nodiscard]] vk::Instance createVulkanInstance(Window const &window) const;
   [[nodiscard]] vk::PhysicalDevice selectPhysicalDevice(vk::Instance const &vulkanInstance,
@@ -50,6 +54,16 @@ private:
   [[nodiscard]] vk::Queue retrieveQueue(vk::Device const &device,
                                         QueueFamilyIndices const &queueFamilyIndices,
                                         QueueFamily const &queueFamily) const;
+
+  [[nodiscard]] vk::RenderPass createRenderPass(vk::Device const &device,
+                                                vk::Format const &swapChainFormat);
+
+  [[nodiscard]] vk::CommandPool
+  createCommandPool(vk::Device const &device, QueueFamilyIndices const &queueFamilyIndices) const;
+  [[nodiscard]] std::vector<vk::CommandBuffer>
+  createCommandBuffers(vk::Device const &device, Pipeline const &pipeline,
+                       SwapChain const &swapChain, vk::RenderPass const &renderPass,
+                       vk::CommandPool const &commandPool) const;
 
 public:
   VulkanRenderer() = delete;

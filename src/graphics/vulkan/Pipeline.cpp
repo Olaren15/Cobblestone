@@ -25,28 +25,8 @@ vk::ShaderModule Pipeline::createShaderModule(vk::Device const &device,
   return device.createShaderModule(moduleCreateInfo);
 }
 
-vk::RenderPass Pipeline::createRenderPass(vk::Device const &device,
-                                          vk::Format const &swapChainFormat) {
-  vk::AttachmentDescription colorAttachment{{},
-                                            swapChainFormat,
-                                            vk::SampleCountFlagBits::e1,
-                                            vk::AttachmentLoadOp::eClear,
-                                            vk::AttachmentStoreOp::eDontCare,
-                                            vk::AttachmentLoadOp::eDontCare,
-                                            vk::AttachmentStoreOp::eDontCare,
-                                            vk::ImageLayout::eUndefined,
-                                            vk::ImageLayout::ePresentSrcKHR};
-
-  vk::AttachmentReference colorAttachmentReference{0, vk::ImageLayout::eColorAttachmentOptimal};
-
-  vk::SubpassDescription subpassDescription{
-      {}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentReference, {}, {}, {}};
-
-  vk::RenderPassCreateInfo const renderPassCreateInfo{{}, colorAttachment, subpassDescription, {}};
-  return device.createRenderPass((renderPassCreateInfo));
-}
-
-Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain) {
+Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain,
+                   vk::RenderPass const &renderPass) {
   vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
   fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
 
@@ -97,8 +77,6 @@ Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain) {
   vk::PipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{
       {}, vk::SampleCountFlagBits::e1, false, 1.0f, nullptr, false, false};
 
-  renderPass = createRenderPass(device, swapChain.format);
-
   pipelineLayout = device.createPipelineLayout({});
   vk::GraphicsPipelineCreateInfo pipelineCreateInfo{{},
                                                     shaderStages,
@@ -123,7 +101,6 @@ Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain) {
 void Pipeline::destroy(vk::Device const &device) const {
   device.destroyPipeline(pipeline);
   device.destroyPipelineLayout(pipelineLayout);
-  device.destroyRenderPass(renderPass);
   device.destroyShaderModule(fragShaderModule);
   device.destroyShaderModule(vertShaderModule);
 }

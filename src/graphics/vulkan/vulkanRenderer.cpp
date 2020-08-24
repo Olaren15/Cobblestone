@@ -27,13 +27,17 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
   mSwapChain =
       SwapChain{mDevice, window, mDrawingSurface,
                 SwapChainSupportDetails{mPhysicalDevice, mDrawingSurface}, mQueueFamilyIndices};
-  mPipeline = Pipeline{mDevice, mSwapChain};
-  mSwapChain.createFrameBuffers(mDevice, mPipeline.renderPass);
+  mRenderPass = createRenderPass(mDevice, mSwapChain.format);
+  mPipeline = Pipeline{mDevice, mSwapChain, mRenderPass};
+  mSwapChain.createFrameBuffers(mDevice, mRenderPass);
+  mCommandPool = createCommandPool(mDevice, mQueueFamilyIndices);
 }
 
 VulkanRenderer::~VulkanRenderer() {
+  mDevice.destroyCommandPool(mCommandPool);
   mPipeline.destroy(mDevice);
   mSwapChain.destroy(mDevice);
+  mDevice.destroyRenderPass(mRenderPass);
   mDevice.destroy();
   mVulkanInstance.destroySurfaceKHR(mDrawingSurface);
   mVulkanInstance.destroy();
@@ -164,5 +168,63 @@ vk::Queue VulkanRenderer::retrieveQueue(vk::Device const &device,
   }
 
   return device.getQueue(queueFamilyIndex, 0);
+}
+
+vk::RenderPass VulkanRenderer::createRenderPass(vk::Device const &device,
+                                                vk::Format const &swapChainFormat) {
+  vk::AttachmentDescription colorAttachment{{},
+                                            swapChainFormat,
+                                            vk::SampleCountFlagBits::e1,
+                                            vk::AttachmentLoadOp::eClear,
+                                            vk::AttachmentStoreOp::eDontCare,
+                                            vk::AttachmentLoadOp::eDontCare,
+                                            vk::AttachmentStoreOp::eDontCare,
+                                            vk::ImageLayout::eUndefined,
+                                            vk::ImageLayout::ePresentSrcKHR};
+
+  vk::AttachmentReference colorAttachmentReference{0, vk::ImageLayout::eColorAttachmentOptimal};
+
+  vk::SubpassDescription subpassDescription{
+      {}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentReference, {}, {}, {}};
+
+  vk::RenderPassCreateInfo const renderPassCreateInfo{{}, colorAttachment, subpassDescription, {}};
+  return device.createRenderPass((renderPassCreateInfo));
+}
+
+vk::CommandPool
+VulkanRenderer::createCommandPool(vk::Device const &device,
+                                  QueueFamilyIndices const &queueFamilyIndices) const {
+  vk::CommandPoolCreateInfo const commandPoolCreateInfo{{}, queueFamilyIndices.graphics.value()};
+  return device.createCommandPool(commandPoolCreateInfo);
+}
+
+std::vector<vk::CommandBuffer>
+VulkanRenderer::createCommandBuffers(vk::Device const &device, Pipeline const &pipeline,
+                                     SwapChain const &swapChain, vk::RenderPass const &renderPass,
+                                     vk::CommandPool const &commandPool) const {
+
+  vk::CommandBufferAllocateInfo const commandBufferAllocateInfo{
+      commandPool, vk::CommandBufferLevel::ePrimary,
+      static_cast<uint32_t>(swapChain.framebuffers.size())};
+
+  std::vector<vk::CommandBuffer> commandBuffers =
+      device.allocateCommandBuffers(commandBufferAllocateInfo);
+
+  for (size_t i = 0; i < commandBuffers.size(); i++) {
+    vk::CommandBufferBeginInfo beginInfo{};
+    commandBuffers[i].begin(beginInfo);
+
+    vk::Rect2D const renderArea{vk::Offset2D{0, 0}, swapChain.extent};
+    vk::ClearValue clearValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
+    vk::RenderPassBeginInfo renderPassBeginInfo{renderPass, swapChain.framebuffers[i], renderArea,
+                                                clearValue};
+    commandBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+    commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
+    commandBuffers[i].draw(3, 1, 0, 0);
+
+    commandBuffers[i].end();
+  }
+
+  return commandBuffers;
 }
 } // namespace flex
