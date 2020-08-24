@@ -11,10 +11,7 @@ struct Pipeline {
 private:
   [[nodiscard]] vk::ShaderModule createShaderModule(vk::Device const &device,
                                                     std::filesystem::path const &shaderPath) const;
-  [[nodiscard]] vk::PipelineViewportStateCreateInfo
-  buildViewPortStateCreateInfo(vk::Extent2D const &swapChainExtent);
-  [[nodiscard]] vk::PipelineRasterizationStateCreateInfo buildRasterizationStateCreateInfo();
-  [[nodiscard]] vk::PipelineColorBlendStateCreateInfo buildColorBlendStateCreateInfo();
+
   [[nodiscard]] vk::RenderPass createRenderPass(vk::Device const &device,
                                                 vk::Format const &swapChainFormat);
 

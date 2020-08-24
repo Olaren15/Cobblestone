@@ -62,9 +62,12 @@ vk::SwapchainKHR SwapChain::createSwapChain(vk::Device const &device, vk::Surfac
           ? std::min(surfaceCapabilities.minImageCount + 1, surfaceCapabilities.maxImageCount)
           : surfaceCapabilities.minImageCount + 1;
 
-  std::set<uint32_t> uniqueQueueFamilyIndices{queueFamilyIndices.graphics.value(),
-                                              queueFamilyIndices.transfer.value(),
-                                              queueFamilyIndices.present.value()};
+  std::vector<uint32_t> uniqueQueueFamilies{queueFamilyIndices.graphics.value(),
+                                            queueFamilyIndices.transfer.value(),
+                                            queueFamilyIndices.present.value()};
+
+  uniqueQueueFamilies.erase(std::unique(uniqueQueueFamilies.begin(), uniqueQueueFamilies.end()),
+                            uniqueQueueFamilies.end());
 
   vk::SwapchainCreateInfoKHR const swapChainCreateInfo{
       {},
@@ -75,9 +78,8 @@ vk::SwapchainKHR SwapChain::createSwapChain(vk::Device const &device, vk::Surfac
       extent,
       1,
       vk::ImageUsageFlagBits::eColorAttachment,
-      uniqueQueueFamilyIndices.size() > 1 ? vk::SharingMode::eConcurrent
-                                          : vk::SharingMode::eExclusive,
-      std::vector<uint32_t>{uniqueQueueFamilyIndices.begin(), uniqueQueueFamilyIndices.end()},
+      uniqueQueueFamilies.size() > 1 ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
+      uniqueQueueFamilies,
       surfaceCapabilities.currentTransform,
       vk::CompositeAlphaFlagBitsKHR::eOpaque,
       presentMode,

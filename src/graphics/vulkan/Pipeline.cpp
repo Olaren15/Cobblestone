@@ -25,47 +25,6 @@ vk::ShaderModule Pipeline::createShaderModule(vk::Device const &device,
   return device.createShaderModule(moduleCreateInfo);
 }
 
-vk::PipelineViewportStateCreateInfo
-Pipeline::buildViewPortStateCreateInfo(vk::Extent2D const &swapChainExtent) {
-
-  vk::Viewport viewport{0.0f,
-                        0.0f,
-                        static_cast<float>(swapChainExtent.width),
-                        static_cast<float>(swapChainExtent.height),
-                        0.0f,
-                        1.0f};
-  vk::Rect2D scissor{{0, 0}, swapChainExtent};
-  return vk::PipelineViewportStateCreateInfo{{}, viewport, scissor};
-}
-
-vk::PipelineRasterizationStateCreateInfo Pipeline::buildRasterizationStateCreateInfo() {
-  return vk::PipelineRasterizationStateCreateInfo{{},
-                                                  false,
-                                                  false,
-                                                  vk::PolygonMode::eFill,
-                                                  vk::CullModeFlagBits::eBack,
-                                                  vk::FrontFace::eClockwise,
-                                                  false,
-                                                  0.0f,
-                                                  0.0f,
-                                                  0.0f,
-                                                  1.0f};
-}
-
-vk::PipelineColorBlendStateCreateInfo Pipeline::buildColorBlendStateCreateInfo() {
-  vk::PipelineColorBlendAttachmentState colorBlendAttachmentState{false,
-                                                                  vk::BlendFactor::eOne,
-                                                                  vk::BlendFactor::eZero,
-                                                                  vk::BlendOp::eAdd,
-                                                                  vk::BlendFactor::eOne,
-                                                                  vk::BlendFactor::eZero,
-                                                                  vk::BlendOp::eAdd,
-                                                                  {}};
-  constexpr std::array<float, 4> blendConstants{0.0f, 0.0f, 0.0f, 0.0f};
-  return vk::PipelineColorBlendStateCreateInfo{
-      {}, false, vk::LogicOp::eCopy, colorBlendAttachmentState, blendConstants};
-}
-
 vk::RenderPass Pipeline::createRenderPass(vk::Device const &device,
                                           vk::Format const &swapChainFormat) {
   vk::AttachmentDescription colorAttachment{{},
@@ -101,12 +60,39 @@ Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain) {
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{
       {}, vk::PrimitiveTopology::eTriangleList, false};
 
-  vk::PipelineViewportStateCreateInfo viewportStateCreateInfo =
-      buildViewPortStateCreateInfo(swapChain.extent);
-  vk::PipelineRasterizationStateCreateInfo rasterizationStateCreateInfo =
-      buildRasterizationStateCreateInfo();
-  vk::PipelineColorBlendStateCreateInfo colorBlendStateCreateInfo =
-      buildColorBlendStateCreateInfo();
+  vk::Viewport viewport{0.0f,
+                        0.0f,
+                        static_cast<float>(swapChain.extent.width),
+                        static_cast<float>(swapChain.extent.height),
+                        0.0f,
+                        1.0f};
+  vk::Rect2D scissor{{0, 0}, swapChain.extent};
+  vk::PipelineViewportStateCreateInfo viewportStateCreateInfo{{}, viewport, scissor};
+
+  vk::PipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{{},
+                                                                        false,
+                                                                        false,
+                                                                        vk::PolygonMode::eFill,
+                                                                        vk::CullModeFlagBits::eBack,
+                                                                        vk::FrontFace::eClockwise,
+                                                                        false,
+                                                                        0.0f,
+                                                                        0.0f,
+                                                                        0.0f,
+                                                                        1.0f};
+
+  vk::PipelineColorBlendAttachmentState colorBlendAttachmentState{false,
+                                                                  vk::BlendFactor::eOne,
+                                                                  vk::BlendFactor::eZero,
+                                                                  vk::BlendOp::eAdd,
+                                                                  vk::BlendFactor::eOne,
+                                                                  vk::BlendFactor::eZero,
+                                                                  vk::BlendOp::eAdd,
+                                                                  {}};
+
+  constexpr std::array<float, 4> blendConstants{0.0f, 0.0f, 0.0f, 0.0f};
+  vk::PipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{
+      {}, false, vk::LogicOp::eCopy, colorBlendAttachmentState, blendConstants};
 
   vk::PipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{
       {}, vk::SampleCountFlagBits::e1, false, 1.0f, nullptr, false, false};
@@ -135,6 +121,7 @@ Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain) {
 }
 
 void Pipeline::destroy(vk::Device const &device) const {
+  device.destroyPipeline(pipeline);
   device.destroyPipelineLayout(pipelineLayout);
   device.destroyRenderPass(renderPass);
   device.destroyShaderModule(fragShaderModule);
