@@ -3,15 +3,15 @@
 #include <set>
 
 namespace flex {
-vk::SurfaceFormatKHR
-SwapChain::chooseSwapChainSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const &availableFormats) {
+VkSurfaceFormatKHR SwapChain::chooseSwapChainSurfaceFormat(
+    std::vector<VkSurfaceFormatKHR> const &availableFormats) const {
   if (availableFormats.empty()) {
     throw std::runtime_error("Cannot choose a format from an empty array");
   }
 
-  for (vk::SurfaceFormatKHR const &availableFormat : availableFormats) {
-    if (availableFormat.format == vk::Format::eB8G8R8A8Srgb &&
-        availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+  for (VkSurfaceFormatKHR const &availableFormat : availableFormats) {
+    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        availableFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
       return availableFormat;
     }
   }
@@ -19,25 +19,25 @@ SwapChain::chooseSwapChainSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const 
   return availableFormats.front();
 }
 
-vk::PresentModeKHR SwapChain::chooseSwapChainPresentMode(
-    std::vector<vk::PresentModeKHR> const &availablePresentModes) {
-  for (vk::PresentModeKHR const &availablePresentMode : availablePresentModes) {
-    if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
+VkPresentModeKHR SwapChain::chooseSwapChainPresentMode(
+    std::vector<VkPresentModeKHR> const &availablePresentModes) const {
+  for (VkPresentModeKHR const &availablePresentMode : availablePresentModes) {
+    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
       return availablePresentMode;
     }
   }
 
-  return vk::PresentModeKHR::eFifo;
+  return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-vk::Extent2D SwapChain::chooseSwapChainExtent(vk::SurfaceCapabilitiesKHR const &capabilities,
-                                              Window const &window) {
+VkExtent2D SwapChain::chooseSwapChainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
+                                            Window const &window) const {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
     return capabilities.currentExtent;
   }
 
-  vk::Extent2D const windowDrawableSize = window.getDrawableVulkanSurfaceSize();
+  VkExtent2D const windowDrawableSize = window.getDrawableVulkanSurfaceSize();
 
   uint32_t const actualWidth =
       std::clamp(windowDrawableSize.width, capabilities.minImageExtent.width,
@@ -46,16 +46,16 @@ vk::Extent2D SwapChain::chooseSwapChainExtent(vk::SurfaceCapabilitiesKHR const &
       std::clamp(windowDrawableSize.height, capabilities.minImageExtent.height,
                  capabilities.maxImageExtent.height);
 
-  return vk::Extent2D{actualWidth, actualHeight};
+  return VkExtent2D{actualWidth, actualHeight};
 }
 
-vk::SwapchainKHR SwapChain::createSwapChain(vk::Device const &device, vk::SurfaceKHR const &surface,
-                                            vk::SurfaceFormatKHR const &surfaceFormat,
-                                            vk::PresentModeKHR const &presentMode,
-                                            QueueFamilyIndices const &queueFamilyIndices,
-                                            vk::Extent2D const &extent,
-                                            vk::SurfaceCapabilitiesKHR const &surfaceCapabilities,
-                                            vk::SwapchainKHR const &oldSwapChain) {
+void SwapChain::createSwapChain(VkDevice const &device, VkSurfaceKHR const &surface,
+                                VkSurfaceFormatKHR const &surfaceFormat,
+                                VkPresentModeKHR const &presentMode,
+                                QueueFamilyIndices const &queueFamilyIndices,
+                                VkExtent2D const &extent,
+                                VkSurfaceCapabilitiesKHR const &surfaceCapabilities,
+                                VkSwapchainKHR const &oldSwapChain) {
 
   uint32_t const minimumImageCount =
       surfaceCapabilities.maxImageCount > 0
@@ -65,92 +65,122 @@ vk::SwapchainKHR SwapChain::createSwapChain(vk::Device const &device, vk::Surfac
   std::vector<uint32_t> uniqueQueueFamilies{queueFamilyIndices.graphics.value(),
                                             queueFamilyIndices.transfer.value(),
                                             queueFamilyIndices.present.value()};
-
+  // remove duplicate queues
   uniqueQueueFamilies.erase(std::unique(uniqueQueueFamilies.begin(), uniqueQueueFamilies.end()),
                             uniqueQueueFamilies.end());
 
-  vk::SwapchainCreateInfoKHR const swapChainCreateInfo{
-      {},
-      surface,
-      minimumImageCount,
-      surfaceFormat.format,
-      surfaceFormat.colorSpace,
-      extent,
-      1,
-      vk::ImageUsageFlagBits::eColorAttachment,
-      uniqueQueueFamilies.size() > 1 ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
-      uniqueQueueFamilies,
-      surfaceCapabilities.currentTransform,
-      vk::CompositeAlphaFlagBitsKHR::eOpaque,
-      presentMode,
-      true,
-      oldSwapChain};
+  VkSwapchainCreateInfoKHR swapchainCreateInfo{};
+  swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+  swapchainCreateInfo.surface = surface;
+  swapchainCreateInfo.minImageCount = minimumImageCount;
+  swapchainCreateInfo.imageFormat = surfaceFormat.format;
+  swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+  swapchainCreateInfo.imageExtent = extent;
+  swapchainCreateInfo.imageArrayLayers = 1;
+  swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+  swapchainCreateInfo.imageSharingMode =
+      uniqueQueueFamilies.size() > 1 ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE;
+  swapchainCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>(uniqueQueueFamilies.size());
+  swapchainCreateInfo.pQueueFamilyIndices = uniqueQueueFamilies.data();
+  swapchainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
+  swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+  swapchainCreateInfo.presentMode = presentMode;
+  swapchainCreateInfo.clipped = VK_TRUE;
+  swapchainCreateInfo.oldSwapchain = oldSwapChain;
 
-  return device.createSwapchainKHR(swapChainCreateInfo);
+  vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapChain);
 }
 
-std::vector<vk::ImageView>
-SwapChain::createImageViews(vk::Device const &device, std::vector<vk::Image> const &swapChainImages,
-                            vk::Format const &swapChainImagesFormat) {
-  std::vector<vk::ImageView> imageViews{};
+void SwapChain::retrieveSwapChainImages(VkDevice const &device) {
+  uint32_t swapChainImageCount;
+  vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, nullptr);
+  images.resize(swapChainImageCount);
+  vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, images.data());
+}
 
-  imageViews.reserve(swapChainImages.size());
+void SwapChain::createImageViews(VkDevice const &device) {
+  imageViews.reserve(images.size());
 
-  vk::ImageSubresourceRange const subResourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1};
+  VkImageSubresourceRange subresourceRange;
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = 1;
+  subresourceRange.baseArrayLayer = 0;
+  subresourceRange.layerCount = 1;
 
-  for (vk::Image const &image : swapChainImages) {
-    vk::ImageViewCreateInfo imageViewCreateInfo{{},
-                                                image,
-                                                vk::ImageViewType::e2D,
-                                                swapChainImagesFormat,
-                                                vk::ComponentMapping{},
-                                                subResourceRange};
+  VkComponentMapping componentMapping;
+  componentMapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+  componentMapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+  componentMapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+  componentMapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-    imageViews.push_back(device.createImageView(imageViewCreateInfo));
+  for (VkImage const &image : images) {
+    VkImageViewCreateInfo imageViewCreateInfo{};
+    imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    imageViewCreateInfo.image = image;
+    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    imageViewCreateInfo.format = format;
+    imageViewCreateInfo.components = componentMapping;
+    imageViewCreateInfo.subresourceRange = subresourceRange;
+
+    VkImageView imageView;
+    vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
+
+    imageViews.push_back(imageView);
   }
-  return imageViews;
 }
 
-SwapChain::SwapChain(vk::Device const &device, Window const &window, vk::SurfaceKHR const &surface,
+SwapChain::SwapChain(VkDevice const &device, Window const &window, VkSurfaceKHR const &surface,
                      SwapChainSupportDetails const &swapChainSupportDetails,
                      QueueFamilyIndices const &queueFamilyIndices) {
 
-  vk::SurfaceFormatKHR const surfaceFormat =
+  VkSurfaceFormatKHR const surfaceFormat =
       chooseSwapChainSurfaceFormat(swapChainSupportDetails.formats);
-  format = surfaceFormat.format;
-  vk::PresentModeKHR const presentMode =
-      chooseSwapChainPresentMode(swapChainSupportDetails.presentModes);
-  extent = chooseSwapChainExtent(swapChainSupportDetails.capabilities, window);
-  swapChain = createSwapChain(device, surface, surfaceFormat, presentMode, queueFamilyIndices,
-                              extent, swapChainSupportDetails.capabilities, {});
 
-  images = device.getSwapchainImagesKHR(swapChain);
-  imageViews = createImageViews(device, images, format);
+  format = surfaceFormat.format;
+
+  VkPresentModeKHR const presentMode =
+      chooseSwapChainPresentMode(swapChainSupportDetails.presentModes);
+
+  extent = chooseSwapChainExtent(swapChainSupportDetails.capabilities, window);
+
+  createSwapChain(device, surface, surfaceFormat, presentMode, queueFamilyIndices, extent,
+                  swapChainSupportDetails.capabilities, {});
+
+  retrieveSwapChainImages(device);
+  createImageViews(device);
 }
 
-void SwapChain::createFrameBuffers(vk::Device const &device, vk::RenderPass renderPass) {
+void SwapChain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass) {
   framebuffers.reserve(imageViews.size());
 
-  for (vk::ImageView const &imageView : imageViews) {
-    std::array<vk::ImageView, 1> attachments{imageView};
+  for (VkImageView const &imageView : imageViews) {
 
-    vk::FramebufferCreateInfo const framebufferCreateInfo{{},           renderPass,    attachments,
-                                                          extent.width, extent.height, 1};
+    VkFramebufferCreateInfo framebufferCreateInfo{};
+    framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebufferCreateInfo.renderPass = renderPass;
+    framebufferCreateInfo.attachmentCount = 1;
+    framebufferCreateInfo.pAttachments = &imageView;
+    framebufferCreateInfo.width = extent.width;
+    framebufferCreateInfo.height = extent.height;
+    framebufferCreateInfo.layers = 1;
 
-    framebuffers.push_back(device.createFramebuffer(framebufferCreateInfo));
+    VkFramebuffer framebuffer;
+    vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer);
+    framebuffers.push_back(framebuffer);
   }
 }
 
-void SwapChain::destroy(vk::Device const &device) const {
-  for (vk::Framebuffer const &framebuffer : framebuffers) {
-    device.destroyFramebuffer(framebuffer);
+void SwapChain::destroy(VkDevice const &device) const {
+  for (VkFramebuffer const &framebuffer : framebuffers) {
+    vkDestroyFramebuffer(device, framebuffer, nullptr);
   }
 
-  for (vk::ImageView const &imageView : imageViews) {
-    device.destroyImageView(imageView);
+  for (VkImageView const &imageView : imageViews) {
+    vkDestroyImageView(device, imageView, nullptr);
   }
 
-  device.destroySwapchainKHR(swapChain);
-}
+  vkDestroySwapchainKHR(device, swapChain, nullptr);
+};
 
 } // namespace flex

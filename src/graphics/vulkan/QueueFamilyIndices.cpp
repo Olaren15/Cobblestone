@@ -8,22 +8,27 @@ QueueFamilyIndices::QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndi
   present = queueFamilyIndices.present;
 }
 
-QueueFamilyIndices::QueueFamilyIndices(vk::PhysicalDevice const &physicalDevice,
-                                       vk::SurfaceKHR const &surface) {
-  std::vector<vk::QueueFamilyProperties> deviceQueueFamilyProperties = physicalDevice.
-      getQueueFamilyProperties();
+QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
+                                       VkSurfaceKHR const &surface) {
+  uint32_t propertiesCount;
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount, nullptr);
+  std::vector<VkQueueFamilyProperties> queueFamilyProperties{propertiesCount};
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount,
+                                           queueFamilyProperties.data());
 
   uint32_t i = 0;
-  for (vk::QueueFamilyProperties const &queueFamilyProperty : deviceQueueFamilyProperties) {
-    if (queueFamilyProperty.queueFlags & vk::QueueFlagBits::eGraphics) {
+  for (VkQueueFamilyProperties const &queueFamilyProperty : queueFamilyProperties) {
+    if (queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
       graphics = i;
     }
 
-    if (queueFamilyProperty.queueFlags & vk::QueueFlagBits::eTransfer) {
+    if (queueFamilyProperty.queueFlags & VK_QUEUE_TRANSFER_BIT) {
       transfer = i;
     }
 
-    if (physicalDevice.getSurfaceSupportKHR(i, surface) == VK_TRUE) {
+    VkBool32 surfaceSupported;
+    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &surfaceSupported);
+    if (surfaceSupported == VK_TRUE) {
       present = i;
     }
 

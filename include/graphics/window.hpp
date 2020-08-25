@@ -39,7 +39,7 @@ public:
   [[nodiscard]] std::string getTitle() const;
   [[nodiscard]] RenderAPI getRenderAPI() const;
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
-  [[nodiscard]] vk::SurfaceKHR getDrawableVulkanSurface(vk::Instance const &vulkanInstance) const;
-  [[nodiscard]] vk::Extent2D getDrawableVulkanSurfaceSize() const;
+  [[nodiscard]] VkSurfaceKHR getDrawableVulkanSurface(VkInstance const &vulkanInstance) const;
+  [[nodiscard]] VkExtent2D getDrawableVulkanSurfaceSize() const;
 };
 } // namespace flex

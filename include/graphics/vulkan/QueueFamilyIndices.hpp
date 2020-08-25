@@ -12,8 +12,7 @@ struct QueueFamilyIndices {
 
   QueueFamilyIndices() = default;
   QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndices);
-  explicit QueueFamilyIndices(vk::PhysicalDevice const &physicalDevice,
-                              vk::SurfaceKHR const &surface);
+  explicit QueueFamilyIndices(VkPhysicalDevice const &physicalDevice, VkSurfaceKHR const &surface);
   ~QueueFamilyIndices() = default;
 
   [[nodiscard]] bool isComplete() const;

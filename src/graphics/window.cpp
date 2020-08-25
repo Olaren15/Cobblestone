@@ -92,26 +92,26 @@ std::vector<char const *> Window::getRequiredVulkanExtensions() const {
   return extensions;
 }
 
-vk::SurfaceKHR Window::getDrawableVulkanSurface(vk::Instance const &vulkanInstance) const {
+VkSurfaceKHR Window::getDrawableVulkanSurface(VkInstance const &vulkanInstance) const {
   if (mRenderAPI != RenderAPI::Vulkan)
     throw InvalidRenderAPIException{"Cannot get drawable vulkan surface if "
                                     "render API is not set to vulkan"};
 
   VkSurfaceKHR surface;
 
-  if (SDL_Vulkan_CreateSurface(mSDLWindow, {vulkanInstance}, &surface) != SDL_TRUE) {
+  if (SDL_Vulkan_CreateSurface(mSDLWindow, vulkanInstance, &surface) != SDL_TRUE) {
     throw std::runtime_error("Failed to create vulkan surface");
   }
 
-  return vk::SurfaceKHR{surface};
+  return surface;
 }
 
-vk::Extent2D Window::getDrawableVulkanSurfaceSize() const {
+VkExtent2D Window::getDrawableVulkanSurfaceSize() const {
   int width = 0;
   int height = 0;
   SDL_Vulkan_GetDrawableSize(mSDLWindow, &width, &height);
 
-  return vk::Extent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+  return VkExtent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 }
 
 } // namespace flex

@@ -6,14 +6,14 @@
 
 namespace flex {
 struct SwapChainSupportDetails {
-  vk::SurfaceCapabilitiesKHR capabilities;
-  std::vector<vk::SurfaceFormatKHR> formats;
-  std::vector<vk::PresentModeKHR> presentModes;
+  VkSurfaceCapabilitiesKHR capabilities;
+  std::vector<VkSurfaceFormatKHR> formats;
+  std::vector<VkPresentModeKHR> presentModes;
 
   SwapChainSupportDetails() = default;
   SwapChainSupportDetails(SwapChainSupportDetails const &swapChainSupportDetails);
-  explicit SwapChainSupportDetails(vk::PhysicalDevice const &physicalDevice,
-                                   vk::SurfaceKHR const &surface);
+  explicit SwapChainSupportDetails(VkPhysicalDevice const &physicalDevice,
+                                   VkSurfaceKHR const &surface);
   ~SwapChainSupportDetails() = default;
 
   [[nodiscard]] bool isUsable() const;

@@ -7,11 +7,19 @@ flex::SwapChainSupportDetails::SwapChainSupportDetails(
   presentModes = swapChainSupportDetails.presentModes;
 }
 
-flex::SwapChainSupportDetails::SwapChainSupportDetails(vk::PhysicalDevice const &physicalDevice,
-                                                       vk::SurfaceKHR const &surface) {
-  capabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
-  formats = physicalDevice.getSurfaceFormatsKHR(surface);
-  presentModes = physicalDevice.getSurfacePresentModesKHR(surface);
+flex::SwapChainSupportDetails::SwapChainSupportDetails(VkPhysicalDevice const &physicalDevice,
+                                                       VkSurfaceKHR const &surface) {
+  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
+
+  uint32_t vectorLength;
+  vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, nullptr);
+  formats.resize(vectorLength);
+  vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, formats.data());
+
+  vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength, nullptr);
+  presentModes.resize(vectorLength);
+  vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength,
+                                            presentModes.data());
 }
 
 bool flex::SwapChainSupportDetails::isUsable() const {
