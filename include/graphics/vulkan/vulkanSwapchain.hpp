@@ -5,11 +5,11 @@
 #include <vulkan/vulkan.h>
 
 #include "graphics/RenderWindow.hpp"
-#include "graphics/vulkan/QueueFamilyIndices.hpp"
-#include "graphics/vulkan/SwapchainSupportDetails.hpp"
+#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
+#include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 
 namespace flex {
-struct Swapchain {
+struct VulkanSwapchain {
 private:
   [[nodiscard]] VkSurfaceFormatKHR
   chooseSwapchainSurfaceFormat(std::vector<VkSurfaceFormatKHR> const &availableFormats) const;
@@ -22,20 +22,20 @@ private:
   void createImageViews(VkDevice const &device);
 
 public:
-  SwapchainSupportDetails swapchainSupportDetails{};
-  VkSwapchainKHR vulkanSwapchain{};
+  VulkanSwapchainSupportDetails swapchainSupportDetails{};
+  VkSwapchainKHR swapchain{};
   std::vector<VkImage> images;
   VkFormat format{};
   VkExtent2D extent{};
   std::vector<VkImageView> imageViews;
   std::vector<VkFramebuffer> framebuffers;
 
-  Swapchain() = default;
-  Swapchain(Swapchain const &swapchain) = delete;
+  VulkanSwapchain() = default;
+  VulkanSwapchain(VulkanSwapchain const &swapchain) = delete;
 
   void createSwapchain(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
                        RenderWindow const &window, VkSurfaceKHR const &surface,
-                       QueueFamilyIndices const &queueFamilyIndices);
+                       VulkanQueueFamilyIndices const &queueFamilyIndices);
 
   void createFrameBuffers(VkDevice const &device, VkRenderPass renderPass);
 

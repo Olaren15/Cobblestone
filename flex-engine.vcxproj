@@ -188,10 +188,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\inputHandler.cpp" />
-    <ClCompile Include="src\graphics\vulkan\Pipeline.cpp" />
-    <ClCompile Include="src\graphics\vulkan\QueueFamilyIndices.cpp" />
-    <ClCompile Include="src\graphics\vulkan\vulkanSwapchain.cpp" />
-    <ClCompile Include="src\graphics\vulkan\SwapchainSupportDetails.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanSwapchain.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanSwapchainSupportDetails.cpp" />
     <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp" />
     <ClCompile Include="src\graphics\RenderWindow.cpp" />
     <ClCompile Include="src\utils\configuration.cpp" />
@@ -201,10 +201,10 @@
     <ClInclude Include="include\core\main.hpp" />
     <ClInclude Include="include\flexEngine.hpp" />
     <ClInclude Include="include\graphics\renderAPI.hpp" />
-    <ClInclude Include="include\graphics\vulkan\Pipeline.hpp" />
-    <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp" />
-    <ClInclude Include="include\graphics\vulkan\vulkanSwapchain.hpp" />
-    <ClInclude Include="include\graphics\vulkan\SwapchainSupportDetails.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanPipeline.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanSwapchain.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanSwapchainSupportDetails.hpp" />
     <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp" />
     <ClInclude Include="include\graphics\RenderWindow.hpp" />
     <ClInclude Include="include\utils\configuration.hpp" />

@@ -5,9 +5,9 @@
 #include <vulkan/vulkan.h>
 
 #include "graphics/RenderWindow.hpp"
-#include "graphics/vulkan/Pipeline.hpp"
-#include "graphics/vulkan/QueueFamilyIndices.hpp"
-#include "graphics/vulkan/vulkanSwapchain.hpp"
+#include "graphics/vulkan/VulkanPipeline.hpp"
+#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
+#include "graphics/vulkan/VulkanSwapchain.hpp"
 
 namespace flex {
 enum struct QueueFamily;
@@ -25,15 +25,15 @@ private:
   vk::SurfaceKHR mSurface;
 
   VkPhysicalDevice mPhysicalDevice{};
-  QueueFamilyIndices mQueueFamilyIndices;
+  VulkanQueueFamilyIndices mQueueFamilyIndices;
   VkDevice mDevice{};
 
   VkQueue mGraphicsQueue{};
   VkQueue mPresentQueue{};
   VkQueue mTransferQueue{};
 
-  Swapchain mSwapchain;
-  Pipeline mPipeline{};
+  VulkanSwapchain mSwapchain;
+  VulkanPipeline mPipeline{};
   VkRenderPass mRenderPass{};
 
   VkCommandPool mCommandPool{};

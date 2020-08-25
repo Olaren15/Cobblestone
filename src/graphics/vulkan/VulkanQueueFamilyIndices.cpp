@@ -1,15 +1,16 @@
-﻿#include "graphics/vulkan/QueueFamilyIndices.hpp"
+﻿#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
 
 namespace flex {
 
-QueueFamilyIndices::QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndices) {
+VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(
+    VulkanQueueFamilyIndices const &queueFamilyIndices) {
   graphics = queueFamilyIndices.graphics;
   transfer = queueFamilyIndices.transfer;
   present = queueFamilyIndices.present;
 }
 
-QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
-                                       VkSurfaceKHR const &surface) {
+VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
+                                                   VkSurfaceKHR const &surface) {
   uint32_t propertiesCount;
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount, nullptr);
   std::vector<VkQueueFamilyProperties> queueFamilyProperties{propertiesCount};
@@ -36,7 +37,7 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
   }
 }
 
-bool QueueFamilyIndices::isComplete() const {
+bool VulkanQueueFamilyIndices::isComplete() const {
   return graphics.has_value() && transfer.has_value() && present.has_value();
 }
 

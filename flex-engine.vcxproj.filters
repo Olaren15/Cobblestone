@@ -48,19 +48,19 @@
     <ClCompile Include="src\utils\configuration.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\QueueFamilyIndices.cpp">
-      <Filter>Source Files\graphics\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\SwapchainSupportDetails.cpp">
-      <Filter>Source Files\graphics\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\Pipeline.cpp">
-      <Filter>Source Files\graphics\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\RenderWindow.cpp">
       <Filter>Source Files\graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\vulkanSwapchain.cpp">
+    <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\VulkanSwapchain.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\VulkanSwapchainSupportDetails.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,19 +83,19 @@
     <ClInclude Include="include\core\main.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp">
-      <Filter>Header Files\graphics\vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\SwapchainSupportDetails.hpp">
-      <Filter>Header Files\graphics\vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\Pipeline.hpp">
-      <Filter>Header Files\graphics\vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="include\graphics\RenderWindow.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\vulkanSwapchain.hpp">
+    <ClInclude Include="include\graphics\vulkan\VulkanPipeline.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\VulkanSwapchain.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\VulkanSwapchainSupportDetails.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
   </ItemGroup>

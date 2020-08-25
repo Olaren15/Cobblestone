@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 
 namespace flex {
-struct Pipeline {
+struct VulkanPipeline {
 private:
   [[nodiscard]] VkShaderModule createShaderModule(VkDevice const &device,
                                                   std::filesystem::path const &shaderPath) const;
@@ -17,8 +17,8 @@ public:
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
 
-  Pipeline() = default;
-  Pipeline(Pipeline const &pipeline) = delete;
+  VulkanPipeline() = default;
+  VulkanPipeline(VulkanPipeline const &pipeline) = delete;
 
   void createPipeline(VkDevice const &device, VkRenderPass const &renderPass);
   void destroy(VkDevice const &device) const;

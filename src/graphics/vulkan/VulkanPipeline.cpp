@@ -1,12 +1,12 @@
-#include "graphics/vulkan/Pipeline.hpp"
+#include "graphics/vulkan/VulkanPipeline.hpp"
 
 #include <array>
 #include <fstream>
 #include <stdexcept>
 
 namespace flex {
-VkShaderModule Pipeline::createShaderModule(VkDevice const &device,
-                                            std::filesystem::path const &shaderPath) const {
+VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
+                                                  std::filesystem::path const &shaderPath) const {
   std::ifstream shaderFile{shaderPath.string(), std::ios::ate | std::ios::binary};
 
   if (!shaderFile.is_open()) {
@@ -31,7 +31,7 @@ VkShaderModule Pipeline::createShaderModule(VkDevice const &device,
   return shaderModule;
 }
 
-void Pipeline::createPipeline(VkDevice const &device, VkRenderPass const &renderPass) {
+void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &renderPass) {
   vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
   fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
 
@@ -132,7 +132,7 @@ void Pipeline::createPipeline(VkDevice const &device, VkRenderPass const &render
   vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline);
 }
 
-void Pipeline::destroy(VkDevice const &device) const {
+void VulkanPipeline::destroy(VkDevice const &device) const {
   vkDestroyPipeline(device, pipeline, nullptr);
   vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
   vkDestroyShaderModule(device, fragShaderModule, nullptr);

@@ -1,9 +1,9 @@
-﻿#include "graphics/vulkan/vulkanSwapchain.hpp"
+﻿#include "graphics/vulkan/VulkanSwapchain.hpp"
 
 #include <set>
 
 namespace flex {
-VkSurfaceFormatKHR Swapchain::chooseSwapchainSurfaceFormat(
+VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
     std::vector<VkSurfaceFormatKHR> const &availableFormats) const {
   if (availableFormats.empty()) {
     throw std::runtime_error("Cannot choose a format from an empty array");
@@ -19,7 +19,7 @@ VkSurfaceFormatKHR Swapchain::chooseSwapchainSurfaceFormat(
   return availableFormats.front();
 }
 
-VkPresentModeKHR Swapchain::chooseSwapchainPresentMode(
+VkPresentModeKHR VulkanSwapchain::chooseSwapchainPresentMode(
     std::vector<VkPresentModeKHR> const &availablePresentModes) const {
   for (VkPresentModeKHR const &availablePresentMode : availablePresentModes) {
     if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -30,8 +30,8 @@ VkPresentModeKHR Swapchain::chooseSwapchainPresentMode(
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D Swapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                            RenderWindow const &window) const {
+VkExtent2D VulkanSwapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
+                                                  RenderWindow const &window) const {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
     return capabilities.currentExtent;
@@ -49,14 +49,14 @@ VkExtent2D Swapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capa
   return VkExtent2D{actualWidth, actualHeight};
 }
 
-void Swapchain::retrieveSwapchainImages(VkDevice const &device) {
+void VulkanSwapchain::retrieveSwapchainImages(VkDevice const &device) {
   uint32_t swapchainImageCount;
-  vkGetSwapchainImagesKHR(device, vulkanSwapchain, &swapchainImageCount, nullptr);
+  vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr);
   images.resize(swapchainImageCount);
-  vkGetSwapchainImagesKHR(device, vulkanSwapchain, &swapchainImageCount, images.data());
+  vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, images.data());
 }
 
-void Swapchain::createImageViews(VkDevice const &device) {
+void VulkanSwapchain::createImageViews(VkDevice const &device) {
   imageViews.reserve(images.size());
 
   VkImageSubresourceRange subresourceRange;
@@ -88,11 +88,12 @@ void Swapchain::createImageViews(VkDevice const &device) {
   }
 }
 
-void Swapchain::createSwapchain(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
-                                RenderWindow const &window, VkSurfaceKHR const &surface,
-                                QueueFamilyIndices const &queueFamilyIndices) {
+void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
+                                      VkDevice const &device, RenderWindow const &window,
+                                      VkSurfaceKHR const &surface,
+                                      VulkanQueueFamilyIndices const &queueFamilyIndices) {
 
-  swapchainSupportDetails = SwapchainSupportDetails{physicalDevice, surface};
+  swapchainSupportDetails = VulkanSwapchainSupportDetails{physicalDevice, surface};
 
   VkSurfaceFormatKHR const surfaceFormat =
       chooseSwapchainSurfaceFormat(swapchainSupportDetails.formats);
@@ -138,13 +139,13 @@ void Swapchain::createSwapchain(VkPhysicalDevice const &physicalDevice, VkDevice
   swapchainCreateInfo.clipped = VK_TRUE;
   swapchainCreateInfo.oldSwapchain = nullptr;
 
-  vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &vulkanSwapchain);
+  vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain);
 
   retrieveSwapchainImages(device);
   createImageViews(device);
 }
 
-void Swapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass) {
+void VulkanSwapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass) {
   framebuffers.reserve(imageViews.size());
 
   for (VkImageView const &imageView : imageViews) {
@@ -164,7 +165,7 @@ void Swapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPa
   }
 }
 
-void Swapchain::destroy(VkDevice const &device) const {
+void VulkanSwapchain::destroy(VkDevice const &device) const {
   for (VkFramebuffer const &framebuffer : framebuffers) {
     vkDestroyFramebuffer(device, framebuffer, nullptr);
   }
@@ -173,7 +174,7 @@ void Swapchain::destroy(VkDevice const &device) const {
     vkDestroyImageView(device, imageView, nullptr);
   }
 
-  vkDestroySwapchainKHR(device, vulkanSwapchain, nullptr);
+  vkDestroySwapchainKHR(device, swapchain, nullptr);
 };
 
 } // namespace flex

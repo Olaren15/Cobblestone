@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "graphics/renderAPI.hpp"
-#include "graphics/vulkan/SwapchainSupportDetails.hpp"
+#include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
@@ -20,7 +20,7 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
   createVulkanInstance(window);
   mSurface = window.getDrawableVulkanSurface(mInstance);
   selectPhysicalDevice();
-  mQueueFamilyIndices = QueueFamilyIndices{mPhysicalDevice, mSurface};
+  mQueueFamilyIndices = VulkanQueueFamilyIndices{mPhysicalDevice, mSurface};
   createVulkanDevice();
   retrieveQueues();
   mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueueFamilyIndices);
@@ -111,7 +111,7 @@ unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physical
     score += 1000u;
   }
 
-  if (QueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
+  if (VulkanQueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
       !queueFamilyIndices.isComplete()) {
     return 0u;
   }
@@ -120,7 +120,7 @@ unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physical
     return 0u;
   }
 
-  if (SwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
+  if (VulkanSwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
       !swapchainSupportDetails.isUsable()) {
     return 0u;
   }
@@ -322,7 +322,7 @@ void VulkanRenderer::draw() {
   vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(mDevice, mSwapchain.vulkanSwapchain, UINT64_MAX,
+  vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, UINT64_MAX,
                         mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
 
   if (mImagesInFlight[imageIndex] != nullptr) {
@@ -346,7 +346,7 @@ void VulkanRenderer::draw() {
   vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
   vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]);
 
-  std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.vulkanSwapchain};
+  std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.swapchain};
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
