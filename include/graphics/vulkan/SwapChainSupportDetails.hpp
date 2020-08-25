@@ -5,16 +5,16 @@
 #include <vulkan/vulkan.hpp>
 
 namespace flex {
-struct SwapChainSupportDetails {
-  VkSurfaceCapabilitiesKHR capabilities;
+struct SwapchainSupportDetails {
+  VkSurfaceCapabilitiesKHR capabilities{};
   std::vector<VkSurfaceFormatKHR> formats;
   std::vector<VkPresentModeKHR> presentModes;
 
-  SwapChainSupportDetails() = default;
-  SwapChainSupportDetails(SwapChainSupportDetails const &swapChainSupportDetails);
-  explicit SwapChainSupportDetails(VkPhysicalDevice const &physicalDevice,
+  SwapchainSupportDetails() = default;
+  SwapchainSupportDetails(SwapchainSupportDetails const &swapChainSupportDetails);
+  explicit SwapchainSupportDetails(VkPhysicalDevice const &physicalDevice,
                                    VkSurfaceKHR const &surface);
-  ~SwapChainSupportDetails() = default;
+  ~SwapchainSupportDetails() = default;
 
   [[nodiscard]] bool isUsable() const;
 };

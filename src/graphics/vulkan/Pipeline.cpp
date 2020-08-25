@@ -30,9 +30,8 @@ VkShaderModule Pipeline::createShaderModule(VkDevice const &device,
   return shaderModule;
 }
 
-Pipeline::Pipeline(VkDevice const &device, SwapChain const &swapChain,
-                   VkRenderPass const &renderPass) {
-
+void Pipeline::createPipeline(VkDevice const &device, Swapchain const &swapchain,
+                              VkRenderPass const &renderPass) {
   vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
   fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
   ;
@@ -59,14 +58,14 @@ Pipeline::Pipeline(VkDevice const &device, SwapChain const &swapChain,
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = static_cast<float>(swapChain.extent.width);
-  viewport.height = static_cast<float>(swapChain.extent.height);
+  viewport.width = static_cast<float>(swapchain.extent.width);
+  viewport.height = static_cast<float>(swapchain.extent.height);
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = swapChain.extent;
+  scissor.extent = swapchain.extent;
 
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
   viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

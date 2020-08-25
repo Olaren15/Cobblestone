@@ -1,13 +1,13 @@
-#include "graphics/vulkan/SwapChainSupportDetails.hpp"
+#include "graphics/vulkan/SwapchainSupportDetails.hpp"
 
-flex::SwapChainSupportDetails::SwapChainSupportDetails(
-    SwapChainSupportDetails const &swapChainSupportDetails) {
-  capabilities = swapChainSupportDetails.capabilities;
-  formats = swapChainSupportDetails.formats;
-  presentModes = swapChainSupportDetails.presentModes;
+flex::SwapchainSupportDetails::SwapchainSupportDetails(
+    SwapchainSupportDetails const &swapchainSupportDetails) {
+  capabilities = swapchainSupportDetails.capabilities;
+  formats = swapchainSupportDetails.formats;
+  presentModes = swapchainSupportDetails.presentModes;
 }
 
-flex::SwapChainSupportDetails::SwapChainSupportDetails(VkPhysicalDevice const &physicalDevice,
+flex::SwapchainSupportDetails::SwapchainSupportDetails(VkPhysicalDevice const &physicalDevice,
                                                        VkSurfaceKHR const &surface) {
   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
 
@@ -22,6 +22,6 @@ flex::SwapChainSupportDetails::SwapChainSupportDetails(VkPhysicalDevice const &p
                                             presentModes.data());
 }
 
-bool flex::SwapChainSupportDetails::isUsable() const {
+bool flex::SwapchainSupportDetails::isUsable() const {
   return !(formats.empty() || presentModes.empty());
 }

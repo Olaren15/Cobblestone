@@ -7,7 +7,7 @@
 #include "graphics/RenderWindow.hpp"
 #include "graphics/vulkan/Pipeline.hpp"
 #include "graphics/vulkan/QueueFamilyIndices.hpp"
-#include "graphics/vulkan/SwapChain.hpp"
+#include "graphics/vulkan/vulkanSwapchain.hpp"
 
 namespace flex {
 enum struct QueueFamily;
@@ -21,27 +21,27 @@ private:
   static constexpr unsigned int mMaxFramesInFlight = 2;
   unsigned int mCurrentFrame;
 
-  VkInstance mInstance;
+  VkInstance mInstance{};
   vk::SurfaceKHR mSurface;
 
-  VkPhysicalDevice mPhysicalDevice;
+  VkPhysicalDevice mPhysicalDevice{};
   QueueFamilyIndices mQueueFamilyIndices;
-  VkDevice mDevice;
+  VkDevice mDevice{};
 
-  VkQueue mGraphicsQueue;
-  VkQueue mPresentQueue;
-  VkQueue mTransferQueue;
+  VkQueue mGraphicsQueue{};
+  VkQueue mPresentQueue{};
+  VkQueue mTransferQueue{};
 
-  SwapChain mSwapChain;
-  Pipeline mPipeline;
-  VkRenderPass mRenderPass;
+  Swapchain mSwapchain;
+  Pipeline mPipeline{};
+  VkRenderPass mRenderPass{};
 
-  VkCommandPool mCommandPool;
+  VkCommandPool mCommandPool{};
   std::vector<VkCommandBuffer> mCommandBuffers;
 
-  std::array<VkSemaphore, mMaxFramesInFlight> mImageAvailableSemaphores;
-  std::array<VkSemaphore, mMaxFramesInFlight> mRenderFinishedSemaphores;
-  std::array<VkFence, mMaxFramesInFlight> mInFlightFences;
+  std::array<VkSemaphore, mMaxFramesInFlight> mImageAvailableSemaphores{};
+  std::array<VkSemaphore, mMaxFramesInFlight> mRenderFinishedSemaphores{};
+  std::array<VkFence, mMaxFramesInFlight> mInFlightFences{};
   std::vector<VkFence> mImagesInFlight;
 
   void createVulkanInstance(RenderWindow const &window);

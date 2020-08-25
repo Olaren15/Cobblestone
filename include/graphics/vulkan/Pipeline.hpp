@@ -4,7 +4,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include "graphics/vulkan/SwapChain.hpp"
+#include "graphics/vulkan/vulkanSwapchain.hpp"
 
 namespace flex {
 struct Pipeline {
@@ -19,8 +19,10 @@ public:
   VkPipeline pipeline;
 
   Pipeline() = default;
-  explicit Pipeline(VkDevice const &device, SwapChain const &swapChain,
-                    VkRenderPass const &renderPass);
+  Pipeline(Pipeline const &pipeline) = delete;
+
+  void createPipeline(VkDevice const &device, Swapchain const &swapchain,
+                      VkRenderPass const &renderPass);
   void destroy(VkDevice const &device) const;
 };
 } // namespace flex

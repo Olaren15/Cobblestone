@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "graphics/renderAPI.hpp"
-#include "graphics/vulkan/SwapChainSupportDetails.hpp"
+#include "graphics/vulkan/SwapchainSupportDetails.hpp"
 
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
@@ -23,11 +23,10 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
   mQueueFamilyIndices = QueueFamilyIndices{mPhysicalDevice, mSurface};
   createVulkanDevice();
   retrieveQueues();
-  mSwapChain = SwapChain{mDevice, window, mSurface,
-                         SwapChainSupportDetails{mPhysicalDevice, mSurface}, mQueueFamilyIndices};
+  mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueueFamilyIndices);
   createRenderPass();
-  mPipeline = Pipeline{mDevice, mSwapChain, mRenderPass};
-  mSwapChain.createFrameBuffers(mDevice, mRenderPass);
+  mPipeline.createPipeline(mDevice, mSwapchain, mRenderPass);
+  mSwapchain.createFrameBuffers(mDevice, mRenderPass);
   createCommandPool();
   createCommandBuffers();
   createSyncObjects();
@@ -44,7 +43,7 @@ VulkanRenderer::~VulkanRenderer() {
   }
   vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
   mPipeline.destroy(mDevice);
-  mSwapChain.destroy(mDevice);
+  mSwapchain.destroy(mDevice);
   vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
   vkDestroyDevice(mDevice, nullptr);
   vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
@@ -121,8 +120,8 @@ unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physical
     return 0u;
   }
 
-  if (SwapChainSupportDetails const swapChainSupportDetails{physicalDevice, vulkanSurface};
-      !swapChainSupportDetails.isUsable()) {
+  if (SwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
+      !swapchainSupportDetails.isUsable()) {
     return 0u;
   }
 
@@ -195,7 +194,7 @@ void VulkanRenderer::retrieveQueues() {
 void VulkanRenderer::createRenderPass() {
 
   VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = static_cast<VkFormat>(mSwapChain.format);
+  colorAttachment.format = static_cast<VkFormat>(mSwapchain.format);
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -248,14 +247,14 @@ void VulkanRenderer::createCommandBuffers() {
   commandBufferAllocateInfo.commandPool = mCommandPool;
   commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   commandBufferAllocateInfo.commandBufferCount =
-      static_cast<uint32_t>(mSwapChain.framebuffers.size());
+      static_cast<uint32_t>(mSwapchain.framebuffers.size());
 
-  mCommandBuffers.resize(mSwapChain.framebuffers.size());
+  mCommandBuffers.resize(mSwapchain.framebuffers.size());
   vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data());
 
   VkRect2D renderArea{};
   renderArea.offset = {0, 0};
-  renderArea.extent = mSwapChain.extent;
+  renderArea.extent = mSwapchain.extent;
 
   VkClearValue clearValue{};
   clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
@@ -269,7 +268,7 @@ void VulkanRenderer::createCommandBuffers() {
     VkRenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.renderPass = mRenderPass;
-    renderPassBeginInfo.framebuffer = mSwapChain.framebuffers[i];
+    renderPassBeginInfo.framebuffer = mSwapchain.framebuffers[i];
     renderPassBeginInfo.renderArea = renderArea;
     renderPassBeginInfo.clearValueCount = 1;
     renderPassBeginInfo.pClearValues = &clearValue;
@@ -298,7 +297,7 @@ void VulkanRenderer::createSyncObjects() {
     vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]);
   }
 
-  mImagesInFlight.resize(mSwapChain.images.size(), nullptr);
+  mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
 }
 
 void VulkanRenderer::draw() {
@@ -306,7 +305,7 @@ void VulkanRenderer::draw() {
   vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(mDevice, mSwapChain.swapChain, UINT64_MAX,
+  vkAcquireNextImageKHR(mDevice, mSwapchain.vulkanSwapchain, UINT64_MAX,
                         mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
 
   if (mImagesInFlight[imageIndex] != nullptr) {
@@ -330,14 +329,14 @@ void VulkanRenderer::draw() {
   vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
   vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]);
 
-  std::array<VkSwapchainKHR, 1> presentSwapChain{mSwapChain.swapChain};
+  std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.vulkanSwapchain};
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame];
-  presentInfo.swapchainCount = static_cast<uint32_t>(presentSwapChain.size());
-  presentInfo.pSwapchains = presentSwapChain.data();
+  presentInfo.swapchainCount = static_cast<uint32_t>(presentSwapchain.size());
+  presentInfo.pSwapchains = presentSwapchain.data();
   presentInfo.pImageIndices = &imageIndex;
 
   vkQueuePresentKHR(mPresentQueue, &presentInfo);

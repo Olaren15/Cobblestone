@@ -51,10 +51,7 @@
     <ClCompile Include="src\graphics\vulkan\QueueFamilyIndices.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\SwapChainSupportDetails.cpp">
-      <Filter>Source Files\graphics\vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\SwapChain.cpp">
+    <ClCompile Include="src\graphics\vulkan\SwapchainSupportDetails.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\vulkan\Pipeline.cpp">
@@ -62,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="src\graphics\RenderWindow.cpp">
       <Filter>Source Files\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\vulkanSwapchain.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -86,10 +86,7 @@
     <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\SwapChainSupportDetails.hpp">
-      <Filter>Header Files\graphics\vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\SwapChain.hpp">
+    <ClInclude Include="include\graphics\vulkan\SwapchainSupportDetails.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\Pipeline.hpp">
@@ -97,6 +94,9 @@
     </ClInclude>
     <ClInclude Include="include\graphics\RenderWindow.hpp">
       <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\vulkanSwapchain.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
