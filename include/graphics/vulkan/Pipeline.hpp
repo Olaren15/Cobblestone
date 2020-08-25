@@ -4,8 +4,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "graphics/vulkan/vulkanSwapchain.hpp"
-
 namespace flex {
 struct Pipeline {
 private:
@@ -13,9 +11,6 @@ private:
                                                   std::filesystem::path const &shaderPath) const;
 
 public:
-  static constexpr std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT,
-                                                               VK_DYNAMIC_STATE_SCISSOR};
-
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
   VkDynamicState dynamicState;
