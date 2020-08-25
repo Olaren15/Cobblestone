@@ -3,7 +3,6 @@
 #include <array>
 
 #include <vulkan/vulkan.h>
-#include <vulkan/vulkan.hpp>
 
 #include "graphics/vulkan/Pipeline.hpp"
 #include "graphics/vulkan/QueueFamilyIndices.hpp"

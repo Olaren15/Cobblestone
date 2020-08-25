@@ -4,8 +4,8 @@
 #include <stdexcept>
 
 namespace flex {
-vk::ShaderModule Pipeline::createShaderModule(vk::Device const &device,
-                                              std::filesystem::path const &shaderPath) const {
+VkShaderModule Pipeline::createShaderModule(VkDevice const &device,
+                                            std::filesystem::path const &shaderPath) const {
   std::ifstream shaderFile{shaderPath.string(), std::ios::ate | std::ios::binary};
 
   if (!shaderFile.is_open()) {
@@ -19,91 +19,128 @@ vk::ShaderModule Pipeline::createShaderModule(vk::Device const &device,
   shaderFile.read(buffer.data(), fileSize);
   shaderFile.close();
 
-  vk::ShaderModuleCreateInfo const moduleCreateInfo{
-      {}, buffer.size(), reinterpret_cast<const uint32_t *>(buffer.data())};
+  VkShaderModuleCreateInfo shaderModuleCreateInfo{};
+  shaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shaderModuleCreateInfo.codeSize = static_cast<uint32_t>(buffer.size());
+  shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t *>(buffer.data());
 
-  return device.createShaderModule(moduleCreateInfo);
+  VkShaderModule shaderModule{};
+  vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule);
+
+  return shaderModule;
 }
 
-Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain,
-                   vk::RenderPass const &renderPass) {
+Pipeline::Pipeline(VkDevice const &device, SwapChain const &swapChain,
+                   VkRenderPass const &renderPass) {
+
   vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
   fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
+  ;
 
-  std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages{
-      vk::PipelineShaderStageCreateInfo{
-          {}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main"},
-      vk::PipelineShaderStageCreateInfo{
-          {}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main"}};
+  std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
+  shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+  shaderStages[0].module = vertShaderModule;
+  shaderStages[0].pName = "main";
 
-  vk::PipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{{}, {}, {}};
-  vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{
-      {}, vk::PrimitiveTopology::eTriangleList, false};
+  shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+  shaderStages[1].module = fragShaderModule;
+  shaderStages[1].pName = "main";
 
-  vk::Viewport viewport{0.0f,
-                        0.0f,
-                        static_cast<float>(swapChain.extent.width),
-                        static_cast<float>(swapChain.extent.height),
-                        0.0f,
-                        1.0f};
-  vk::Rect2D scissor{{0, 0}, swapChain.extent};
-  vk::PipelineViewportStateCreateInfo viewportStateCreateInfo{{}, viewport, scissor};
+  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
+  vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-  vk::PipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{{},
-                                                                        false,
-                                                                        false,
-                                                                        vk::PolygonMode::eFill,
-                                                                        vk::CullModeFlagBits::eBack,
-                                                                        vk::FrontFace::eClockwise,
-                                                                        false,
-                                                                        0.0f,
-                                                                        0.0f,
-                                                                        0.0f,
-                                                                        1.0f};
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
+  inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-  vk::PipelineColorBlendAttachmentState colorBlendAttachmentState{
-      false,
-      vk::BlendFactor::eOne,
-      vk::BlendFactor::eZero,
-      vk::BlendOp::eAdd,
-      vk::BlendFactor::eOne,
-      vk::BlendFactor::eZero,
-      vk::BlendOp::eAdd,
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-          vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = static_cast<float>(swapChain.extent.width);
+  viewport.height = static_cast<float>(swapChain.extent.height);
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
 
-  constexpr std::array<float, 4> blendConstants{0.0f, 0.0f, 0.0f, 0.0f};
-  vk::PipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{
-      {}, false, vk::LogicOp::eCopy, colorBlendAttachmentState, blendConstants};
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = swapChain.extent;
 
-  vk::PipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{
-      {}, vk::SampleCountFlagBits::e1, false, 1.0f, nullptr, false, false};
+  VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
+  viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  viewportStateCreateInfo.viewportCount = 1;
+  viewportStateCreateInfo.pViewports = &viewport;
+  viewportStateCreateInfo.scissorCount = 1;
+  viewportStateCreateInfo.pScissors = &scissor;
 
-  pipelineLayout = device.createPipelineLayout({});
-  vk::GraphicsPipelineCreateInfo pipelineCreateInfo{{},
-                                                    shaderStages,
-                                                    &vertexInputStateCreateInfo,
-                                                    &inputAssemblyStateCreateInfo,
-                                                    {},
-                                                    &viewportStateCreateInfo,
-                                                    &rasterizationStateCreateInfo,
-                                                    &multiSampleStateCreateInfo,
-                                                    nullptr,
-                                                    &colorBlendStateCreateInfo,
-                                                    nullptr,
-                                                    pipelineLayout,
-                                                    renderPass,
-                                                    0,
-                                                    {},
-                                                    -1};
+  VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{};
+  rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+  rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+  rasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;
+  rasterizationStateCreateInfo.depthBiasClamp = 0.0f;
+  rasterizationStateCreateInfo.depthBiasSlopeFactor = 0.0f;
+  rasterizationStateCreateInfo.lineWidth = 1.0f;
 
-  pipeline = device.createGraphicsPipeline({}, pipelineCreateInfo).value;
+  VkPipelineColorBlendAttachmentState colorBlendAttachmentState{};
+  colorBlendAttachmentState.blendEnable = VK_FALSE;
+  colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+  colorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  colorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+  VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{};
+  colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+  colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+  colorBlendStateCreateInfo.attachmentCount = 1;
+  colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
+
+  VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{};
+  multiSampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  multiSampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  multiSampleStateCreateInfo.sampleShadingEnable = VK_FALSE;
+  multiSampleStateCreateInfo.minSampleShading = 1.0f;
+  multiSampleStateCreateInfo.pSampleMask = nullptr;
+  multiSampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
+  multiSampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
+
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+  pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+  vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+
+  VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+  pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+  pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
+  pipelineCreateInfo.pStages = shaderStages.data();
+  pipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
+  pipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
+  pipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
+  pipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
+  pipelineCreateInfo.pMultisampleState = &multiSampleStateCreateInfo;
+  pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
+  pipelineCreateInfo.layout = pipelineLayout;
+  pipelineCreateInfo.renderPass = renderPass;
+  pipelineCreateInfo.subpass = 0;
+  pipelineCreateInfo.basePipelineIndex = -1;
+
+  vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline);
 }
 
-void Pipeline::destroy(vk::Device const &device) const {
-  device.destroyPipeline(pipeline);
-  device.destroyPipelineLayout(pipelineLayout);
-  device.destroyShaderModule(fragShaderModule);
-  device.destroyShaderModule(vertShaderModule);
+void Pipeline::destroy(VkDevice const &device) const {
+  vkDestroyPipeline(device, pipeline, nullptr);
+  vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+  vkDestroyShaderModule(device, fragShaderModule, nullptr);
+  vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 } // namespace flex
