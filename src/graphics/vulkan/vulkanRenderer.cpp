@@ -35,45 +35,60 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  mDevice.waitIdle();
+  vkDeviceWaitIdle(mDevice);
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    mDevice.destroySemaphore(mRenderFinishedSemaphores[i]);
-    mDevice.destroySemaphore(mImageAvailableSemaphores[i]);
-    mDevice.destroyFence(mInFlightFences[i]);
+    vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
+    vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
+    vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
   }
-  mDevice.destroyCommandPool(mCommandPool);
+  vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
   mPipeline.destroy(mDevice);
   mSwapChain.destroy(mDevice);
-  mDevice.destroyRenderPass(mRenderPass);
-  mDevice.destroy();
-  mInstance.destroySurfaceKHR(mSurface);
-  mInstance.destroy();
+  vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+  vkDestroyDevice(mDevice, nullptr);
+  vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+  vkDestroyInstance(mInstance, nullptr);
 }
 
 void VulkanRenderer::createVulkanInstance(Window const &window) {
-  vk::ApplicationInfo appInfo{window.getTitle().c_str(), VK_MAKE_VERSION(1, 0, 0), "Flex Engine",
-                              VK_MAKE_VERSION(0, 0, 1), VK_API_VERSION_1_0};
+  std::string const title = window.getTitle();
+
+  VkApplicationInfo appInfo{};
+  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  appInfo.pApplicationName = title.c_str();
+  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.pEngineName = "Flex Engine";
+  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.apiVersion = VK_API_VERSION_1_0;
 
   std::vector<char const *> enabledExtensions = window.getRequiredVulkanExtensions();
-
   std::vector<char const *> enabledLayers{};
 
 #ifndef NDEBUG
   enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
-  vk::InstanceCreateInfo const instanceCreateInfo({}, &appInfo, enabledLayers, enabledExtensions);
+  VkInstanceCreateInfo instanceCreateInfo{};
+  instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instanceCreateInfo.pApplicationInfo = &appInfo;
+  instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
+  instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
+  instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(enabledLayers.size());
+  instanceCreateInfo.ppEnabledLayerNames = enabledLayers.data();
 
-  mInstance = createInstance(instanceCreateInfo);
+  vkCreateInstance(&instanceCreateInfo, nullptr, &mInstance);
 }
 
 void VulkanRenderer::selectPhysicalDevice() {
-  std::vector<vk::PhysicalDevice> availablePhysicalDevices = mInstance.enumeratePhysicalDevices();
+  uint32_t physicalDeviceCount;
+  vkEnumeratePhysicalDevices(mInstance, &physicalDeviceCount, nullptr);
+  std::vector<VkPhysicalDevice> availablePhysicalDevices{physicalDeviceCount};
+  vkEnumeratePhysicalDevices(mInstance, &physicalDeviceCount, availablePhysicalDevices.data());
 
-  std::multimap<int, vk::PhysicalDevice> rankedPhysicalDevices = {};
+  std::multimap<int, VkPhysicalDevice> rankedPhysicalDevices = {};
 
-  for (vk::PhysicalDevice const &physicalDevice : availablePhysicalDevices) {
+  for (VkPhysicalDevice const &physicalDevice : availablePhysicalDevices) {
     unsigned int deviceScore = ratePhysicalDevice(physicalDevice, mSurface);
     rankedPhysicalDevices.insert(std::make_pair(deviceScore, physicalDevice));
   }
@@ -85,14 +100,15 @@ void VulkanRenderer::selectPhysicalDevice() {
   }
 }
 
-unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice,
-                                                vk::SurfaceKHR const &vulkanSurface) const {
+unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
+                                                VkSurfaceKHR const &vulkanSurface) const {
 
   unsigned int score = 1u;
 
-  vk::PhysicalDeviceProperties const physicalDeviceProperties = physicalDevice.getProperties();
+  VkPhysicalDeviceProperties physicalDeviceProperties;
+  vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
-  if (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) {
+  if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
     score += 1000u;
   }
 
@@ -114,13 +130,17 @@ unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physic
 }
 
 bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
-    vk::PhysicalDevice const &physicalDevice) const {
-  std::vector<vk::ExtensionProperties> availableExtensions =
-      physicalDevice.enumerateDeviceExtensionProperties();
+    VkPhysicalDevice const &physicalDevice) const {
+
+  uint32_t availableExtensionsCount;
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount, nullptr);
+  std::vector<VkExtensionProperties> availableExtensions{availableExtensionsCount};
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount,
+                                       availableExtensions.data());
 
   for (std::string const &requiredExtensionName : mRequiredDeviceExtensionsNames) {
     bool extensionFound = false;
-    for (vk::ExtensionProperties const &availableExtension : availableExtensions) {
+    for (VkExtensionProperties const &availableExtension : availableExtensions) {
       if (std::strcmp(requiredExtensionName.c_str(), availableExtension.extensionName) == 0) {
         extensionFound = true;
       }
@@ -139,24 +159,39 @@ void VulkanRenderer::createVulkanDevice() {
                                                  mQueueFamilyIndices.transfer.value(),
                                                  mQueueFamilyIndices.present.value()};
 
-  std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos{};
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
   queueCreateInfos.reserve(uniqueQueueFamilyIndices.size());
 
   for (uint32_t const &queueFamilyIndex : uniqueQueueFamilyIndices) {
-    queueCreateInfos.push_back(vk::DeviceQueueCreateInfo{{}, queueFamilyIndex, 1, &queuePriority});
+    VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
+    deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    deviceQueueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    deviceQueueCreateInfo.queueCount = 1;
+    deviceQueueCreateInfo.pQueuePriorities = &queuePriority;
+
+    queueCreateInfos.push_back(deviceQueueCreateInfo);
   }
 
-  vk::PhysicalDeviceFeatures enabledDeviceFeatures{};
+  VkPhysicalDeviceFeatures enabledDeviceFeatures{};
 
-  vk::DeviceCreateInfo const deviceCreateInfo{
-      {}, queueCreateInfos, {}, mRequiredDeviceExtensionsNames, &enabledDeviceFeatures};
-  mDevice = mPhysicalDevice.createDevice(deviceCreateInfo);
+  VkDeviceCreateInfo deviceCreateInfo{};
+  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+  deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+  deviceCreateInfo.enabledExtensionCount =
+      static_cast<uint32_t>(mRequiredDeviceExtensionsNames.size());
+  deviceCreateInfo.ppEnabledExtensionNames = mRequiredDeviceExtensionsNames.data();
+  deviceCreateInfo.pEnabledFeatures = &enabledDeviceFeatures;
+
+  vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, nullptr, &mDevice);
 }
 
 void VulkanRenderer::retrieveQueues() {
-  mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndices.graphics.value(), 0);
-  mPresentQueue = mDevice.getQueue(mQueueFamilyIndices.present.value(), 0);
-  mTransferQueue = mDevice.getQueue(mQueueFamilyIndices.transfer.value(), 0);
+  vk::Device device{mDevice};
+
+  mGraphicsQueue = device.getQueue(mQueueFamilyIndices.graphics.value(), 0);
+  mPresentQueue = device.getQueue(mQueueFamilyIndices.present.value(), 0);
+  mTransferQueue = device.getQueue(mQueueFamilyIndices.transfer.value(), 0);
 }
 
 void VulkanRenderer::createRenderPass() {
@@ -184,21 +219,26 @@ void VulkanRenderer::createRenderPass() {
 
   vk::RenderPassCreateInfo const renderPassCreateInfo{
       {}, colorAttachment, subpassDescription, subpassDependency};
-  mRenderPass = mDevice.createRenderPass(renderPassCreateInfo);
+
+  vk::Device device{mDevice};
+  mRenderPass = device.createRenderPass(renderPassCreateInfo);
 }
 
 void VulkanRenderer::createCommandPool() {
   vk::CommandPoolCreateInfo const commandPoolCreateInfo{{}, mQueueFamilyIndices.graphics.value()};
-  mCommandPool = mDevice.createCommandPool(commandPoolCreateInfo);
+
+  vk::Device device{mDevice};
+  mCommandPool = device.createCommandPool(commandPoolCreateInfo);
 }
 
 void VulkanRenderer::createCommandBuffers() {
+  vk::Device device{mDevice};
 
   vk::CommandBufferAllocateInfo const commandBufferAllocateInfo{
       mCommandPool, vk::CommandBufferLevel::ePrimary,
       static_cast<uint32_t>(mSwapChain.framebuffers.size())};
 
-  mCommandBuffers = mDevice.allocateCommandBuffers(commandBufferAllocateInfo);
+  mCommandBuffers = device.allocateCommandBuffers(commandBufferAllocateInfo);
 
   vk::Rect2D const renderArea{vk::Offset2D{0, 0}, mSwapChain.extent};
   vk::ClearValue clearValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
@@ -220,28 +260,31 @@ void VulkanRenderer::createCommandBuffers() {
 }
 
 void VulkanRenderer::createSyncObjects() {
+  vk::Device device{mDevice};
+
   vk::SemaphoreCreateInfo const semaphoreCreateInfo{};
   vk::FenceCreateInfo const fenceCreateInfo{vk::FenceCreateFlagBits::eSignaled};
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    mImageAvailableSemaphores[i] = mDevice.createSemaphore(semaphoreCreateInfo);
-    mRenderFinishedSemaphores[i] = mDevice.createSemaphore(semaphoreCreateInfo);
-    mInFlightFences[i] = mDevice.createFence(fenceCreateInfo);
+    mImageAvailableSemaphores[i] = device.createSemaphore(semaphoreCreateInfo);
+    mRenderFinishedSemaphores[i] = device.createSemaphore(semaphoreCreateInfo);
+    mInFlightFences[i] = device.createFence(fenceCreateInfo);
   }
 
   mImagesInFlight.resize(mSwapChain.images.size(), vk::Fence{});
 }
 
 void VulkanRenderer::draw() {
+  vk::Device device{mDevice};
 
-  mDevice.waitForFences(mInFlightFences[mCurrentFrame], true, UINT64_MAX);
+  device.waitForFences(mInFlightFences[mCurrentFrame], true, UINT64_MAX);
 
   uint32_t imageIndex;
-  mDevice.acquireNextImageKHR(mSwapChain.swapChain, UINT64_MAX,
-                              mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
+  device.acquireNextImageKHR(mSwapChain.swapChain, UINT64_MAX,
+                             mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
 
   if (mImagesInFlight[imageIndex] != vk::Fence{}) {
-    static_cast<void>(mDevice.waitForFences(mImagesInFlight, true, UINT64_MAX));
+    static_cast<void>(device.waitForFences(mImagesInFlight, true, UINT64_MAX));
   }
 
   mImagesInFlight[imageIndex] = mInFlightFences[mCurrentFrame];
@@ -254,7 +297,7 @@ void VulkanRenderer::draw() {
 
   vk::SubmitInfo submitInfo{waitSemaphore, waitStage, commandBuffers, signalSemaphore};
 
-  mDevice.resetFences(mInFlightFences[mCurrentFrame]);
+  device.resetFences(mInFlightFences[mCurrentFrame]);
   mGraphicsQueue.submit(submitInfo, mInFlightFences[mCurrentFrame]);
 
   waitSemaphore = std::array<vk::Semaphore, 1>{mRenderFinishedSemaphores[mCurrentFrame]};

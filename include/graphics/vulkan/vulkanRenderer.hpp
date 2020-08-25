@@ -2,10 +2,10 @@
 
 #include <array>
 
+#include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 
 #include "graphics/vulkan/Pipeline.hpp"
-#include "graphics/vulkan/QueueFamily.hpp"
 #include "graphics/vulkan/QueueFamilyIndices.hpp"
 #include "graphics/vulkan/SwapChain.hpp"
 #include "graphics/window.hpp"
@@ -22,12 +22,12 @@ private:
   static constexpr unsigned int mMaxFramesInFlight = 2;
   unsigned int mCurrentFrame;
 
-  vk::Instance mInstance;
+  VkInstance mInstance;
   vk::SurfaceKHR mSurface;
 
-  vk::PhysicalDevice mPhysicalDevice;
+  VkPhysicalDevice mPhysicalDevice;
   QueueFamilyIndices mQueueFamilyIndices;
-  vk::Device mDevice;
+  VkDevice mDevice;
 
   vk::Queue mGraphicsQueue;
   vk::Queue mPresentQueue;
@@ -47,10 +47,10 @@ private:
 
   void createVulkanInstance(Window const &window);
   void selectPhysicalDevice();
-  [[nodiscard]] unsigned int ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice,
-                                                vk::SurfaceKHR const &vulkanSurface) const;
+  [[nodiscard]] unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
+                                                VkSurfaceKHR const &vulkanSurface) const;
   [[nodiscard]] bool
-  physicalDeviceSupportsRequiredExtensions(vk::PhysicalDevice const &physicalDevice) const;
+  physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice) const;
   void createVulkanDevice();
   void retrieveQueues();
   void createRenderPass();
