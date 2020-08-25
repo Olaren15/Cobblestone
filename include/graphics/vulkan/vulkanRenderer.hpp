@@ -29,21 +29,21 @@ private:
   QueueFamilyIndices mQueueFamilyIndices;
   VkDevice mDevice;
 
-  vk::Queue mGraphicsQueue;
-  vk::Queue mPresentQueue;
-  vk::Queue mTransferQueue;
+  VkQueue mGraphicsQueue;
+  VkQueue mPresentQueue;
+  VkQueue mTransferQueue;
 
   SwapChain mSwapChain;
   Pipeline mPipeline;
-  vk::RenderPass mRenderPass;
+  VkRenderPass mRenderPass;
 
-  vk::CommandPool mCommandPool;
-  std::vector<vk::CommandBuffer> mCommandBuffers;
+  VkCommandPool mCommandPool;
+  std::vector<VkCommandBuffer> mCommandBuffers;
 
-  std::array<vk::Semaphore, mMaxFramesInFlight> mImageAvailableSemaphores;
-  std::array<vk::Semaphore, mMaxFramesInFlight> mRenderFinishedSemaphores;
-  std::array<vk::Fence, mMaxFramesInFlight> mInFlightFences;
-  std::vector<vk::Fence> mImagesInFlight;
+  std::array<VkSemaphore, mMaxFramesInFlight> mImageAvailableSemaphores;
+  std::array<VkSemaphore, mMaxFramesInFlight> mRenderFinishedSemaphores;
+  std::array<VkFence, mMaxFramesInFlight> mInFlightFences;
+  std::vector<VkFence> mImagesInFlight;
 
   void createVulkanInstance(Window const &window);
   void selectPhysicalDevice();

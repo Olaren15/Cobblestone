@@ -187,125 +187,160 @@ void VulkanRenderer::createVulkanDevice() {
 }
 
 void VulkanRenderer::retrieveQueues() {
-  vk::Device device{mDevice};
-
-  mGraphicsQueue = device.getQueue(mQueueFamilyIndices.graphics.value(), 0);
-  mPresentQueue = device.getQueue(mQueueFamilyIndices.present.value(), 0);
-  mTransferQueue = device.getQueue(mQueueFamilyIndices.transfer.value(), 0);
+  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.graphics.value(), 0, &mGraphicsQueue);
+  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.present.value(), 0, &mPresentQueue);
+  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.transfer.value(), 0, &mTransferQueue);
 }
 
 void VulkanRenderer::createRenderPass() {
-  vk::AttachmentDescription colorAttachment{{},
-                                            mSwapChain.format,
-                                            vk::SampleCountFlagBits::e1,
-                                            vk::AttachmentLoadOp::eClear,
-                                            vk::AttachmentStoreOp::eStore,
-                                            vk::AttachmentLoadOp::eDontCare,
-                                            vk::AttachmentStoreOp::eDontCare,
-                                            vk::ImageLayout::eUndefined,
-                                            vk::ImageLayout::ePresentSrcKHR};
 
-  vk::AttachmentReference colorAttachmentReference{0, vk::ImageLayout::eColorAttachmentOptimal};
+  VkAttachmentDescription colorAttachment{};
+  colorAttachment.format = static_cast<VkFormat>(mSwapChain.format);
+  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-  vk::SubpassDescription subpassDescription{
-      {}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentReference, {}, {}, {}};
+  VkAttachmentReference colorAttachmentReference{};
+  colorAttachmentReference.attachment = 0;
+  colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  vk::SubpassDependency subpassDependency{VK_SUBPASS_EXTERNAL,
-                                          0,
-                                          vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                          vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                          vk::AccessFlagBits{0},
-                                          vk::AccessFlagBits::eColorAttachmentWrite};
+  VkSubpassDescription subpassDescription{};
+  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpassDescription.colorAttachmentCount = 1;
+  subpassDescription.pColorAttachments = &colorAttachmentReference;
 
-  vk::RenderPassCreateInfo const renderPassCreateInfo{
-      {}, colorAttachment, subpassDescription, subpassDependency};
+  VkSubpassDependency subpassDependency{};
+  subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  subpassDependency.dstSubpass = 0;
+  subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  subpassDependency.srcAccessMask = 0;
+  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-  vk::Device device{mDevice};
-  mRenderPass = device.createRenderPass(renderPassCreateInfo);
+  VkRenderPassCreateInfo renderPassCreateInfo{};
+  renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  renderPassCreateInfo.attachmentCount = 1;
+  renderPassCreateInfo.pAttachments = &colorAttachment;
+  renderPassCreateInfo.subpassCount = 1;
+  renderPassCreateInfo.pSubpasses = &subpassDescription;
+  renderPassCreateInfo.dependencyCount = 1;
+  renderPassCreateInfo.pDependencies = &subpassDependency;
+
+  vkCreateRenderPass(mDevice, &renderPassCreateInfo, nullptr, &mRenderPass);
 }
 
 void VulkanRenderer::createCommandPool() {
-  vk::CommandPoolCreateInfo const commandPoolCreateInfo{{}, mQueueFamilyIndices.graphics.value()};
+  VkCommandPoolCreateInfo commandPoolCreateInfo{};
+  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  commandPoolCreateInfo.queueFamilyIndex = mQueueFamilyIndices.graphics.value();
 
-  vk::Device device{mDevice};
-  mCommandPool = device.createCommandPool(commandPoolCreateInfo);
+  vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mCommandPool);
 }
 
 void VulkanRenderer::createCommandBuffers() {
-  vk::Device device{mDevice};
 
-  vk::CommandBufferAllocateInfo const commandBufferAllocateInfo{
-      mCommandPool, vk::CommandBufferLevel::ePrimary,
-      static_cast<uint32_t>(mSwapChain.framebuffers.size())};
+  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  commandBufferAllocateInfo.commandPool = mCommandPool;
+  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  commandBufferAllocateInfo.commandBufferCount =
+      static_cast<uint32_t>(mSwapChain.framebuffers.size());
 
-  mCommandBuffers = device.allocateCommandBuffers(commandBufferAllocateInfo);
+  mCommandBuffers.resize(mSwapChain.framebuffers.size());
+  vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data());
 
-  vk::Rect2D const renderArea{vk::Offset2D{0, 0}, mSwapChain.extent};
-  vk::ClearValue clearValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
+  VkRect2D renderArea{};
+  renderArea.offset = {0, 0};
+  renderArea.extent = mSwapChain.extent;
+
+  VkClearValue clearValue{};
+  clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
   for (size_t i = 0; i < mCommandBuffers.size(); i++) {
-    vk::CommandBufferBeginInfo beginInfo{};
-    mCommandBuffers[i].begin(beginInfo);
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    vk::RenderPassBeginInfo renderPassBeginInfo{mRenderPass, mSwapChain.framebuffers[i], renderArea,
-                                                clearValue};
-    mCommandBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+    vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo);
 
-    mCommandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline.pipeline);
-    mCommandBuffers[i].draw(3, 1, 0, 0);
+    VkRenderPassBeginInfo renderPassBeginInfo{};
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassBeginInfo.renderPass = mRenderPass;
+    renderPassBeginInfo.framebuffer = mSwapChain.framebuffers[i];
+    renderPassBeginInfo.renderArea = renderArea;
+    renderPassBeginInfo.clearValueCount = 1;
+    renderPassBeginInfo.pClearValues = &clearValue;
 
-    mCommandBuffers[i].endRenderPass();
-    mCommandBuffers[i].end();
+    vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.pipeline);
+    vkCmdDraw(mCommandBuffers[i], 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(mCommandBuffers[i]);
+    vkEndCommandBuffer(mCommandBuffers[i]);
   }
 }
 
 void VulkanRenderer::createSyncObjects() {
-  vk::Device device{mDevice};
+  VkSemaphoreCreateInfo semaphoreCreateInfo{};
+  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-  vk::SemaphoreCreateInfo const semaphoreCreateInfo{};
-  vk::FenceCreateInfo const fenceCreateInfo{vk::FenceCreateFlagBits::eSignaled};
+  VkFenceCreateInfo fenceCreateInfo{};
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    mImageAvailableSemaphores[i] = device.createSemaphore(semaphoreCreateInfo);
-    mRenderFinishedSemaphores[i] = device.createSemaphore(semaphoreCreateInfo);
-    mInFlightFences[i] = device.createFence(fenceCreateInfo);
+    vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]);
+    vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]);
+    vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]);
   }
 
-  mImagesInFlight.resize(mSwapChain.images.size(), vk::Fence{});
+  mImagesInFlight.resize(mSwapChain.images.size(), nullptr);
 }
 
 void VulkanRenderer::draw() {
-  vk::Device device{mDevice};
 
-  device.waitForFences(mInFlightFences[mCurrentFrame], true, UINT64_MAX);
+  vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
   uint32_t imageIndex;
-  device.acquireNextImageKHR(mSwapChain.swapChain, UINT64_MAX,
-                             mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
+  vkAcquireNextImageKHR(mDevice, mSwapChain.swapChain, UINT64_MAX,
+                        mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
 
-  if (mImagesInFlight[imageIndex] != vk::Fence{}) {
-    static_cast<void>(device.waitForFences(mImagesInFlight, true, UINT64_MAX));
+  if (mImagesInFlight[imageIndex] != nullptr) {
+    vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
   }
 
   mImagesInFlight[imageIndex] = mInFlightFences[mCurrentFrame];
 
-  vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+  VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-  std::array<vk::Semaphore, 1> waitSemaphore{mImageAvailableSemaphores[mCurrentFrame]};
-  std::array<vk::Semaphore, 1> signalSemaphore{mRenderFinishedSemaphores[mCurrentFrame]};
-  std::array<vk::CommandBuffer, 1> commandBuffers{mCommandBuffers[imageIndex]};
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.pWaitDstStageMask = &waitStage;
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &mImageAvailableSemaphores[mCurrentFrame];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &mRenderFinishedSemaphores[mCurrentFrame];
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &mCommandBuffers[imageIndex];
 
-  vk::SubmitInfo submitInfo{waitSemaphore, waitStage, commandBuffers, signalSemaphore};
+  vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
+  vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]);
 
-  device.resetFences(mInFlightFences[mCurrentFrame]);
-  mGraphicsQueue.submit(submitInfo, mInFlightFences[mCurrentFrame]);
+  std::array<VkSwapchainKHR, 1> presentSwapChain{mSwapChain.swapChain};
 
-  waitSemaphore = std::array<vk::Semaphore, 1>{mRenderFinishedSemaphores[mCurrentFrame]};
-  std::array<vk::SwapchainKHR, 1> presentSwapChain{mSwapChain.swapChain};
+  VkPresentInfoKHR presentInfo{};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &mRenderFinishedSemaphores[mCurrentFrame];
+  presentInfo.swapchainCount = static_cast<uint32_t>(presentSwapChain.size());
+  presentInfo.pSwapchains = presentSwapChain.data();
+  presentInfo.pImageIndices = &imageIndex;
 
-  vk::PresentInfoKHR presentInfo{waitSemaphore, presentSwapChain, imageIndex};
-
-  static_cast<void>(mPresentQueue.presentKHR(&presentInfo));
+  vkQueuePresentKHR(mPresentQueue, &presentInfo);
 
   mCurrentFrame = (mCurrentFrame + 1) % mMaxFramesInFlight;
 }
