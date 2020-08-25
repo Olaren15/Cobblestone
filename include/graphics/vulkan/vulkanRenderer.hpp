@@ -15,12 +15,6 @@ enum struct QueueFamily;
 
 struct VulkanRenderer {
 private:
-#ifdef NDEBUG
-  static constexpr bool mEnableValidationLayers = false;
-#else
-  static constexpr bool mEnableValidationLayers = true;
-#endif
-
   static constexpr std::array<const char *, 1> mRequiredDeviceExtensionsNames{
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
   };
@@ -28,8 +22,8 @@ private:
   static constexpr unsigned int mMaxFramesInFlight = 2;
   unsigned int mCurrentFrame;
 
-  vk::Instance mVulkanInstance;
-  vk::SurfaceKHR mDrawingSurface;
+  vk::Instance mInstance;
+  vk::SurfaceKHR mSurface;
 
   vk::PhysicalDevice mPhysicalDevice;
   QueueFamilyIndices mQueueFamilyIndices;
@@ -37,6 +31,7 @@ private:
 
   vk::Queue mGraphicsQueue;
   vk::Queue mPresentQueue;
+  vk::Queue mTransferQueue;
 
   SwapChain mSwapChain;
   Pipeline mPipeline;
@@ -50,33 +45,18 @@ private:
   std::array<vk::Fence, mMaxFramesInFlight> mInFlightFences;
   std::vector<vk::Fence> mImagesInFlight;
 
-  [[nodiscard]] vk::Instance createVulkanInstance(Window const &window) const;
-  [[nodiscard]] vk::PhysicalDevice selectPhysicalDevice(vk::Instance const &vulkanInstance,
-                                                        vk::SurfaceKHR const &vulkanSurface) const;
+  void createVulkanInstance(Window const &window);
+  void selectPhysicalDevice();
   [[nodiscard]] unsigned int ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice,
                                                 vk::SurfaceKHR const &vulkanSurface) const;
   [[nodiscard]] bool
   physicalDeviceSupportsRequiredExtensions(vk::PhysicalDevice const &physicalDevice) const;
-  [[nodiscard]] vk::Device createVulkanDevice(vk::PhysicalDevice const &physicalDevice,
-                                              QueueFamilyIndices const &queueFamilyIndices) const;
-
-  [[nodiscard]] vk::Queue retrieveQueue(vk::Device const &device,
-                                        QueueFamilyIndices const &queueFamilyIndices,
-                                        QueueFamily const &queueFamily) const;
-
-  [[nodiscard]] vk::RenderPass createRenderPass(vk::Device const &device,
-                                                vk::Format const &swapChainFormat);
-
-  [[nodiscard]] vk::CommandPool
-  createCommandPool(vk::Device const &device, QueueFamilyIndices const &queueFamilyIndices) const;
-  [[nodiscard]] std::vector<vk::CommandBuffer>
-  createCommandBuffers(vk::Device const &device, Pipeline const &pipeline,
-                       SwapChain const &swapChain, vk::RenderPass const &renderPass,
-                       vk::CommandPool const &commandPool) const;
-  [[nodiscard]] std::array<vk::Semaphore, mMaxFramesInFlight>
-  createSemaphores(vk::Device const &device) const;
-  [[nodiscard]] std::array<vk::Fence, mMaxFramesInFlight>
-  createFences(vk::Device const &device) const;
+  void createVulkanDevice();
+  void retrieveQueues();
+  void createRenderPass();
+  void createCommandPool();
+  void createCommandBuffers();
+  void createSyncObjects();
 
 public:
   VulkanRenderer() = delete;

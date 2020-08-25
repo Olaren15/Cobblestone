@@ -17,27 +17,20 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
         "Vulkan render API"};
   }
 
-  mVulkanInstance = createVulkanInstance(window);
-  mDrawingSurface = window.getDrawableVulkanSurface(mVulkanInstance);
-  mPhysicalDevice = selectPhysicalDevice(mVulkanInstance, mDrawingSurface);
-  mQueueFamilyIndices = QueueFamilyIndices{mPhysicalDevice, mDrawingSurface};
-  mDevice = createVulkanDevice(mPhysicalDevice, mQueueFamilyIndices);
-  mGraphicsQueue = retrieveQueue(mDevice, mQueueFamilyIndices, QueueFamily::Graphics);
-  mPresentQueue = retrieveQueue(mDevice, mQueueFamilyIndices, QueueFamily::Present);
-  mSwapChain =
-      SwapChain{mDevice, window, mDrawingSurface,
-                SwapChainSupportDetails{mPhysicalDevice, mDrawingSurface}, mQueueFamilyIndices};
-  mRenderPass = createRenderPass(mDevice, mSwapChain.format);
+  createVulkanInstance(window);
+  mSurface = window.getDrawableVulkanSurface(mInstance);
+  selectPhysicalDevice();
+  mQueueFamilyIndices = QueueFamilyIndices{mPhysicalDevice, mSurface};
+  createVulkanDevice();
+  retrieveQueues();
+  mSwapChain = SwapChain{mDevice, window, mSurface,
+                         SwapChainSupportDetails{mPhysicalDevice, mSurface}, mQueueFamilyIndices};
+  createRenderPass();
   mPipeline = Pipeline{mDevice, mSwapChain, mRenderPass};
   mSwapChain.createFrameBuffers(mDevice, mRenderPass);
-  mCommandPool = createCommandPool(mDevice, mQueueFamilyIndices);
-  mCommandBuffers = createCommandBuffers(mDevice, mPipeline, mSwapChain, mRenderPass, mCommandPool);
-
-  mImageAvailableSemaphores = createSemaphores(mDevice);
-  mRenderFinishedSemaphores = createSemaphores(mDevice);
-  mInFlightFences = createFences(mDevice);
-  mImagesInFlight.resize(mSwapChain.images.size(), vk::Fence{});
-
+  createCommandPool();
+  createCommandBuffers();
+  createSyncObjects();
   mCurrentFrame = 0;
 }
 
@@ -54,11 +47,11 @@ VulkanRenderer::~VulkanRenderer() {
   mSwapChain.destroy(mDevice);
   mDevice.destroyRenderPass(mRenderPass);
   mDevice.destroy();
-  mVulkanInstance.destroySurfaceKHR(mDrawingSurface);
-  mVulkanInstance.destroy();
+  mInstance.destroySurfaceKHR(mSurface);
+  mInstance.destroy();
 }
 
-vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) const {
+void VulkanRenderer::createVulkanInstance(Window const &window) {
   vk::ApplicationInfo appInfo{window.getTitle().c_str(), VK_MAKE_VERSION(1, 0, 0), "Flex Engine",
                               VK_MAKE_VERSION(0, 0, 1), VK_API_VERSION_1_0};
 
@@ -66,33 +59,30 @@ vk::Instance VulkanRenderer::createVulkanInstance(Window const &window) const {
 
   std::vector<char const *> enabledLayers{};
 
-  // ReSharper disable once CppUnreachableCode
-  if (mEnableValidationLayers) {
-    enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
-  }
+#ifndef NDEBUG
+  enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+#endif
 
   vk::InstanceCreateInfo const instanceCreateInfo({}, &appInfo, enabledLayers, enabledExtensions);
 
-  return createInstance(instanceCreateInfo);
+  mInstance = createInstance(instanceCreateInfo);
 }
 
-vk::PhysicalDevice VulkanRenderer::selectPhysicalDevice(vk::Instance const &vulkanInstance,
-                                                        vk::SurfaceKHR const &vulkanSurface) const {
-  std::vector<vk::PhysicalDevice> availablePhysicalDevices =
-      vulkanInstance.enumeratePhysicalDevices();
+void VulkanRenderer::selectPhysicalDevice() {
+  std::vector<vk::PhysicalDevice> availablePhysicalDevices = mInstance.enumeratePhysicalDevices();
 
   std::multimap<int, vk::PhysicalDevice> rankedPhysicalDevices = {};
 
   for (vk::PhysicalDevice const &physicalDevice : availablePhysicalDevices) {
-    unsigned int deviceScore = ratePhysicalDevice(physicalDevice, vulkanSurface);
+    unsigned int deviceScore = ratePhysicalDevice(physicalDevice, mSurface);
     rankedPhysicalDevices.insert(std::make_pair(deviceScore, physicalDevice));
   }
 
   if (rankedPhysicalDevices.rbegin()->first > 0) {
-    return rankedPhysicalDevices.rbegin()->second;
+    mPhysicalDevice = rankedPhysicalDevices.rbegin()->second;
+  } else {
+    throw std::runtime_error("No suitable device supporting vulkan found");
   }
-
-  throw std::runtime_error("No suitable device supporting vulkan found");
 }
 
 unsigned int VulkanRenderer::ratePhysicalDevice(vk::PhysicalDevice const &physicalDevice,
@@ -143,13 +133,11 @@ bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
   return true;
 }
 
-vk::Device VulkanRenderer::createVulkanDevice(vk::PhysicalDevice const &physicalDevice,
-                                              QueueFamilyIndices const &queueFamilyIndices) const {
-
+void VulkanRenderer::createVulkanDevice() {
   float queuePriority = 1.0f;
-  std::set<uint32_t> uniqueQueueFamilyIndices = {queueFamilyIndices.graphics.value(),
-                                                 queueFamilyIndices.transfer.value(),
-                                                 queueFamilyIndices.present.value()};
+  std::set<uint32_t> uniqueQueueFamilyIndices = {mQueueFamilyIndices.graphics.value(),
+                                                 mQueueFamilyIndices.transfer.value(),
+                                                 mQueueFamilyIndices.present.value()};
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos{};
   queueCreateInfos.reserve(uniqueQueueFamilyIndices.size());
@@ -162,33 +150,18 @@ vk::Device VulkanRenderer::createVulkanDevice(vk::PhysicalDevice const &physical
 
   vk::DeviceCreateInfo const deviceCreateInfo{
       {}, queueCreateInfos, {}, mRequiredDeviceExtensionsNames, &enabledDeviceFeatures};
-  return physicalDevice.createDevice(deviceCreateInfo);
+  mDevice = mPhysicalDevice.createDevice(deviceCreateInfo);
 }
 
-vk::Queue VulkanRenderer::retrieveQueue(vk::Device const &device,
-                                        QueueFamilyIndices const &queueFamilyIndices,
-                                        QueueFamily const &queueFamily) const {
-
-  uint32_t queueFamilyIndex = 0u;
-  switch (queueFamily) {
-  case QueueFamily::Graphics:
-    queueFamilyIndex = queueFamilyIndices.graphics.value();
-    break;
-  case QueueFamily::Transfer:
-    queueFamilyIndex = queueFamilyIndices.transfer.value();
-    break;
-  case QueueFamily::Present:
-    queueFamilyIndex = queueFamilyIndices.present.value();
-    break;
-  }
-
-  return device.getQueue(queueFamilyIndex, 0);
+void VulkanRenderer::retrieveQueues() {
+  mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndices.graphics.value(), 0);
+  mPresentQueue = mDevice.getQueue(mQueueFamilyIndices.present.value(), 0);
+  mTransferQueue = mDevice.getQueue(mQueueFamilyIndices.transfer.value(), 0);
 }
 
-vk::RenderPass VulkanRenderer::createRenderPass(vk::Device const &device,
-                                                vk::Format const &swapChainFormat) {
+void VulkanRenderer::createRenderPass() {
   vk::AttachmentDescription colorAttachment{{},
-                                            swapChainFormat,
+                                            mSwapChain.format,
                                             vk::SampleCountFlagBits::e1,
                                             vk::AttachmentLoadOp::eClear,
                                             vk::AttachmentStoreOp::eStore,
@@ -211,72 +184,52 @@ vk::RenderPass VulkanRenderer::createRenderPass(vk::Device const &device,
 
   vk::RenderPassCreateInfo const renderPassCreateInfo{
       {}, colorAttachment, subpassDescription, subpassDependency};
-  return device.createRenderPass(renderPassCreateInfo);
+  mRenderPass = mDevice.createRenderPass(renderPassCreateInfo);
 }
 
-vk::CommandPool
-VulkanRenderer::createCommandPool(vk::Device const &device,
-                                  QueueFamilyIndices const &queueFamilyIndices) const {
-  vk::CommandPoolCreateInfo const commandPoolCreateInfo{{}, queueFamilyIndices.graphics.value()};
-  return device.createCommandPool(commandPoolCreateInfo);
+void VulkanRenderer::createCommandPool() {
+  vk::CommandPoolCreateInfo const commandPoolCreateInfo{{}, mQueueFamilyIndices.graphics.value()};
+  mCommandPool = mDevice.createCommandPool(commandPoolCreateInfo);
 }
 
-std::vector<vk::CommandBuffer>
-VulkanRenderer::createCommandBuffers(vk::Device const &device, Pipeline const &pipeline,
-                                     SwapChain const &swapChain, vk::RenderPass const &renderPass,
-                                     vk::CommandPool const &commandPool) const {
+void VulkanRenderer::createCommandBuffers() {
 
   vk::CommandBufferAllocateInfo const commandBufferAllocateInfo{
-      commandPool, vk::CommandBufferLevel::ePrimary,
-      static_cast<uint32_t>(swapChain.framebuffers.size())};
+      mCommandPool, vk::CommandBufferLevel::ePrimary,
+      static_cast<uint32_t>(mSwapChain.framebuffers.size())};
 
-  std::vector<vk::CommandBuffer> commandBuffers =
-      device.allocateCommandBuffers(commandBufferAllocateInfo);
+  mCommandBuffers = mDevice.allocateCommandBuffers(commandBufferAllocateInfo);
 
-  vk::Rect2D const renderArea{vk::Offset2D{0, 0}, swapChain.extent};
+  vk::Rect2D const renderArea{vk::Offset2D{0, 0}, mSwapChain.extent};
   vk::ClearValue clearValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
 
-  for (size_t i = 0; i < commandBuffers.size(); i++) {
+  for (size_t i = 0; i < mCommandBuffers.size(); i++) {
     vk::CommandBufferBeginInfo beginInfo{};
-    commandBuffers[i].begin(beginInfo);
+    mCommandBuffers[i].begin(beginInfo);
 
-    vk::RenderPassBeginInfo renderPassBeginInfo{renderPass, swapChain.framebuffers[i], renderArea,
+    vk::RenderPassBeginInfo renderPassBeginInfo{mRenderPass, mSwapChain.framebuffers[i], renderArea,
                                                 clearValue};
-    commandBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+    mCommandBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-    commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
-    commandBuffers[i].draw(3, 1, 0, 0);
+    mCommandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline.pipeline);
+    mCommandBuffers[i].draw(3, 1, 0, 0);
 
-    commandBuffers[i].endRenderPass();
-    commandBuffers[i].end();
+    mCommandBuffers[i].endRenderPass();
+    mCommandBuffers[i].end();
   }
-
-  return commandBuffers;
 }
 
-std::array<vk::Semaphore, VulkanRenderer::mMaxFramesInFlight>
-VulkanRenderer::createSemaphores(vk::Device const &device) const {
-  std::array<vk::Semaphore, mMaxFramesInFlight> semaphores;
+void VulkanRenderer::createSyncObjects() {
   vk::SemaphoreCreateInfo const semaphoreCreateInfo{};
-
-  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    semaphores[i] = device.createSemaphore(semaphoreCreateInfo);
-  }
-
-  return semaphores;
-}
-
-std::array<vk::Fence, VulkanRenderer::mMaxFramesInFlight>
-VulkanRenderer::createFences(vk::Device const &device) const {
-  std::array<vk::Fence, mMaxFramesInFlight> fences;
-
   vk::FenceCreateInfo const fenceCreateInfo{vk::FenceCreateFlagBits::eSignaled};
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    fences[i] = device.createFence(fenceCreateInfo);
+    mImageAvailableSemaphores[i] = mDevice.createSemaphore(semaphoreCreateInfo);
+    mRenderFinishedSemaphores[i] = mDevice.createSemaphore(semaphoreCreateInfo);
+    mInFlightFences[i] = mDevice.createFence(fenceCreateInfo);
   }
 
-  return fences;
+  mImagesInFlight.resize(mSwapChain.images.size(), vk::Fence{});
 }
 
 void VulkanRenderer::draw() {
