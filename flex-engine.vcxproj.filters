@@ -89,9 +89,6 @@
     <ClInclude Include="include\graphics\vulkan\QueueFamilyIndices.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\QueueFamily.hpp">
-      <Filter>Header Files\graphics\vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="include\graphics\vulkan\SwapChainSupportDetails.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
