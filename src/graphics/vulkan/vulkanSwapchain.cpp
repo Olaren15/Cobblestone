@@ -57,7 +57,7 @@ void VulkanSwapchain::retrieveSwapchainImages(VkDevice const &device) {
 }
 
 void VulkanSwapchain::createImageViews(VkDevice const &device) {
-  imageViews.reserve(images.size());
+  imageViews.resize(images.size(), {});
 
   VkImageSubresourceRange subresourceRange;
   subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -72,19 +72,16 @@ void VulkanSwapchain::createImageViews(VkDevice const &device) {
   componentMapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
   componentMapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-  for (VkImage const &image : images) {
+  for (size_t i = 0; i < images.size(); i++) {
     VkImageViewCreateInfo imageViewCreateInfo{};
     imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    imageViewCreateInfo.image = image;
+    imageViewCreateInfo.image = images[i];
     imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
     imageViewCreateInfo.format = format;
     imageViewCreateInfo.components = componentMapping;
     imageViewCreateInfo.subresourceRange = subresourceRange;
 
-    VkImageView imageView;
-    vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
-
-    imageViews.push_back(imageView);
+    vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageViews[i]);
   }
 }
 
@@ -92,7 +89,6 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
                                       VkDevice const &device, RenderWindow const &window,
                                       VkSurfaceKHR const &surface,
                                       VulkanQueueFamilyIndices const &queueFamilyIndices) {
-
   swapchainSupportDetails = VulkanSwapchainSupportDetails{physicalDevice, surface};
 
   VkSurfaceFormatKHR const surfaceFormat =
@@ -137,7 +133,7 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
   swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   swapchainCreateInfo.presentMode = presentMode;
   swapchainCreateInfo.clipped = VK_TRUE;
-  swapchainCreateInfo.oldSwapchain = nullptr;
+  swapchainCreateInfo.oldSwapchain = swapchain;
 
   vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain);
 
@@ -146,23 +142,41 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
 }
 
 void VulkanSwapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass) {
-  framebuffers.reserve(imageViews.size());
+  framebuffers.resize(imageViews.size(), {});
 
-  for (VkImageView const &imageView : imageViews) {
-
+  for (size_t i = 0; i < imageViews.size(); i++) {
     VkFramebufferCreateInfo framebufferCreateInfo{};
     framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferCreateInfo.renderPass = renderPass;
     framebufferCreateInfo.attachmentCount = 1;
-    framebufferCreateInfo.pAttachments = &imageView;
+    framebufferCreateInfo.pAttachments = &imageViews[i];
     framebufferCreateInfo.width = extent.width;
     framebufferCreateInfo.height = extent.height;
     framebufferCreateInfo.layers = 1;
 
-    VkFramebuffer framebuffer;
-    vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer);
-    framebuffers.push_back(framebuffer);
+    vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
   }
+}
+
+void VulkanSwapchain::handleFrameBufferResize(VkPhysicalDevice const &physicalDevice,
+                                              VkDevice const &device, RenderWindow const &window,
+                                              VkSurfaceKHR const &surface,
+                                              VulkanQueueFamilyIndices const &queueFamilyIndices,
+                                              VkRenderPass const &renderPass) {
+
+  for (VkFramebuffer &framebuffer : framebuffers) {
+    vkDestroyFramebuffer(device, framebuffer, nullptr);
+  }
+
+  for (VkImageView &imageView : imageViews) {
+    vkDestroyImageView(device, imageView, nullptr);
+  }
+
+  VkSwapchainKHR oldSwapchain = swapchain;
+  createSwapchain(physicalDevice, device, window, surface, queueFamilyIndices);
+  createFrameBuffers(device, renderPass);
+
+  vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
 }
 
 void VulkanSwapchain::destroy(VkDevice const &device) const {

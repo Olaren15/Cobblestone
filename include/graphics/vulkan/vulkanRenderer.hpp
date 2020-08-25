@@ -21,6 +21,8 @@ private:
   static constexpr unsigned int mMaxFramesInFlight = 2;
   unsigned int mCurrentFrame;
 
+  RenderWindow *mWindow;
+
   VkInstance mInstance{};
   vk::SurfaceKHR mSurface;
 
@@ -44,7 +46,7 @@ private:
   std::array<VkFence, mMaxFramesInFlight> mInFlightFences{};
   std::vector<VkFence> mImagesInFlight;
 
-  void createVulkanInstance(RenderWindow const &window);
+  void createVulkanInstance();
   void selectPhysicalDevice();
   [[nodiscard]] unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
                                                 VkSurfaceKHR const &vulkanSurface) const;
@@ -57,10 +59,12 @@ private:
   void createCommandBuffers();
   void createSyncObjects();
 
+  void handleFrameBufferResize();
+
 public:
   VulkanRenderer() = delete;
   VulkanRenderer(VulkanRenderer const &) = delete;
-  explicit VulkanRenderer(RenderWindow const &window);
+  explicit VulkanRenderer(RenderWindow &window);
   ~VulkanRenderer();
 
   void operator=(VulkanRenderer const &) = delete;

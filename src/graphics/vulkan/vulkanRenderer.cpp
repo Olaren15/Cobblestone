@@ -10,14 +10,15 @@
 #include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
+VulkanRenderer::VulkanRenderer(RenderWindow &window) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
         "Vulkan render API"};
   }
 
-  createVulkanInstance(window);
+  mWindow = &window;
+  createVulkanInstance();
   mSurface = window.getDrawableVulkanSurface(mInstance);
   selectPhysicalDevice();
   mQueueFamilyIndices = VulkanQueueFamilyIndices{mPhysicalDevice, mSurface};
@@ -50,8 +51,8 @@ VulkanRenderer::~VulkanRenderer() {
   vkDestroyInstance(mInstance, nullptr);
 }
 
-void VulkanRenderer::createVulkanInstance(RenderWindow const &window) {
-  std::string const title = window.getTitle();
+void VulkanRenderer::createVulkanInstance() {
+  std::string const title = mWindow->getTitle();
 
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -61,7 +62,7 @@ void VulkanRenderer::createVulkanInstance(RenderWindow const &window) {
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.apiVersion = VK_API_VERSION_1_0;
 
-  std::vector<char const *> enabledExtensions = window.getRequiredVulkanExtensions();
+  std::vector<char const *> enabledExtensions = mWindow->getRequiredVulkanExtensions();
   std::vector<char const *> enabledLayers{};
 
 #ifndef NDEBUG
@@ -317,13 +318,30 @@ void VulkanRenderer::createSyncObjects() {
   mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
 }
 
+void VulkanRenderer::handleFrameBufferResize() {
+  vkDeviceWaitIdle(mDevice);
+
+  vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()),
+                       mCommandBuffers.data());
+
+  mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, *mWindow, mSurface,
+                                     mQueueFamilyIndices, mRenderPass);
+
+  createCommandBuffers();
+}
+
 void VulkanRenderer::draw() {
 
   vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
   uint32_t imageIndex;
-  vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, UINT64_MAX,
-                        mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
+  VkResult const result =
+      vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, UINT64_MAX,
+                            mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+    handleFrameBufferResize();
+    return;
+  }
 
   if (mImagesInFlight[imageIndex] != nullptr) {
     vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);

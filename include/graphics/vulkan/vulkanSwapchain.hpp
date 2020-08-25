@@ -23,7 +23,7 @@ private:
 
 public:
   VulkanSwapchainSupportDetails swapchainSupportDetails{};
-  VkSwapchainKHR swapchain{};
+  VkSwapchainKHR swapchain = nullptr;
   std::vector<VkImage> images;
   VkFormat format{};
   VkExtent2D extent{};
@@ -39,6 +39,10 @@ public:
 
   void createFrameBuffers(VkDevice const &device, VkRenderPass renderPass);
 
+  void handleFrameBufferResize(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
+                               RenderWindow const &window, VkSurfaceKHR const &surface,
+                               VulkanQueueFamilyIndices const &queueFamilyIndices,
+                               VkRenderPass const &renderPass);
   void destroy(VkDevice const &device) const;
 };
 } // namespace flex
