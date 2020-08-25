@@ -1,5 +1,6 @@
 #include "graphics/vulkan/Pipeline.hpp"
 
+#include <array>
 #include <fstream>
 #include <stdexcept>
 
@@ -90,8 +91,8 @@ void Pipeline::createPipeline(VkDevice const &device, VkRenderPass const &render
   colorBlendStateCreateInfo.attachmentCount = 1;
   colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
 
-  static constexpr std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT,
-                                                               VK_DYNAMIC_STATE_SCISSOR};
+  std::array<VkDynamicState, 2> constexpr dynamicStates{VK_DYNAMIC_STATE_VIEWPORT,
+                                                        VK_DYNAMIC_STATE_SCISSOR};
 
   VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
   dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
