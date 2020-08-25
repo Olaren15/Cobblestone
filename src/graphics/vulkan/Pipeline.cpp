@@ -34,7 +34,6 @@ void Pipeline::createPipeline(VkDevice const &device, Swapchain const &swapchain
                               VkRenderPass const &renderPass) {
   vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
   fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
-  ;
 
   std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
   shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

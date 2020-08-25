@@ -203,7 +203,7 @@ void VulkanRenderer::createRenderPass() {
   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-  VkAttachmentReference colorAttachmentReference{};
+  VkAttachmentReference colorAttachmentReference;
   colorAttachmentReference.attachment = 0;
   colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
@@ -252,11 +252,11 @@ void VulkanRenderer::createCommandBuffers() {
   mCommandBuffers.resize(mSwapchain.framebuffers.size());
   vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data());
 
-  VkRect2D renderArea{};
+  VkRect2D renderArea;
   renderArea.offset = {0, 0};
   renderArea.extent = mSwapchain.extent;
 
-  VkClearValue clearValue{};
+  VkClearValue clearValue;
   clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
   for (size_t i = 0; i < mCommandBuffers.size(); i++) {

@@ -17,7 +17,7 @@ private:
 
   RenderAPI mRenderAPI = RenderAPI::Vulkan;
 
-  SDL_Window *mSDLWindow;
+  SDL_Window *mSDLWindow{};
   bool mShouldExit = false;
 
   static void initSDL();
