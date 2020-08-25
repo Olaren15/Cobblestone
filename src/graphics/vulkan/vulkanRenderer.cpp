@@ -31,9 +31,24 @@ VulkanRenderer::VulkanRenderer(Window const &window) {
   mPipeline = Pipeline{mDevice, mSwapChain, mRenderPass};
   mSwapChain.createFrameBuffers(mDevice, mRenderPass);
   mCommandPool = createCommandPool(mDevice, mQueueFamilyIndices);
+  mCommandBuffers = createCommandBuffers(mDevice, mPipeline, mSwapChain, mRenderPass, mCommandPool);
+
+  mImageAvailableSemaphores = createSemaphores(mDevice);
+  mRenderFinishedSemaphores = createSemaphores(mDevice);
+  mInFlightFences = createFences(mDevice);
+  mImagesInFlight.resize(mSwapChain.images.size(), vk::Fence{});
+
+  mCurrentFrame = 0;
 }
 
 VulkanRenderer::~VulkanRenderer() {
+  mDevice.waitIdle();
+
+  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
+    mDevice.destroySemaphore(mRenderFinishedSemaphores[i]);
+    mDevice.destroySemaphore(mImageAvailableSemaphores[i]);
+    mDevice.destroyFence(mInFlightFences[i]);
+  }
   mDevice.destroyCommandPool(mCommandPool);
   mPipeline.destroy(mDevice);
   mSwapChain.destroy(mDevice);
@@ -176,7 +191,7 @@ vk::RenderPass VulkanRenderer::createRenderPass(vk::Device const &device,
                                             swapChainFormat,
                                             vk::SampleCountFlagBits::e1,
                                             vk::AttachmentLoadOp::eClear,
-                                            vk::AttachmentStoreOp::eDontCare,
+                                            vk::AttachmentStoreOp::eStore,
                                             vk::AttachmentLoadOp::eDontCare,
                                             vk::AttachmentStoreOp::eDontCare,
                                             vk::ImageLayout::eUndefined,
@@ -187,8 +202,16 @@ vk::RenderPass VulkanRenderer::createRenderPass(vk::Device const &device,
   vk::SubpassDescription subpassDescription{
       {}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentReference, {}, {}, {}};
 
-  vk::RenderPassCreateInfo const renderPassCreateInfo{{}, colorAttachment, subpassDescription, {}};
-  return device.createRenderPass((renderPassCreateInfo));
+  vk::SubpassDependency subpassDependency{VK_SUBPASS_EXTERNAL,
+                                          0,
+                                          vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                          vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                          vk::AccessFlagBits{0},
+                                          vk::AccessFlagBits::eColorAttachmentWrite};
+
+  vk::RenderPassCreateInfo const renderPassCreateInfo{
+      {}, colorAttachment, subpassDescription, subpassDependency};
+  return device.createRenderPass(renderPassCreateInfo);
 }
 
 vk::CommandPool
@@ -210,21 +233,85 @@ VulkanRenderer::createCommandBuffers(vk::Device const &device, Pipeline const &p
   std::vector<vk::CommandBuffer> commandBuffers =
       device.allocateCommandBuffers(commandBufferAllocateInfo);
 
+  vk::Rect2D const renderArea{vk::Offset2D{0, 0}, swapChain.extent};
+  vk::ClearValue clearValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
+
   for (size_t i = 0; i < commandBuffers.size(); i++) {
     vk::CommandBufferBeginInfo beginInfo{};
     commandBuffers[i].begin(beginInfo);
 
-    vk::Rect2D const renderArea{vk::Offset2D{0, 0}, swapChain.extent};
-    vk::ClearValue clearValue{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
     vk::RenderPassBeginInfo renderPassBeginInfo{renderPass, swapChain.framebuffers[i], renderArea,
                                                 clearValue};
     commandBuffers[i].beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+
     commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.pipeline);
     commandBuffers[i].draw(3, 1, 0, 0);
 
+    commandBuffers[i].endRenderPass();
     commandBuffers[i].end();
   }
 
   return commandBuffers;
 }
+
+std::array<vk::Semaphore, VulkanRenderer::mMaxFramesInFlight>
+VulkanRenderer::createSemaphores(vk::Device const &device) const {
+  std::array<vk::Semaphore, mMaxFramesInFlight> semaphores;
+  vk::SemaphoreCreateInfo const semaphoreCreateInfo{};
+
+  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
+    semaphores[i] = device.createSemaphore(semaphoreCreateInfo);
+  }
+
+  return semaphores;
+}
+
+std::array<vk::Fence, VulkanRenderer::mMaxFramesInFlight>
+VulkanRenderer::createFences(vk::Device const &device) const {
+  std::array<vk::Fence, mMaxFramesInFlight> fences;
+
+  vk::FenceCreateInfo const fenceCreateInfo{vk::FenceCreateFlagBits::eSignaled};
+
+  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
+    fences[i] = device.createFence(fenceCreateInfo);
+  }
+
+  return fences;
+}
+
+void VulkanRenderer::draw() {
+
+  mDevice.waitForFences(mInFlightFences[mCurrentFrame], true, UINT64_MAX);
+
+  uint32_t imageIndex;
+  mDevice.acquireNextImageKHR(mSwapChain.swapChain, UINT64_MAX,
+                              mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
+
+  if (mImagesInFlight[imageIndex] != vk::Fence{}) {
+    static_cast<void>(mDevice.waitForFences(mImagesInFlight, true, UINT64_MAX));
+  }
+
+  mImagesInFlight[imageIndex] = mInFlightFences[mCurrentFrame];
+
+  vk::PipelineStageFlags waitStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+  std::array<vk::Semaphore, 1> waitSemaphore{mImageAvailableSemaphores[mCurrentFrame]};
+  std::array<vk::Semaphore, 1> signalSemaphore{mRenderFinishedSemaphores[mCurrentFrame]};
+  std::array<vk::CommandBuffer, 1> commandBuffers{mCommandBuffers[imageIndex]};
+
+  vk::SubmitInfo submitInfo{waitSemaphore, waitStage, commandBuffers, signalSemaphore};
+
+  mDevice.resetFences(mInFlightFences[mCurrentFrame]);
+  mGraphicsQueue.submit(submitInfo, mInFlightFences[mCurrentFrame]);
+
+  waitSemaphore = std::array<vk::Semaphore, 1>{mRenderFinishedSemaphores[mCurrentFrame]};
+  std::array<vk::SwapchainKHR, 1> presentSwapChain{mSwapChain.swapChain};
+
+  vk::PresentInfoKHR presentInfo{waitSemaphore, presentSwapChain, imageIndex};
+
+  static_cast<void>(mPresentQueue.presentKHR(&presentInfo));
+
+  mCurrentFrame = (mCurrentFrame + 1) % mMaxFramesInFlight;
+}
+
 } // namespace flex

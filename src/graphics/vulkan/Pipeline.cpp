@@ -61,14 +61,16 @@ Pipeline::Pipeline(vk::Device const &device, SwapChain const &swapChain,
                                                                         0.0f,
                                                                         1.0f};
 
-  vk::PipelineColorBlendAttachmentState colorBlendAttachmentState{false,
-                                                                  vk::BlendFactor::eOne,
-                                                                  vk::BlendFactor::eZero,
-                                                                  vk::BlendOp::eAdd,
-                                                                  vk::BlendFactor::eOne,
-                                                                  vk::BlendFactor::eZero,
-                                                                  vk::BlendOp::eAdd,
-                                                                  {}};
+  vk::PipelineColorBlendAttachmentState colorBlendAttachmentState{
+      false,
+      vk::BlendFactor::eOne,
+      vk::BlendFactor::eZero,
+      vk::BlendOp::eAdd,
+      vk::BlendFactor::eOne,
+      vk::BlendFactor::eZero,
+      vk::BlendOp::eAdd,
+      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+          vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
   constexpr std::array<float, 4> blendConstants{0.0f, 0.0f, 0.0f, 0.0f};
   vk::PipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{

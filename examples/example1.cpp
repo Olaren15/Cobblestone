@@ -20,6 +20,8 @@ int flexMain() {
     if (flex::InputHandler::keyPressed("Space")) {
       std::cout << i++ << '\n';
     }
+
+    vulkanRenderer.draw();
   }
 
   return 0;

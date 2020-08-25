@@ -123,6 +123,8 @@ SwapChain::SwapChain(vk::Device const &device, Window const &window, vk::Surface
   extent = chooseSwapChainExtent(swapChainSupportDetails.capabilities, window);
   swapChain = createSwapChain(device, surface, surfaceFormat, presentMode, queueFamilyIndices,
                               extent, swapChainSupportDetails.capabilities, {});
+
+  images = device.getSwapchainImagesKHR(swapChain);
   imageViews = createImageViews(device, images, format);
 }
 

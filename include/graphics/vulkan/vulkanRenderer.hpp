@@ -22,7 +22,11 @@ private:
 #endif
 
   static constexpr std::array<const char *, 1> mRequiredDeviceExtensionsNames{
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+  };
+
+  static constexpr unsigned int mMaxFramesInFlight = 2;
+  unsigned int mCurrentFrame;
 
   vk::Instance mVulkanInstance;
   vk::SurfaceKHR mDrawingSurface;
@@ -40,6 +44,11 @@ private:
 
   vk::CommandPool mCommandPool;
   std::vector<vk::CommandBuffer> mCommandBuffers;
+
+  std::array<vk::Semaphore, mMaxFramesInFlight> mImageAvailableSemaphores;
+  std::array<vk::Semaphore, mMaxFramesInFlight> mRenderFinishedSemaphores;
+  std::array<vk::Fence, mMaxFramesInFlight> mInFlightFences;
+  std::vector<vk::Fence> mImagesInFlight;
 
   [[nodiscard]] vk::Instance createVulkanInstance(Window const &window) const;
   [[nodiscard]] vk::PhysicalDevice selectPhysicalDevice(vk::Instance const &vulkanInstance,
@@ -64,6 +73,10 @@ private:
   createCommandBuffers(vk::Device const &device, Pipeline const &pipeline,
                        SwapChain const &swapChain, vk::RenderPass const &renderPass,
                        vk::CommandPool const &commandPool) const;
+  [[nodiscard]] std::array<vk::Semaphore, mMaxFramesInFlight>
+  createSemaphores(vk::Device const &device) const;
+  [[nodiscard]] std::array<vk::Fence, mMaxFramesInFlight>
+  createFences(vk::Device const &device) const;
 
 public:
   VulkanRenderer() = delete;
@@ -73,5 +86,7 @@ public:
 
   void operator=(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer) = delete;
+
+  void draw();
 };
 } // namespace flex
