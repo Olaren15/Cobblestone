@@ -1,5 +1,7 @@
 ﻿#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
 
+#include <vector>
+
 namespace flex {
 
 VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(
