@@ -1,8 +1,6 @@
 ﻿// ReSharper disable CppNonInlineFunctionDefinitionInHeaderFile
 #pragma once
 
-#include <iostream>
-
 #define SDL_MAIN_HANDLED
 #if defined _WIN32 && !defined NDEBUG
 #include <Windows.h>
@@ -24,10 +22,10 @@ int main() {
     freopen_s(&fDummy, "CONOUT$", "w", stderr);
     freopen_s(&fDummy, "CONOUT$", "w", stdout);
     // ReSharper restore StringLiteralTypo
+#endif
 
     returnValue = flexMain();
 
-#endif
   } catch (...) {
     return EXIT_FAILURE;
   }
