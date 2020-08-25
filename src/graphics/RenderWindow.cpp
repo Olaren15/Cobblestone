@@ -1,17 +1,17 @@
-﻿#include "graphics/window.hpp"
+﻿#include "graphics/RenderWindow.hpp"
 
 #include <stdexcept>
 
 #include <SDL2/SDL_vulkan.h>
 
 namespace flex {
-Window::Window() {
+RenderWindow::RenderWindow() {
   initSDL();
   createSDLWindow();
 }
 
-Window::Window(std::string const &title, unsigned int const &width, unsigned int const &height,
-               bool const &fullscreen) {
+RenderWindow::RenderWindow(std::string const &title, unsigned int const &width,
+                           unsigned int const &height, bool const &fullscreen) {
   initSDL();
 
   mWidth = width;
@@ -21,17 +21,17 @@ Window::Window(std::string const &title, unsigned int const &width, unsigned int
   createSDLWindow();
 }
 
-Window::~Window() { SDL_Quit(); }
+RenderWindow::~RenderWindow() { SDL_Quit(); }
 
-void Window::initSDL() {
+void RenderWindow::initSDL() {
   SDL_SetMainReady();
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
     throw std::runtime_error(std::string("Failed to initialize SDL ") + SDL_GetError());
   }
 }
 
-void Window::createSDLWindow() {
-  uint32_t windowFlags = SDL_WINDOW_SHOWN;
+void RenderWindow::createSDLWindow() {
+  uint32_t windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
 
   if (mFullScreen) {
     windowFlags |= SDL_WINDOW_FULLSCREEN;
@@ -56,7 +56,7 @@ void Window::createSDLWindow() {
   }
 }
 
-void Window::update() {
+void RenderWindow::update() {
   SDL_Event event{};
 
   while (SDL_PollEvent(&event)) {
@@ -66,13 +66,13 @@ void Window::update() {
   }
 }
 
-bool Window::shouldExit() const { return mShouldExit; }
+bool RenderWindow::shouldExit() const { return mShouldExit; }
 
-std::string Window::getTitle() const { return mTitle; }
+std::string RenderWindow::getTitle() const { return mTitle; }
 
-RenderAPI Window::getRenderAPI() const { return mRenderAPI; }
+RenderAPI RenderWindow::getRenderAPI() const { return mRenderAPI; }
 
-std::vector<char const *> Window::getRequiredVulkanExtensions() const {
+std::vector<char const *> RenderWindow::getRequiredVulkanExtensions() const {
   if (mRenderAPI != RenderAPI::Vulkan)
     throw InvalidRenderAPIException{
         "Cannot get vulkan extensions if render API is not set to vulkan"};
@@ -92,7 +92,7 @@ std::vector<char const *> Window::getRequiredVulkanExtensions() const {
   return extensions;
 }
 
-VkSurfaceKHR Window::getDrawableVulkanSurface(VkInstance const &vulkanInstance) const {
+VkSurfaceKHR RenderWindow::getDrawableVulkanSurface(VkInstance const &vulkanInstance) const {
   if (mRenderAPI != RenderAPI::Vulkan)
     throw InvalidRenderAPIException{"Cannot get drawable vulkan surface if "
                                     "render API is not set to vulkan"};
@@ -106,7 +106,7 @@ VkSurfaceKHR Window::getDrawableVulkanSurface(VkInstance const &vulkanInstance) 
   return surface;
 }
 
-VkExtent2D Window::getDrawableVulkanSurfaceSize() const {
+VkExtent2D RenderWindow::getDrawableVulkanSurfaceSize() const {
   int width = 0;
   int height = 0;
   SDL_Vulkan_GetDrawableSize(mSDLWindow, &width, &height);

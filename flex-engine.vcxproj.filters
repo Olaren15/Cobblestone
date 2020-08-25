@@ -45,9 +45,6 @@
     <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\window.cpp">
-      <Filter>Source Files\graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\configuration.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
@@ -63,15 +60,15 @@
     <ClCompile Include="src\graphics\vulkan\Pipeline.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\RenderWindow.cpp">
+      <Filter>Source Files\graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\inputHandler.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\renderAPI.hpp">
-      <Filter>Header Files\graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\window.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp">
@@ -97,6 +94,9 @@
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\Pipeline.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\RenderWindow.hpp">
+      <Filter>Header Files\graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

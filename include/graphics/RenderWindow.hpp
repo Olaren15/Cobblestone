@@ -8,7 +8,7 @@
 #include "renderAPI.hpp"
 
 namespace flex {
-struct Window {
+struct RenderWindow {
 private:
   unsigned int mWidth = 800;
   unsigned int mHeight = 600;
@@ -24,14 +24,14 @@ private:
   void createSDLWindow();
 
 public:
-  Window();
-  Window(Window const &) = delete;
-  Window(std::string const &title, unsigned int const &width, unsigned int const &height,
-         bool const &fullscreen);
-  ~Window();
+  RenderWindow();
+  RenderWindow(RenderWindow const &) = delete;
+  RenderWindow(std::string const &title, unsigned int const &width, unsigned int const &height,
+               bool const &fullscreen);
+  ~RenderWindow();
 
-  void operator=(Window const &) = delete;
-  void operator=(Window) = delete;
+  void operator=(RenderWindow const &) = delete;
+  void operator=(RenderWindow) = delete;
 
   void update();
 

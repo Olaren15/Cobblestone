@@ -10,7 +10,7 @@
 #include "graphics/vulkan/SwapChainSupportDetails.hpp"
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(Window const &window) {
+VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
@@ -51,7 +51,7 @@ VulkanRenderer::~VulkanRenderer() {
   vkDestroyInstance(mInstance, nullptr);
 }
 
-void VulkanRenderer::createVulkanInstance(Window const &window) {
+void VulkanRenderer::createVulkanInstance(RenderWindow const &window) {
   std::string const title = window.getTitle();
 
   VkApplicationInfo appInfo{};

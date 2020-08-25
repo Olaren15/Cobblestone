@@ -4,10 +4,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include "graphics/RenderWindow.hpp"
 #include "graphics/vulkan/Pipeline.hpp"
 #include "graphics/vulkan/QueueFamilyIndices.hpp"
 #include "graphics/vulkan/SwapChain.hpp"
-#include "graphics/window.hpp"
 
 namespace flex {
 enum struct QueueFamily;
@@ -44,7 +44,7 @@ private:
   std::array<VkFence, mMaxFramesInFlight> mInFlightFences;
   std::vector<VkFence> mImagesInFlight;
 
-  void createVulkanInstance(Window const &window);
+  void createVulkanInstance(RenderWindow const &window);
   void selectPhysicalDevice();
   [[nodiscard]] unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
                                                 VkSurfaceKHR const &vulkanSurface) const;
@@ -60,7 +60,7 @@ private:
 public:
   VulkanRenderer() = delete;
   VulkanRenderer(VulkanRenderer const &) = delete;
-  explicit VulkanRenderer(Window const &window);
+  explicit VulkanRenderer(RenderWindow const &window);
   ~VulkanRenderer();
 
   void operator=(VulkanRenderer const &) = delete;

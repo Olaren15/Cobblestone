@@ -9,7 +9,7 @@ int flexMain() {
   const unsigned int height = config.getUnsignedInt("display.window.height");
   const bool fullscreen = config.getBool("display.window.fullscreen");
 
-  flex::Window window{"window", width, height, fullscreen};
+  flex::RenderWindow window{"window", width, height, fullscreen};
   flex::VulkanRenderer vulkanRenderer{window};
 
   unsigned int i = 0;

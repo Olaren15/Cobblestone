@@ -5,9 +5,9 @@
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp>
 
+#include "graphics/RenderWindow.hpp"
 #include "graphics/vulkan/QueueFamilyIndices.hpp"
 #include "graphics/vulkan/SwapChainSupportDetails.hpp"
-#include "graphics/window.hpp"
 
 namespace flex {
 struct SwapChain {
@@ -17,7 +17,7 @@ private:
   [[nodiscard]] VkPresentModeKHR
   chooseSwapChainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes) const;
   [[nodiscard]] VkExtent2D chooseSwapChainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                                 Window const &window) const;
+                                                 RenderWindow const &window) const;
   void createSwapChain(VkDevice const &device, VkSurfaceKHR const &surface,
                        VkSurfaceFormatKHR const &surfaceFormat, VkPresentModeKHR const &presentMode,
                        QueueFamilyIndices const &queueFamilyIndices, VkExtent2D const &extent,
@@ -36,7 +36,7 @@ public:
   std::vector<VkFramebuffer> framebuffers;
 
   SwapChain() = default;
-  SwapChain(VkDevice const &device, Window const &window, VkSurfaceKHR const &surface,
+  SwapChain(VkDevice const &device, RenderWindow const &window, VkSurfaceKHR const &surface,
             SwapChainSupportDetails const &swapChainSupportDetails,
             QueueFamilyIndices const &queueFamilyIndices);
 

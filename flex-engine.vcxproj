@@ -193,7 +193,7 @@
     <ClCompile Include="src\graphics\vulkan\SwapChain.cpp" />
     <ClCompile Include="src\graphics\vulkan\SwapChainSupportDetails.cpp" />
     <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp" />
-    <ClCompile Include="src\graphics\window.cpp" />
+    <ClCompile Include="src\graphics\RenderWindow.cpp" />
     <ClCompile Include="src\utils\configuration.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -206,7 +206,7 @@
     <ClInclude Include="include\graphics\vulkan\SwapChain.hpp" />
     <ClInclude Include="include\graphics\vulkan\SwapChainSupportDetails.hpp" />
     <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp" />
-    <ClInclude Include="include\graphics\window.hpp" />
+    <ClInclude Include="include\graphics\RenderWindow.hpp" />
     <ClInclude Include="include\utils\configuration.hpp" />
   </ItemGroup>
   <ItemGroup>

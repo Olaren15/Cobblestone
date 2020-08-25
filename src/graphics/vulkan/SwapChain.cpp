@@ -31,7 +31,7 @@ VkPresentModeKHR SwapChain::chooseSwapChainPresentMode(
 }
 
 VkExtent2D SwapChain::chooseSwapChainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                            Window const &window) const {
+                                            RenderWindow const &window) const {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
     return capabilities.currentExtent;
@@ -130,7 +130,8 @@ void SwapChain::createImageViews(VkDevice const &device) {
   }
 }
 
-SwapChain::SwapChain(VkDevice const &device, Window const &window, VkSurfaceKHR const &surface,
+SwapChain::SwapChain(VkDevice const &device, RenderWindow const &window,
+                     VkSurfaceKHR const &surface,
                      SwapChainSupportDetails const &swapChainSupportDetails,
                      QueueFamilyIndices const &queueFamilyIndices) {
 
