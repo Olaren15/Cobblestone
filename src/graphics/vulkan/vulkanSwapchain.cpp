@@ -172,6 +172,7 @@ void VulkanSwapchain::handleFrameBufferResize(VkPhysicalDevice const &physicalDe
     vkDestroyImageView(device, imageView, nullptr);
   }
 
+  // ReSharper disable once CppLocalVariableMayBeConst
   VkSwapchainKHR oldSwapchain = swapchain;
   createSwapchain(physicalDevice, device, window, surface, queueFamilyIndices);
   createFrameBuffers(device, renderPass);
