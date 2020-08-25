@@ -7,7 +7,7 @@
 namespace flex {
 Window::Window() {
   initSDL();
-  mSDLWindow = createSDLWindow();
+  createSDLWindow();
 }
 
 Window::Window(std::string const &title, unsigned int const &width, unsigned int const &height,
@@ -18,7 +18,7 @@ Window::Window(std::string const &title, unsigned int const &width, unsigned int
   mHeight = height;
   mFullScreen = fullscreen;
   mTitle = title;
-  mSDLWindow = createSDLWindow();
+  createSDLWindow();
 }
 
 Window::~Window() { SDL_Quit(); }
@@ -30,7 +30,7 @@ void Window::initSDL() {
   }
 }
 
-SDL_Window *Window::createSDLWindow() const {
+void Window::createSDLWindow() {
   uint32_t windowFlags = SDL_WINDOW_SHOWN;
 
   if (mFullScreen) {
@@ -48,15 +48,12 @@ SDL_Window *Window::createSDLWindow() const {
     break;
   }
 
-  SDL_Window *window =
-      SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                       static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
+  mSDLWindow = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
 
-  if (window == nullptr) {
+  if (mSDLWindow == nullptr) {
     throw std::runtime_error("Failed to create SDL window ");
   }
-
-  return window;
 }
 
 void Window::update() {

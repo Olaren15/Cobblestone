@@ -21,8 +21,7 @@ private:
   bool mShouldExit = false;
 
   static void initSDL();
-
-  [[nodiscard]] SDL_Window *createSDLWindow() const;
+  void createSDLWindow();
 
 public:
   Window();
