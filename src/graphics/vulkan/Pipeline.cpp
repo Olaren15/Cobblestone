@@ -30,8 +30,7 @@ VkShaderModule Pipeline::createShaderModule(VkDevice const &device,
   return shaderModule;
 }
 
-void Pipeline::createPipeline(VkDevice const &device, Swapchain const &swapchain,
-                              VkRenderPass const &renderPass) {
+void Pipeline::createPipeline(VkDevice const &device, VkRenderPass const &renderPass) {
   vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
   fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
 
@@ -54,24 +53,12 @@ void Pipeline::createPipeline(VkDevice const &device, Swapchain const &swapchain
   inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-  VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = static_cast<float>(swapchain.extent.width);
-  viewport.height = static_cast<float>(swapchain.extent.height);
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = swapchain.extent;
-
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
   viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportStateCreateInfo.viewportCount = 1;
-  viewportStateCreateInfo.pViewports = &viewport;
+  viewportStateCreateInfo.pViewports = nullptr; // dynamic state
   viewportStateCreateInfo.scissorCount = 1;
-  viewportStateCreateInfo.pScissors = &scissor;
+  viewportStateCreateInfo.pScissors = nullptr; // dynamic state
 
   VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{};
   rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -103,6 +90,11 @@ void Pipeline::createPipeline(VkDevice const &device, Swapchain const &swapchain
   colorBlendStateCreateInfo.attachmentCount = 1;
   colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
 
+  VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
+  dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+  dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+
   VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{};
   multiSampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   multiSampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -127,6 +119,7 @@ void Pipeline::createPipeline(VkDevice const &device, Swapchain const &swapchain
   pipelineCreateInfo.pRasterizationState = &rasterizationStateCreateInfo;
   pipelineCreateInfo.pMultisampleState = &multiSampleStateCreateInfo;
   pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
+  pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
   pipelineCreateInfo.layout = pipelineLayout;
   pipelineCreateInfo.renderPass = renderPass;
   pipelineCreateInfo.subpass = 0;

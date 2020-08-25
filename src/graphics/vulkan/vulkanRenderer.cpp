@@ -25,7 +25,7 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window) {
   retrieveQueues();
   mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueueFamilyIndices);
   createRenderPass();
-  mPipeline.createPipeline(mDevice, mSwapchain, mRenderPass);
+  mPipeline.createPipeline(mDevice, mRenderPass);
   mSwapchain.createFrameBuffers(mDevice, mRenderPass);
   createCommandPool();
   createCommandBuffers();
@@ -252,6 +252,18 @@ void VulkanRenderer::createCommandBuffers() {
   mCommandBuffers.resize(mSwapchain.framebuffers.size());
   vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data());
 
+  std::array<VkViewport, 1> viewport{};
+  viewport[0].x = 0.0f;
+  viewport[0].y = 0.0f;
+  viewport[0].width = static_cast<float>(mSwapchain.extent.width);
+  viewport[0].height = static_cast<float>(mSwapchain.extent.height);
+  viewport[0].minDepth = 0.0f;
+  viewport[0].maxDepth = 1.0f;
+
+  std::array<VkRect2D, 1> scissors{};
+  scissors[0].offset = {0, 0};
+  scissors[0].extent = mSwapchain.extent;
+
   VkRect2D renderArea;
   renderArea.offset = {0, 0};
   renderArea.extent = mSwapchain.extent;
@@ -264,6 +276,11 @@ void VulkanRenderer::createCommandBuffers() {
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
     vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo);
+
+    // dynamic states
+    vkCmdSetViewport(mCommandBuffers[i], 0, static_cast<uint32_t>(viewport.size()),
+                     viewport.data());
+    vkCmdSetScissor(mCommandBuffers[i], 0, static_cast<uint32_t>(scissors.size()), scissors.data());
 
     VkRenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
