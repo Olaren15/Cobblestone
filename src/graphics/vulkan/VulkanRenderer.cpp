@@ -68,6 +68,7 @@ void VulkanRenderer::createVulkanInstance() {
 
 #ifndef NDEBUG
   enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+  enabledLayers.push_back("VK_LAYER_LUNARG_monitor");
 #endif
 
   VkInstanceCreateInfo instanceCreateInfo{};
@@ -325,13 +326,19 @@ void VulkanRenderer::createSyncObjects() {
 void VulkanRenderer::handleFrameBufferResize() {
   validateVkResult(vkDeviceWaitIdle(mDevice));
 
-  vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()),
-                       mCommandBuffers.data());
+  if (mWindow->hasFocus()) {
+    mDoNotRender = false;
 
-  mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, *mWindow, mSurface,
-                                     mQueueFamilyIndices, mRenderPass);
+    vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()),
+                         mCommandBuffers.data());
 
-  createCommandBuffers();
+    mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, *mWindow, mSurface,
+                                       mQueueFamilyIndices, mRenderPass);
+
+    createCommandBuffers();
+  } else {
+    mDoNotRender = true;
+  }
 }
 
 void VulkanRenderer::draw() {
@@ -343,7 +350,7 @@ void VulkanRenderer::draw() {
   VkResult const result =
       vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, UINT64_MAX,
                             mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || mDoNotRender) {
     handleFrameBufferResize();
     return;
   }

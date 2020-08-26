@@ -20,6 +20,7 @@ private:
 
   static constexpr unsigned int mMaxFramesInFlight = 2;
   unsigned int mCurrentFrame;
+  bool mDoNotRender = false;
 
   RenderWindow *mWindow;
 

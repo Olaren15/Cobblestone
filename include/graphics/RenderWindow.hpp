@@ -19,6 +19,7 @@ private:
 
   SDL_Window *mSDLWindow{};
   bool mShouldExit = false;
+  bool mHasFocus = true;
 
   static void initSDL();
   void createSDLWindow();
@@ -38,6 +39,7 @@ public:
   [[nodiscard]] bool shouldExit() const;
   [[nodiscard]] std::string getTitle() const;
   [[nodiscard]] RenderAPI getRenderAPI() const;
+  [[nodiscard]] bool hasFocus() const;
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
   [[nodiscard]] VkSurfaceKHR getDrawableVulkanSurface(VkInstance const &vulkanInstance) const;
   [[nodiscard]] VkExtent2D getDrawableVulkanSurfaceSize() const;

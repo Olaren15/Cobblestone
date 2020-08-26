@@ -62,6 +62,12 @@ void RenderWindow::update() {
   while (SDL_PollEvent(&event)) {
     if (event.type == SDL_QUIT) {
       mShouldExit = true;
+    } else if (event.type == SDL_WINDOWEVENT) {
+      if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+        mHasFocus = false;
+      } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+        mHasFocus = true;
+      }
     }
   }
 }
@@ -71,6 +77,8 @@ bool RenderWindow::shouldExit() const { return mShouldExit; }
 std::string RenderWindow::getTitle() const { return mTitle; }
 
 RenderAPI RenderWindow::getRenderAPI() const { return mRenderAPI; }
+
+bool RenderWindow::hasFocus() const { return mHasFocus; }
 
 std::vector<char const *> RenderWindow::getRequiredVulkanExtensions() const {
   if (mRenderAPI != RenderAPI::Vulkan)
