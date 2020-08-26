@@ -238,23 +238,48 @@ void VulkanRenderer::createRenderPass() {
 void VulkanRenderer::createCommandPool() {
   VkCommandPoolCreateInfo commandPoolCreateInfo{};
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  commandPoolCreateInfo.flags =
+      VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
   commandPoolCreateInfo.queueFamilyIndex = mQueueFamilyIndices.graphics.value();
 
   validateVkResult(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mCommandPool));
 }
 
 void VulkanRenderer::createCommandBuffers() {
+  mCommandBuffers.resize(mSwapchain.framebuffers.size());
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
   commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   commandBufferAllocateInfo.commandPool = mCommandPool;
   commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandBufferCount =
-      static_cast<uint32_t>(mSwapchain.framebuffers.size());
+  commandBufferAllocateInfo.commandBufferCount = static_cast<uint32_t>(mCommandBuffers.size());
 
-  mCommandBuffers.resize(mSwapchain.framebuffers.size());
   validateVkResult(
       vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data()));
+}
+
+void VulkanRenderer::createSyncObjects() {
+  VkSemaphoreCreateInfo semaphoreCreateInfo{};
+  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkFenceCreateInfo fenceCreateInfo{};
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
+    validateVkResult(
+        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]));
+    validateVkResult(
+        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]));
+    validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
+  }
+
+  mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
+}
+
+void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
+
+  // vkResetCommandBuffer(mCommandBuffers[imageIndex], 0);
 
   std::array<VkViewport, 1> viewport{};
   viewport[0].x = 0.0f;
@@ -275,52 +300,35 @@ void VulkanRenderer::createCommandBuffers() {
   VkClearValue clearValue;
   clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
 
-  for (size_t i = 0; i < mCommandBuffers.size(); i++) {
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    validateVkResult(vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo));
+  validateVkResult(vkBeginCommandBuffer(mCommandBuffers[imageIndex], &beginInfo));
 
-    // dynamic states
-    vkCmdSetViewport(mCommandBuffers[i], 0, static_cast<uint32_t>(viewport.size()),
-                     viewport.data());
-    vkCmdSetScissor(mCommandBuffers[i], 0, static_cast<uint32_t>(scissors.size()), scissors.data());
+  // dynamic states
+  vkCmdSetViewport(mCommandBuffers[imageIndex], 0, static_cast<uint32_t>(viewport.size()),
+                   viewport.data());
+  vkCmdSetScissor(mCommandBuffers[imageIndex], 0, static_cast<uint32_t>(scissors.size()),
+                  scissors.data());
 
-    VkRenderPassBeginInfo renderPassBeginInfo{};
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.renderPass = mRenderPass;
-    renderPassBeginInfo.framebuffer = mSwapchain.framebuffers[i];
-    renderPassBeginInfo.renderArea = renderArea;
-    renderPassBeginInfo.clearValueCount = 1;
-    renderPassBeginInfo.pClearValues = &clearValue;
+  VkRenderPassBeginInfo renderPassBeginInfo{};
+  renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassBeginInfo.renderPass = mRenderPass;
+  renderPassBeginInfo.framebuffer = mSwapchain.framebuffers[imageIndex];
+  renderPassBeginInfo.renderArea = renderArea;
+  renderPassBeginInfo.clearValueCount = 1;
+  renderPassBeginInfo.pClearValues = &clearValue;
 
-    vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRenderPass(mCommandBuffers[imageIndex], &renderPassBeginInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.pipeline);
-    vkCmdDraw(mCommandBuffers[i], 3, 1, 0, 0);
+  vkCmdBindPipeline(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    mPipeline.pipeline);
+  vkCmdDraw(mCommandBuffers[imageIndex], 3, 1, 0, 0);
 
-    vkCmdEndRenderPass(mCommandBuffers[i]);
-    validateVkResult(vkEndCommandBuffer(mCommandBuffers[i]));
-  }
-}
-
-void VulkanRenderer::createSyncObjects() {
-  VkSemaphoreCreateInfo semaphoreCreateInfo{};
-  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  VkFenceCreateInfo fenceCreateInfo{};
-  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    validateVkResult(
-        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]));
-    validateVkResult(
-        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]));
-    validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
-  }
-
-  mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
+  vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
+  validateVkResult(vkEndCommandBuffer(mCommandBuffers[imageIndex]));
 }
 
 void VulkanRenderer::handleFrameBufferResize() {
@@ -362,6 +370,8 @@ void VulkanRenderer::draw() {
   }
 
   mImagesInFlight[imageIndex] = mInFlightFences[mCurrentFrame];
+
+  recordCommandBuffer(imageIndex);
 
   VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 

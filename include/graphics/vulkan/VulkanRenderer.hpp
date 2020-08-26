@@ -60,6 +60,8 @@ private:
   void createCommandBuffers();
   void createSyncObjects();
 
+  void recordCommandBuffer(uint32_t &imageIndex);
+
   void handleFrameBufferResize();
 
 public:
