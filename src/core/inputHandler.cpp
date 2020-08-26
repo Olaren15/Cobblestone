@@ -1,4 +1,4 @@
-#include "core/inputHandler.hpp"
+#include "core/InputHandler.hpp"
 
 #include <stdexcept>
 #include <string>

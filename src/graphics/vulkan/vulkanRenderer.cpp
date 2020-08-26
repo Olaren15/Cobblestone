@@ -1,4 +1,4 @@
-﻿#include "graphics/vulkan/vulkanRenderer.hpp"
+﻿#include "graphics/vulkan/VulkanRenderer.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -6,7 +6,7 @@
 #include <set>
 #include <vector>
 
-#include "graphics/renderAPI.hpp"
+#include "graphics/RenderAPI.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
 #include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 

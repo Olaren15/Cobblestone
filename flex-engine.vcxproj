@@ -187,29 +187,29 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\inputHandler.cpp" />
+    <ClCompile Include="src\core\InputHandler.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanSwapchain.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanSwapchainSupportDetails.cpp" />
-    <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanRenderer.cpp" />
     <ClCompile Include="src\graphics\RenderWindow.cpp" />
-    <ClCompile Include="src\utils\configuration.cpp" />
+    <ClCompile Include="src\utils\Configuration.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\core\inputHandler.hpp" />
-    <ClInclude Include="include\core\main.hpp" />
-    <ClInclude Include="include\flexEngine.hpp" />
-    <ClInclude Include="include\graphics\renderAPI.hpp" />
+    <ClInclude Include="include\core\InputHandler.hpp" />
+    <ClInclude Include="include\core\Main.hpp" />
+    <ClInclude Include="include\FlexEngine.hpp" />
+    <ClInclude Include="include\graphics\RenderAPI.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanHelpers.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanPipeline.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanSwapchain.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanSwapchainSupportDetails.hpp" />
-    <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanRenderer.hpp" />
     <ClInclude Include="include\graphics\RenderWindow.hpp" />
-    <ClInclude Include="include\utils\configuration.hpp" />
+    <ClInclude Include="include\utils\Configuration.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />

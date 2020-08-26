@@ -5,7 +5,7 @@
 #include <SDL2/SDL.h>
 #include <vulkan/vulkan.hpp>
 
-#include "renderAPI.hpp"
+#include "graphics/RenderAPI.hpp"
 
 namespace flex {
 struct RenderWindow {

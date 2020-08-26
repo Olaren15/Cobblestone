@@ -39,13 +39,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\inputHandler.cpp">
+    <ClCompile Include="src\core\InputHandler.cpp">
       <Filter>Source Files\core</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\vulkanRenderer.cpp">
+    <ClCompile Include="src\graphics\vulkan\VulkanRenderer.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\configuration.cpp">
+    <ClCompile Include="src\utils\Configuration.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\RenderWindow.cpp">
@@ -68,22 +68,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\core\inputHandler.hpp">
+    <ClInclude Include="include\core\InputHandler.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\renderAPI.hpp">
+    <ClInclude Include="include\graphics\RenderAPI.hpp">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\vulkan\vulkanRenderer.hpp">
+    <ClInclude Include="include\graphics\vulkan\VulkanRenderer.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="include\utils\configuration.hpp">
+    <ClInclude Include="include\utils\Configuration.hpp">
       <Filter>Header Files\utils</Filter>
     </ClInclude>
-    <ClInclude Include="include\flexEngine.hpp">
+    <ClInclude Include="include\FlexEngine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\core\main.hpp">
+    <ClInclude Include="include\core\Main.hpp">
       <Filter>Header Files\core</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\RenderWindow.hpp">

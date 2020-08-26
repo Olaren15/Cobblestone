@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 
-#include <flexEngine.hpp>
+#include <FlexEngine.hpp>
 
 int flexMain() {
   const flex::Configuration config;

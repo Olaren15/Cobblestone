@@ -4,7 +4,6 @@
 
 namespace flex {
 struct InputHandler {
-public:
   InputHandler() = delete;
   InputHandler(InputHandler const &) = delete;
   ~InputHandler() = delete;

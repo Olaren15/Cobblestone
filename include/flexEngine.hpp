@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include "core/inputHandler.hpp"
-#include "core/main.hpp"
+#include "core/InputHandler.hpp"
+#include "core/Main.hpp"
 #include "graphics/RenderWindow.hpp"
-#include "graphics/renderAPI.hpp"
-#include "graphics/vulkan/vulkanRenderer.hpp"
-#include "utils/configuration.hpp"
+#include "graphics/vulkan/VulkanRenderer.hpp"
+#include "utils/Configuration.hpp"
