@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "graphics/renderAPI.hpp"
+#include "graphics/vulkan/VulkanHelpers.hpp"
 #include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 
 namespace flex {
@@ -77,7 +78,7 @@ void VulkanRenderer::createVulkanInstance() {
   instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(enabledLayers.size());
   instanceCreateInfo.ppEnabledLayerNames = enabledLayers.data();
 
-  vkCreateInstance(&instanceCreateInfo, nullptr, &mInstance);
+  validateVkResult(vkCreateInstance(&instanceCreateInfo, nullptr, &mInstance));
 }
 
 void VulkanRenderer::selectPhysicalDevice() {
@@ -183,7 +184,7 @@ void VulkanRenderer::createVulkanDevice() {
   deviceCreateInfo.ppEnabledExtensionNames = mRequiredDeviceExtensionsNames.data();
   deviceCreateInfo.pEnabledFeatures = &enabledDeviceFeatures;
 
-  vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, nullptr, &mDevice);
+  validateVkResult(vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, nullptr, &mDevice));
 }
 
 void VulkanRenderer::retrieveQueues() {
@@ -230,7 +231,7 @@ void VulkanRenderer::createRenderPass() {
   renderPassCreateInfo.dependencyCount = 1;
   renderPassCreateInfo.pDependencies = &subpassDependency;
 
-  vkCreateRenderPass(mDevice, &renderPassCreateInfo, nullptr, &mRenderPass);
+  validateVkResult(vkCreateRenderPass(mDevice, &renderPassCreateInfo, nullptr, &mRenderPass));
 }
 
 void VulkanRenderer::createCommandPool() {
@@ -238,7 +239,7 @@ void VulkanRenderer::createCommandPool() {
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   commandPoolCreateInfo.queueFamilyIndex = mQueueFamilyIndices.graphics.value();
 
-  vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mCommandPool);
+  validateVkResult(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mCommandPool));
 }
 
 void VulkanRenderer::createCommandBuffers() {
@@ -251,7 +252,8 @@ void VulkanRenderer::createCommandBuffers() {
       static_cast<uint32_t>(mSwapchain.framebuffers.size());
 
   mCommandBuffers.resize(mSwapchain.framebuffers.size());
-  vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data());
+  validateVkResult(
+      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data()));
 
   std::array<VkViewport, 1> viewport{};
   viewport[0].x = 0.0f;
@@ -276,7 +278,7 @@ void VulkanRenderer::createCommandBuffers() {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo);
+    validateVkResult(vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo));
 
     // dynamic states
     vkCmdSetViewport(mCommandBuffers[i], 0, static_cast<uint32_t>(viewport.size()),
@@ -297,7 +299,7 @@ void VulkanRenderer::createCommandBuffers() {
     vkCmdDraw(mCommandBuffers[i], 3, 1, 0, 0);
 
     vkCmdEndRenderPass(mCommandBuffers[i]);
-    vkEndCommandBuffer(mCommandBuffers[i]);
+    validateVkResult(vkEndCommandBuffer(mCommandBuffers[i]));
   }
 }
 
@@ -310,16 +312,18 @@ void VulkanRenderer::createSyncObjects() {
   fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]);
-    vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]);
-    vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]);
+    validateVkResult(
+        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]));
+    validateVkResult(
+        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]));
+    validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
   }
 
   mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
 }
 
 void VulkanRenderer::handleFrameBufferResize() {
-  vkDeviceWaitIdle(mDevice);
+  validateVkResult(vkDeviceWaitIdle(mDevice));
 
   vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()),
                        mCommandBuffers.data());
@@ -332,7 +336,8 @@ void VulkanRenderer::handleFrameBufferResize() {
 
 void VulkanRenderer::draw() {
 
-  vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
+  validateVkResult(
+      vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX));
 
   uint32_t imageIndex;
   VkResult const result =
@@ -342,9 +347,11 @@ void VulkanRenderer::draw() {
     handleFrameBufferResize();
     return;
   }
+  validateVkResult(result);
 
   if (mImagesInFlight[imageIndex] != nullptr) {
-    vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+    validateVkResult(
+        vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX));
   }
 
   mImagesInFlight[imageIndex] = mInFlightFences[mCurrentFrame];
@@ -361,8 +368,8 @@ void VulkanRenderer::draw() {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &mCommandBuffers[imageIndex];
 
-  vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
-  vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]);
+  validateVkResult(vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]));
+  validateVkResult(vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]));
 
   std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.swapchain};
 
@@ -374,7 +381,7 @@ void VulkanRenderer::draw() {
   presentInfo.pSwapchains = presentSwapchain.data();
   presentInfo.pImageIndices = &imageIndex;
 
-  vkQueuePresentKHR(mPresentQueue, &presentInfo);
+  validateVkResult(vkQueuePresentKHR(mPresentQueue, &presentInfo));
 
   mCurrentFrame = (mCurrentFrame + 1) % mMaxFramesInFlight;
 }

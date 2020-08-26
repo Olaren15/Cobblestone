@@ -63,6 +63,9 @@
     <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\inputHandler.hpp">
@@ -96,6 +99,9 @@
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\VulkanHelpers.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
   </ItemGroup>

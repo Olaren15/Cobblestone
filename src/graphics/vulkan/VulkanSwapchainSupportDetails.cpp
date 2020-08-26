@@ -1,5 +1,7 @@
 #include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 
+#include "graphics/vulkan/VulkanHelpers.hpp"
+
 flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
     VulkanSwapchainSupportDetails const &swapchainSupportDetails) {
   capabilities = swapchainSupportDetails.capabilities;
@@ -7,19 +9,23 @@ flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
   presentModes = swapchainSupportDetails.presentModes;
 }
 
-flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(VkPhysicalDevice const &physicalDevice,
-                                                       VkSurfaceKHR const &surface) {
-  vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
+flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
+    VkPhysicalDevice const &physicalDevice, VkSurfaceKHR const &surface) {
+  validateVkResult(
+      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities));
 
   uint32_t vectorLength;
-  vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, nullptr);
+  validateVkResult(
+      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, nullptr));
   formats.resize(vectorLength);
-  vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, formats.data());
+  validateVkResult(
+      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, formats.data()));
 
-  vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength, nullptr);
+  validateVkResult(
+      vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength, nullptr));
   presentModes.resize(vectorLength);
-  vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength,
-                                            presentModes.data());
+  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength,
+                                                             presentModes.data()));
 }
 
 bool flex::VulkanSwapchainSupportDetails::isUsable() const {

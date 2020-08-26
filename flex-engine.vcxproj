@@ -188,6 +188,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\inputHandler.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanSwapchain.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="include\core\main.hpp" />
     <ClInclude Include="include\flexEngine.hpp" />
     <ClInclude Include="include\graphics\renderAPI.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanHelpers.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanPipeline.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanSwapchain.hpp" />

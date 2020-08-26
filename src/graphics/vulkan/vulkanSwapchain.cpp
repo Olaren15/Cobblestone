@@ -2,6 +2,8 @@
 
 #include <set>
 
+#include "graphics/vulkan/VulkanHelpers.hpp"
+
 namespace flex {
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
     std::vector<VkSurfaceFormatKHR> const &availableFormats) const {
@@ -51,9 +53,9 @@ VkExtent2D VulkanSwapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const
 
 void VulkanSwapchain::retrieveSwapchainImages(VkDevice const &device) {
   uint32_t swapchainImageCount;
-  vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr);
+  validateVkResult(vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr));
   images.resize(swapchainImageCount);
-  vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, images.data());
+  validateVkResult(vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, images.data()));
 }
 
 void VulkanSwapchain::createImageViews(VkDevice const &device) {
@@ -81,7 +83,7 @@ void VulkanSwapchain::createImageViews(VkDevice const &device) {
     imageViewCreateInfo.components = componentMapping;
     imageViewCreateInfo.subresourceRange = subresourceRange;
 
-    vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageViews[i]);
+    validateVkResult(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageViews[i]));
   }
 }
 
@@ -135,7 +137,7 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
   swapchainCreateInfo.clipped = VK_TRUE;
   swapchainCreateInfo.oldSwapchain = swapchain;
 
-  vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain);
+  validateVkResult(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain));
 
   retrieveSwapchainImages(device);
   createImageViews(device);
@@ -154,7 +156,8 @@ void VulkanSwapchain::createFrameBuffers(VkDevice const &device, VkRenderPass re
     framebufferCreateInfo.height = extent.height;
     framebufferCreateInfo.layers = 1;
 
-    vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
+    validateVkResult(
+        vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]));
   }
 }
 

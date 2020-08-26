@@ -4,6 +4,8 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "graphics/vulkan/VulkanHelpers.hpp"
+
 namespace flex {
 VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
                                                   std::filesystem::path const &shaderPath) const {
@@ -26,7 +28,7 @@ VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
   shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t *>(buffer.data());
 
   VkShaderModule shaderModule{};
-  vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule);
+  validateVkResult(vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule));
 
   return shaderModule;
 }
@@ -129,7 +131,8 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   pipelineCreateInfo.subpass = 0;
   pipelineCreateInfo.basePipelineIndex = -1;
 
-  vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline);
+  validateVkResult(
+      vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
 void VulkanPipeline::destroy(VkDevice const &device) const {
