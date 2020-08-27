@@ -111,12 +111,10 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
                      swapchainSupportDetails.capabilities.maxImageCount)
           : swapchainSupportDetails.capabilities.minImageCount + 1;
 
-  std::vector<uint32_t> uniqueQueueFamilies{queueFamilyIndices.graphics.value(),
-                                            queueFamilyIndices.transfer.value(),
-                                            queueFamilyIndices.present.value()};
-  // remove duplicate queues
-  uniqueQueueFamilies.erase(std::unique(uniqueQueueFamilies.begin(), uniqueQueueFamilies.end()),
-                            uniqueQueueFamilies.end());
+  std::set<uint32_t> uniqueQueueFamilyIndices{queueFamilyIndices.graphics.value(),
+                                              queueFamilyIndices.present.value()};
+  std::vector<uint32_t> queueFamiliesIndices{uniqueQueueFamilyIndices.begin(),
+                                             uniqueQueueFamilyIndices.end()};
 
   VkSwapchainCreateInfoKHR swapchainCreateInfo{};
   swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -127,12 +125,12 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
   swapchainCreateInfo.imageExtent = extent;
   swapchainCreateInfo.imageArrayLayers = 1;
   swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-  if (uniqueQueueFamilies.size() > 1)
+  if (queueFamiliesIndices.size() > 1)
     swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
   else
     swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  swapchainCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>(uniqueQueueFamilies.size());
-  swapchainCreateInfo.pQueueFamilyIndices = uniqueQueueFamilies.data();
+  swapchainCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>(queueFamiliesIndices.size());
+  swapchainCreateInfo.pQueueFamilyIndices = queueFamiliesIndices.data();
   swapchainCreateInfo.preTransform = swapchainSupportDetails.capabilities.currentTransform;
   swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   swapchainCreateInfo.presentMode = presentMode;
