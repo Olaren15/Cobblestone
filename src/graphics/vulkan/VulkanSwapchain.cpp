@@ -1,6 +1,7 @@
 ﻿#include "graphics/vulkan/VulkanSwapchain.hpp"
 
 #include <algorithm>
+#include <array>
 #include <set>
 #include <stdexcept>
 
@@ -25,12 +26,18 @@ VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
 
 VkPresentModeKHR VulkanSwapchain::chooseSwapchainPresentMode(
     std::vector<VkPresentModeKHR> const &availablePresentModes) const {
-  for (VkPresentModeKHR const &availablePresentMode : availablePresentModes) {
-    if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-      return availablePresentMode;
+
+  const std::set<VkPresentModeKHR> rankedModes{VK_PRESENT_MODE_MAILBOX_KHR,
+                                               VK_PRESENT_MODE_IMMEDIATE_KHR};
+
+  for (VkPresentModeKHR const &presentMode : rankedModes) {
+    auto mode = std::find(availablePresentModes.begin(), availablePresentModes.end(), presentMode);
+    if (mode != availablePresentModes.end()) {
+      return *mode;
     }
   }
 
+  // only guaranteed mode
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
