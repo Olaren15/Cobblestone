@@ -188,6 +188,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\InputHandler.cpp" />
+    <ClCompile Include="src\graphics\Vertex.cpp" />
+    <ClCompile Include="src\graphics\vulkan\vk_mem_alloc.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp" />
@@ -202,6 +205,9 @@
     <ClInclude Include="include\core\Main.hpp" />
     <ClInclude Include="include\FlexEngine.hpp" />
     <ClInclude Include="include\graphics\RenderAPI.hpp" />
+    <ClInclude Include="include\graphics\Vertex.hpp" />
+    <ClInclude Include="include\graphics\vulkan\vk_mem_alloc.h" />
+    <ClInclude Include="include\graphics\vulkan\VulkanBuffer.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanHelpers.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanPipeline.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp" />

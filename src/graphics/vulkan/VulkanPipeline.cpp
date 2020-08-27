@@ -4,6 +4,7 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "graphics/Vertex.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
@@ -48,8 +49,17 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   shaderStages[1].module = fragShaderModule;
   shaderStages[1].pName = "main";
 
+  VkVertexInputBindingDescription bindingDescription = Vertex::getVulkanBindingDescription();
+  std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions =
+      Vertex::getVulkanAttributeDescriptions();
+
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
   vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescription;
+  vertexInputStateCreateInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(attributeDescriptions.size());
+  vertexInputStateCreateInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
   inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

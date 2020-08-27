@@ -25,6 +25,7 @@ VulkanRenderer::VulkanRenderer(RenderWindow &window) {
   mQueueFamilyIndices = VulkanQueueFamilyIndices{mPhysicalDevice, mSurface};
   createVulkanDevice();
   retrieveQueues();
+  createAllocator();
   mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueueFamilyIndices);
   createRenderPass();
   mPipeline.createPipeline(mDevice, mRenderPass);
@@ -32,11 +33,14 @@ VulkanRenderer::VulkanRenderer(RenderWindow &window) {
   createCommandPool();
   createCommandBuffers();
   createSyncObjects();
+  createVertexBuffer();
   mCurrentFrame = 0;
 }
 
 VulkanRenderer::~VulkanRenderer() {
   vkDeviceWaitIdle(mDevice);
+
+  mVertexBuffer.destroy(mAllocator);
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
     vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
@@ -47,6 +51,7 @@ VulkanRenderer::~VulkanRenderer() {
   mPipeline.destroy(mDevice);
   mSwapchain.destroy(mDevice);
   vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+  vmaDestroyAllocator(mAllocator);
   vkDestroyDevice(mDevice, nullptr);
   vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
   vkDestroyInstance(mInstance, nullptr);
@@ -194,6 +199,15 @@ void VulkanRenderer::retrieveQueues() {
   vkGetDeviceQueue(mDevice, mQueueFamilyIndices.transfer.value(), 0, &mTransferQueue);
 }
 
+void VulkanRenderer::createAllocator() {
+  VmaAllocatorCreateInfo allocatorCreateInfo{};
+  allocatorCreateInfo.instance = mInstance;
+  allocatorCreateInfo.physicalDevice = mPhysicalDevice;
+  allocatorCreateInfo.device = mDevice;
+
+  vmaCreateAllocator(&allocatorCreateInfo, &mAllocator);
+}
+
 void VulkanRenderer::createRenderPass() {
 
   VkAttachmentDescription colorAttachment{};
@@ -277,9 +291,18 @@ void VulkanRenderer::createSyncObjects() {
   mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
 }
 
+void VulkanRenderer::createVertexBuffer() {
+  mVertexBuffer.allocateVertex(mAllocator, sizeof(mVertices[0]) * mVertices.size());
+  mVertexBuffer.setContent(mAllocator, mVertices.data());
+}
+
 void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
 
-  // vkResetCommandBuffer(mCommandBuffers[imageIndex], 0);
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  validateVkResult(vkBeginCommandBuffer(mCommandBuffers[imageIndex], &beginInfo));
 
   std::array<VkViewport, 1> viewport{};
   viewport[0].x = 0.0f;
@@ -293,24 +316,18 @@ void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
   scissors[0].offset = {0, 0};
   scissors[0].extent = mSwapchain.extent;
 
+  // dynamic states
+  vkCmdSetViewport(mCommandBuffers[imageIndex], 0, static_cast<uint32_t>(viewport.size()),
+                   viewport.data());
+  vkCmdSetScissor(mCommandBuffers[imageIndex], 0, static_cast<uint32_t>(scissors.size()),
+                  scissors.data());
+
   VkRect2D renderArea;
   renderArea.offset = {0, 0};
   renderArea.extent = mSwapchain.extent;
 
   VkClearValue clearValue;
   clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-  validateVkResult(vkBeginCommandBuffer(mCommandBuffers[imageIndex], &beginInfo));
-
-  // dynamic states
-  vkCmdSetViewport(mCommandBuffers[imageIndex], 0, static_cast<uint32_t>(viewport.size()),
-                   viewport.data());
-  vkCmdSetScissor(mCommandBuffers[imageIndex], 0, static_cast<uint32_t>(scissors.size()),
-                  scissors.data());
 
   VkRenderPassBeginInfo renderPassBeginInfo{};
   renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -325,7 +342,12 @@ void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
 
   vkCmdBindPipeline(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                     mPipeline.pipeline);
-  vkCmdDraw(mCommandBuffers[imageIndex], 3, 1, 0, 0);
+
+  std::array<VkDeviceSize, 1> vertexBufferOffset{0};
+  vkCmdBindVertexBuffers(mCommandBuffers[imageIndex], 0, 1, &mVertexBuffer.buffer,
+                         vertexBufferOffset.data());
+
+  vkCmdDraw(mCommandBuffers[imageIndex], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);
 
   vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
   validateVkResult(vkEndCommandBuffer(mCommandBuffers[imageIndex]));
@@ -351,6 +373,11 @@ void VulkanRenderer::handleFrameBufferResize() {
 
 void VulkanRenderer::draw() {
 
+  if (mDoNotRender) {
+    handleFrameBufferResize();
+    return;
+  }
+
   validateVkResult(
       vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX));
 
@@ -358,7 +385,7 @@ void VulkanRenderer::draw() {
   VkResult const result =
       vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, UINT64_MAX,
                             mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || mDoNotRender) {
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     handleFrameBufferResize();
     return;
   }

@@ -66,6 +66,15 @@
     <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Vertex.cpp">
+      <Filter>Source Files\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\vk_mem_alloc.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\vulkan\VulkanBuffer.cpp">
+      <Filter>Source Files\graphics\vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\InputHandler.hpp">
@@ -102,6 +111,15 @@
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\VulkanHelpers.hpp">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Vertex.hpp">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\vk_mem_alloc.h">
+      <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\vulkan\VulkanBuffer.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
     </ClInclude>
   </ItemGroup>
