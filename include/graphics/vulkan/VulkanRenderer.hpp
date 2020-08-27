@@ -1,17 +1,17 @@
 ﻿#pragma once
 
-#include "VulkanBuffer.hpp"
-
 #include <array>
 
 #include <vulkan/vulkan.h>
 
 #include "graphics/RenderWindow.hpp"
 #include "graphics/Vertex.hpp"
+#include "graphics/vulkan/VulkanBuffer.hpp"
+#include "graphics/vulkan/VulkanMemoryManager.hpp"
 #include "graphics/vulkan/VulkanPipeline.hpp"
 #include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
+#include "graphics/vulkan/VulkanQueues.hpp"
 #include "graphics/vulkan/VulkanSwapchain.hpp"
-#include <graphics/vulkan/vk_mem_alloc.h>
 
 namespace flex {
 enum struct QueueFamily;
@@ -36,14 +36,11 @@ private:
   VkSurfaceKHR mSurface;
 
   VkPhysicalDevice mPhysicalDevice{};
-  VulkanQueueFamilyIndices mQueueFamilyIndices;
   VkDevice mDevice{};
 
-  VkQueue mGraphicsQueue{};
-  VkQueue mPresentQueue{};
-  VkQueue mTransferQueue{};
+  VulkanQueues mQueues;
 
-  VmaAllocator mAllocator{};
+  VulkanMemoryManager mMemoryManager;
 
   VulkanSwapchain mSwapchain;
   VulkanPipeline mPipeline{};
@@ -66,8 +63,6 @@ private:
   [[nodiscard]] bool
   physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice) const;
   void createVulkanDevice();
-  void retrieveQueues();
-  void createAllocator();
   void createRenderPass();
   void createCommandPool();
   void createCommandBuffers();

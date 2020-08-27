@@ -53,4 +53,12 @@ bool VulkanQueueFamilyIndices::isComplete() const {
   return graphics.has_value() && transfer.has_value() && present.has_value();
 }
 
+bool VulkanQueueFamilyIndices::hasUniqueTransferQueue() const {
+  return graphics.value() != transfer.value();
+}
+
+std::set<uint32_t> VulkanQueueFamilyIndices::getUniqueIndices() const {
+  return std::set<uint32_t>{graphics.value(), transfer.value(), present.value()};
+}
+
 } // namespace flex

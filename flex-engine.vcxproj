@@ -192,8 +192,10 @@
     <ClCompile Include="src\graphics\vulkan\vk_mem_alloc.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanMemoryManager.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanQueueFamilyIndices.cpp" />
+    <ClCompile Include="src\graphics\vulkan\VulkanQueues.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanSwapchain.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanSwapchainSupportDetails.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanRenderer.cpp" />
@@ -209,8 +211,10 @@
     <ClInclude Include="include\graphics\vulkan\vk_mem_alloc.h" />
     <ClInclude Include="include\graphics\vulkan\VulkanBuffer.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanHelpers.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanMemoryManager.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanPipeline.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanQueueFamilyIndices.hpp" />
+    <ClInclude Include="include\graphics\vulkan\VulkanQueues.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanSwapchain.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanSwapchainSupportDetails.hpp" />
     <ClInclude Include="include\graphics\vulkan\VulkanRenderer.hpp" />

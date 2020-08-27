@@ -22,11 +22,11 @@ VulkanRenderer::VulkanRenderer(RenderWindow &window) {
   createVulkanInstance();
   mSurface = window.getDrawableVulkanSurface(mInstance);
   selectPhysicalDevice();
-  mQueueFamilyIndices = VulkanQueueFamilyIndices{mPhysicalDevice, mSurface};
+  mQueues.buildQueueFamilyIndices(mPhysicalDevice, mSurface);
   createVulkanDevice();
-  retrieveQueues();
-  createAllocator();
-  mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueueFamilyIndices);
+  mQueues.retrieveQueues(mDevice);
+  mMemoryManager.initialize(mInstance, mPhysicalDevice, mDevice, mQueues);
+  mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueues.familyIndices);
   createRenderPass();
   mPipeline.createPipeline(mDevice, mRenderPass);
   mSwapchain.createFrameBuffers(mDevice, mRenderPass);
@@ -40,7 +40,7 @@ VulkanRenderer::VulkanRenderer(RenderWindow &window) {
 VulkanRenderer::~VulkanRenderer() {
   vkDeviceWaitIdle(mDevice);
 
-  mVertexBuffer.destroy(mAllocator);
+  mMemoryManager.destroyBuffer(mVertexBuffer);
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
     vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
@@ -51,7 +51,7 @@ VulkanRenderer::~VulkanRenderer() {
   mPipeline.destroy(mDevice);
   mSwapchain.destroy(mDevice);
   vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
-  vmaDestroyAllocator(mAllocator);
+  mMemoryManager.destroy();
   vkDestroyDevice(mDevice, nullptr);
   vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
   vkDestroyInstance(mInstance, nullptr);
@@ -162,9 +162,7 @@ bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
 
 void VulkanRenderer::createVulkanDevice() {
   float queuePriority = 1.0f;
-  std::set<uint32_t> uniqueQueueFamilyIndices = {mQueueFamilyIndices.graphics.value(),
-                                                 mQueueFamilyIndices.transfer.value(),
-                                                 mQueueFamilyIndices.present.value()};
+  std::set<uint32_t> uniqueQueueFamilyIndices = mQueues.familyIndices.getUniqueIndices();
 
   std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
   queueCreateInfos.reserve(uniqueQueueFamilyIndices.size());
@@ -191,21 +189,6 @@ void VulkanRenderer::createVulkanDevice() {
   deviceCreateInfo.pEnabledFeatures = &enabledDeviceFeatures;
 
   validateVkResult(vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, nullptr, &mDevice));
-}
-
-void VulkanRenderer::retrieveQueues() {
-  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.graphics.value(), 0, &mGraphicsQueue);
-  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.present.value(), 0, &mPresentQueue);
-  vkGetDeviceQueue(mDevice, mQueueFamilyIndices.transfer.value(), 0, &mTransferQueue);
-}
-
-void VulkanRenderer::createAllocator() {
-  VmaAllocatorCreateInfo allocatorCreateInfo{};
-  allocatorCreateInfo.instance = mInstance;
-  allocatorCreateInfo.physicalDevice = mPhysicalDevice;
-  allocatorCreateInfo.device = mDevice;
-
-  vmaCreateAllocator(&allocatorCreateInfo, &mAllocator);
 }
 
 void VulkanRenderer::createRenderPass() {
@@ -254,7 +237,7 @@ void VulkanRenderer::createCommandPool() {
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   commandPoolCreateInfo.flags =
       VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = mQueueFamilyIndices.graphics.value();
+  commandPoolCreateInfo.queueFamilyIndex = mQueues.familyIndices.graphics.value();
 
   validateVkResult(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mCommandPool));
 }
@@ -292,8 +275,8 @@ void VulkanRenderer::createSyncObjects() {
 }
 
 void VulkanRenderer::createVertexBuffer() {
-  mVertexBuffer.allocateVertex(mAllocator, sizeof(mVertices[0]) * mVertices.size());
-  mVertexBuffer.setContent(mAllocator, mVertices.data());
+  mMemoryManager.createVertexBuffer(mVertexBuffer, mVertices.data(),
+                                    sizeof(mVertices[0]) * mVertices.size());
 }
 
 void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
@@ -363,7 +346,7 @@ void VulkanRenderer::handleFrameBufferResize() {
                          mCommandBuffers.data());
 
     mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, *mWindow, mSurface,
-                                       mQueueFamilyIndices, mRenderPass);
+                                       mQueues.familyIndices, mRenderPass);
 
     createCommandBuffers();
   } else {
@@ -413,7 +396,7 @@ void VulkanRenderer::draw() {
   submitInfo.pCommandBuffers = &mCommandBuffers[imageIndex];
 
   validateVkResult(vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]));
-  validateVkResult(vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]));
+  validateVkResult(vkQueueSubmit(mQueues.graphics, 1, &submitInfo, mInFlightFences[mCurrentFrame]));
 
   std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.swapchain};
 
@@ -425,7 +408,7 @@ void VulkanRenderer::draw() {
   presentInfo.pSwapchains = presentSwapchain.data();
   presentInfo.pImageIndices = &imageIndex;
 
-  validateVkResult(vkQueuePresentKHR(mPresentQueue, &presentInfo));
+  validateVkResult(vkQueuePresentKHR(mQueues.present, &presentInfo));
 
   mCurrentFrame = (mCurrentFrame + 1) % mMaxFramesInFlight;
 }
