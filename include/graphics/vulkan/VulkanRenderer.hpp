@@ -33,7 +33,7 @@ private:
   RenderWindow *mWindow;
 
   VkInstance mInstance{};
-  vk::SurfaceKHR mSurface;
+  VkSurfaceKHR mSurface;
 
   VkPhysicalDevice mPhysicalDevice{};
   VulkanQueueFamilyIndices mQueueFamilyIndices;

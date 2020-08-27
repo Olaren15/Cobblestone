@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
-#include <vulkan/vulkan.hpp>
+#include <vulkan/vulkan.h>
 
 #include "graphics/RenderAPI.hpp"
 
