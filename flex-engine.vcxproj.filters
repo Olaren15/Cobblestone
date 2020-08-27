@@ -37,6 +37,12 @@
     <Filter Include="Header Files\utils">
       <UniqueIdentifier>{e6ba2ff0-eff8-4cf0-a574-6ddc382b185a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\shaders">
+      <UniqueIdentifier>{a6eb443d-928c-4aff-b2e3-26385a8b36b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\shaders\compiled">
+      <UniqueIdentifier>{d6cf236d-9ca1-406f-a134-3613de17f2f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\InputHandler.cpp">
@@ -134,5 +140,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
+    <None Include="shaders\shader.frag">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="shaders\shader.vert">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <_EmbedManagedResourceFile Include="shaders\frag.spv">
+      <Filter>Resource Files\shaders\compiled</Filter>
+    </_EmbedManagedResourceFile>
+    <_EmbedManagedResourceFile Include="shaders\vert.spv">
+      <Filter>Resource Files\shaders\compiled</Filter>
+    </_EmbedManagedResourceFile>
   </ItemGroup>
 </Project>

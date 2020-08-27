@@ -135,9 +135,7 @@
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
       <OptimizeReferences>false</OptimizeReferences>
     </Link>
-    <PostBuildEvent>
-      <Command>$(ProjectDir)compile-shaders.bat</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -174,6 +172,7 @@
   <ItemGroup>
     <None Include="settings.cfg">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
     </None>
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
