@@ -72,9 +72,6 @@
     <ClCompile Include="src\graphics\vulkan\vk_mem_alloc.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\vulkan\VulkanBuffer.cpp">
-      <Filter>Source Files\graphics\vulkan</Filter>
-    </ClCompile>
     <ClCompile Include="src\graphics\vulkan\VulkanMemoryManager.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>

@@ -276,7 +276,7 @@ void VulkanRenderer::createSyncObjects() {
 
 void VulkanRenderer::createVertexBuffer() {
   mMemoryManager.createVertexBuffer(mVertexBuffer, mVertices.data(),
-                                    sizeof(mVertices[0]) * mVertices.size());
+                                    sizeof mVertices[0] * mVertices.size());
 }
 
 void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {

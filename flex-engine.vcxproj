@@ -190,7 +190,6 @@
     <ClCompile Include="src\core\InputHandler.cpp" />
     <ClCompile Include="src\graphics\Vertex.cpp" />
     <ClCompile Include="src\graphics\vulkan\vk_mem_alloc.cpp" />
-    <ClCompile Include="src\graphics\vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanMemoryManager.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanPipeline.cpp" />

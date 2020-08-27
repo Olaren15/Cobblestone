@@ -9,7 +9,6 @@
 #include "graphics/vulkan/VulkanBuffer.hpp"
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 #include "graphics/vulkan/VulkanPipeline.hpp"
-#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
 #include "graphics/vulkan/VulkanQueues.hpp"
 #include "graphics/vulkan/VulkanSwapchain.hpp"
 
