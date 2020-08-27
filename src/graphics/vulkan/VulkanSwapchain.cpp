@@ -1,6 +1,8 @@
 ﻿#include "graphics/vulkan/VulkanSwapchain.hpp"
 
+#include <algorithm>
 #include <set>
+#include <stdexcept>
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
 

@@ -1,3 +1,4 @@
+#pragma warning(push, 0)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnullability-completeness"
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -16739,3 +16740,4 @@ VMA_CALL_PRE void VMA_CALL_POST vmaDestroyImage(VmaAllocator allocator, VkImage 
 
 #endif // #ifdef VMA_IMPLEMENTATION
 #pragma clang diagnostic pop
+#pragma warning(pop)

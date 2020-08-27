@@ -288,7 +288,7 @@ void VulkanRenderer::createSyncObjects() {
     validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
   }
 
-  mImagesInFlight.resize(mSwapchain.images.size(), nullptr);
+  mImagesInFlight.resize(mSwapchain.images.size(), {});
 }
 
 void VulkanRenderer::createVertexBuffer() {
@@ -384,14 +384,14 @@ void VulkanRenderer::draw() {
   uint32_t imageIndex;
   VkResult const result =
       vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, UINT64_MAX,
-                            mImageAvailableSemaphores[mCurrentFrame], nullptr, &imageIndex);
+                            mImageAvailableSemaphores[mCurrentFrame], VK_NULL_HANDLE, &imageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
     handleFrameBufferResize();
     return;
   }
   validateVkResult(result);
 
-  if (mImagesInFlight[imageIndex] != nullptr) {
+  if (mImagesInFlight[imageIndex] != VK_NULL_HANDLE) {
     validateVkResult(
         vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX));
   }
