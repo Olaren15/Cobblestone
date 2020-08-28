@@ -7,13 +7,13 @@
 namespace flex {
 struct VulkanPipeline {
 private:
+  VkShaderModule mVertShaderModule;
+  VkShaderModule mFragShaderModule;
+
   [[nodiscard]] VkShaderModule createShaderModule(VkDevice const &device,
                                                   std::filesystem::path const &shaderPath) const;
 
 public:
-  VkShaderModule vertShaderModule;
-  VkShaderModule fragShaderModule;
-  VkDynamicState dynamicState;
   VkPipelineLayout pipelineLayout;
   VkPipeline pipeline;
 

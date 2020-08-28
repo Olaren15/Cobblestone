@@ -4,6 +4,7 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "graphics/Camera.hpp"
 #include "graphics/Vertex.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
@@ -35,18 +36,18 @@ VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
 }
 
 void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &renderPass) {
-  vertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
-  fragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
+  mVertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
+  mFragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
 
   std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
   shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  shaderStages[0].module = vertShaderModule;
+  shaderStages[0].module = mVertShaderModule;
   shaderStages[0].pName = "main";
 
   shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  shaderStages[1].module = fragShaderModule;
+  shaderStages[1].module = mFragShaderModule;
   shaderStages[1].pName = "main";
 
   VkVertexInputBindingDescription bindingDescription = Vertex::getVulkanBindingDescription();
@@ -78,7 +79,7 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
   rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
   rasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;
   rasterizationStateCreateInfo.depthBiasClamp = 0.0f;
@@ -120,8 +121,15 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   multiSampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
   multiSampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
 
+  VkPushConstantRange pushConstantRange;
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(glm::mat4);
+
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+  pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
   vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
@@ -148,7 +156,7 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
 void VulkanPipeline::destroy(VkDevice const &device) const {
   vkDestroyPipeline(device, pipeline, nullptr);
   vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-  vkDestroyShaderModule(device, fragShaderModule, nullptr);
-  vkDestroyShaderModule(device, vertShaderModule, nullptr);
+  vkDestroyShaderModule(device, mFragShaderModule, nullptr);
+  vkDestroyShaderModule(device, mVertShaderModule, nullptr);
 }
 } // namespace flex

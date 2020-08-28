@@ -6,6 +6,7 @@
 #include <set>
 #include <vector>
 
+#include "graphics/Camera.hpp"
 #include "graphics/RenderAPI.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
 #include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
@@ -271,7 +272,7 @@ void VulkanRenderer::createSyncObjects() {
     validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
   }
 
-  mImagesInFlight.resize(mSwapchain.images.size(), {});
+  mImagesInFlight.resize(mSwapchain.images.size(), mInFlightFences[0]);
 }
 
 void VulkanRenderer::createMeshBuffer() { mMemoryManager.createMeshBuffer(mMeshBuffer, mMesh); }
@@ -319,6 +320,11 @@ void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
 
   vkCmdBeginRenderPass(mCommandBuffers[imageIndex], &renderPassBeginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
+
+  glm::mat4 cameraView =
+      Camera::getView(static_cast<float>(mSwapchain.extent.width) / mSwapchain.extent.height);
+  vkCmdPushConstants(mCommandBuffers[imageIndex], mPipeline.pipelineLayout,
+                     VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof cameraView, &cameraView);
 
   vkCmdBindPipeline(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                     mPipeline.pipeline);
@@ -374,11 +380,7 @@ void VulkanRenderer::draw() {
   }
   validateVkResult(result);
 
-  if (mImagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-    validateVkResult(
-        vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX));
-  }
-
+  validateVkResult(vkWaitForFences(mDevice, 1, &mImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX));
   mImagesInFlight[imageIndex] = mInFlightFences[mCurrentFrame];
 
   recordCommandBuffer(imageIndex);
