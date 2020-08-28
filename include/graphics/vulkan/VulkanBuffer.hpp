@@ -7,7 +7,6 @@
 namespace flex {
 struct VulkanBuffer {
   VmaAllocation allocation{};
-  VmaAllocationInfo allocationInfo{};
   VkBuffer buffer{};
 
   VulkanBuffer() = default;

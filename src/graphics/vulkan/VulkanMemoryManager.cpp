@@ -54,21 +54,29 @@ void flex::VulkanMemoryManager::destroy() const {
   vmaDestroyAllocator(mAllocator);
 }
 
-void flex::VulkanMemoryManager::createVertexBuffer(VulkanBuffer &vertexBuffer, void *data,
-                                                   VkDeviceSize const &dataSize) {
-  VkBufferCreateInfo bufferCreateInfo = buildCommonBufferCreateInfo(dataSize);
-  bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+void flex::VulkanMemoryManager::createMeshBuffer(VulkanBuffer &vertexBuffer, Mesh &mesh) {
+
+  VkDeviceSize const indicesSize = mesh.getIndicesSize();
+  VkDeviceSize const verticesSize = mesh.getVerticesSize();
+  VkDeviceSize const meshDataSize = indicesSize + verticesSize;
+
+  VkBufferCreateInfo bufferCreateInfo = buildCommonBufferCreateInfo(meshDataSize);
+  bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                           VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
   VmaAllocationCreateInfo allocationCreateInfo{};
   allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
-                                   &vertexBuffer.buffer, &vertexBuffer.allocation,
-                                   &vertexBuffer.allocationInfo));
+                                   &vertexBuffer.buffer, &vertexBuffer.allocation, nullptr));
 
   VulkanBuffer stagingBuffer;
-  createStagingBuffer(stagingBuffer, data, dataSize);
-  copyBuffer(stagingBuffer, vertexBuffer, dataSize);
+  createStagingBuffer(stagingBuffer, mesh.indices.data(), indicesSize);
+  copyBuffer(stagingBuffer, vertexBuffer, indicesSize, 0, 0);
+  destroyBuffer(stagingBuffer);
+
+  createStagingBuffer(stagingBuffer, mesh.vertices.data(), verticesSize);
+  copyBuffer(stagingBuffer, vertexBuffer, verticesSize, 0, indicesSize);
   destroyBuffer(stagingBuffer);
 }
 
@@ -81,8 +89,7 @@ void flex::VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
   allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
-                                   &stagingBuffer.buffer, &stagingBuffer.allocation,
-                                   &stagingBuffer.allocationInfo));
+                                   &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
 
   void *mappedMemory;
   vmaMapMemory(mAllocator, stagingBuffer.allocation, &mappedMemory);
@@ -91,7 +98,9 @@ void flex::VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
 }
 
 void flex::VulkanMemoryManager::copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
-                                           VkDeviceSize const &bufferSize) const {
+                                           VkDeviceSize const &bufferSize,
+                                           VkDeviceSize const srcOffset,
+                                           VkDeviceSize const dstOffset) const {
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
   commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -110,8 +119,8 @@ void flex::VulkanMemoryManager::copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer
   validateVkResult(vkBeginCommandBuffer(transferCommandBuffer, &beginInfo));
 
   VkBufferCopy copyRegion;
-  copyRegion.srcOffset = 0;
-  copyRegion.dstOffset = 0;
+  copyRegion.srcOffset = srcOffset;
+  copyRegion.dstOffset = dstOffset;
   copyRegion.size = bufferSize;
 
   vkCmdCopyBuffer(transferCommandBuffer, srcBuffer.buffer, dstBuffer.buffer, 1, &copyRegion);

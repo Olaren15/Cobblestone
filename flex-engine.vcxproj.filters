@@ -84,6 +84,9 @@
     <ClCompile Include="src\graphics\vulkan\VulkanQueues.cpp">
       <Filter>Source Files\graphics\vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Mesh.cpp">
+      <Filter>Source Files\graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\InputHandler.hpp">
@@ -136,6 +139,9 @@
     </ClInclude>
     <ClInclude Include="include\graphics\vulkan\VulkanQueues.hpp">
       <Filter>Header Files\graphics\vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Mesh.hpp">
+      <Filter>Header Files\graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

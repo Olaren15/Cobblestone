@@ -33,14 +33,14 @@ VulkanRenderer::VulkanRenderer(RenderWindow &window) {
   createCommandPool();
   createCommandBuffers();
   createSyncObjects();
-  createVertexBuffer();
+  createMeshBuffer();
   mCurrentFrame = 0;
 }
 
 VulkanRenderer::~VulkanRenderer() {
   vkDeviceWaitIdle(mDevice);
 
-  mMemoryManager.destroyBuffer(mVertexBuffer);
+  mMemoryManager.destroyBuffer(mMeshBuffer);
 
   for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
     vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
@@ -274,10 +274,7 @@ void VulkanRenderer::createSyncObjects() {
   mImagesInFlight.resize(mSwapchain.images.size(), {});
 }
 
-void VulkanRenderer::createVertexBuffer() {
-  mMemoryManager.createVertexBuffer(mVertexBuffer, mVertices.data(),
-                                    sizeof mVertices[0] * mVertices.size());
-}
+void VulkanRenderer::createMeshBuffer() { mMemoryManager.createMeshBuffer(mMeshBuffer, mMesh); }
 
 void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
 
@@ -326,11 +323,14 @@ void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
   vkCmdBindPipeline(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                     mPipeline.pipeline);
 
-  std::array<VkDeviceSize, 1> vertexBufferOffset{0};
-  vkCmdBindVertexBuffers(mCommandBuffers[imageIndex], 0, 1, &mVertexBuffer.buffer,
+  vkCmdBindIndexBuffer(mCommandBuffers[imageIndex], mMeshBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+  std::array<VkDeviceSize, 1> vertexBufferOffset{mMesh.getIndicesSize()};
+  vkCmdBindVertexBuffers(mCommandBuffers[imageIndex], 0, 1, &mMeshBuffer.buffer,
                          vertexBufferOffset.data());
 
-  vkCmdDraw(mCommandBuffers[imageIndex], static_cast<uint32_t>(mVertices.size()), 1, 0, 0);
+  vkCmdDrawIndexed(mCommandBuffers[imageIndex], static_cast<uint32_t>(mMesh.indices.size()), 1, 0,
+                   0, 0);
 
   vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
   validateVkResult(vkEndCommandBuffer(mCommandBuffers[imageIndex]));

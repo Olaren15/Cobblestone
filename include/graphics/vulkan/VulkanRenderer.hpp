@@ -4,8 +4,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "graphics/Mesh.hpp"
 #include "graphics/RenderWindow.hpp"
-#include "graphics/Vertex.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 #include "graphics/vulkan/VulkanPipeline.hpp"
@@ -18,9 +18,12 @@ enum struct QueueFamily;
 struct VulkanRenderer {
 private:
   // temporary
-  std::vector<flex::Vertex> mVertices{{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                                      {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-                                      {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}};
+  Mesh mMesh{{0, 1, 2, 2, 3, 0},
+             {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+              {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+              {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+              {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}}};
+
   static constexpr std::array<const char *, 1> mRequiredDeviceExtensionsNames{
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
   };
@@ -53,7 +56,7 @@ private:
   std::array<VkFence, mMaxFramesInFlight> mInFlightFences{};
   std::vector<VkFence> mImagesInFlight;
 
-  VulkanBuffer mVertexBuffer;
+  VulkanBuffer mMeshBuffer;
 
   void createVulkanInstance();
   void selectPhysicalDevice();
@@ -66,7 +69,7 @@ private:
   void createCommandPool();
   void createCommandBuffers();
   void createSyncObjects();
-  void createVertexBuffer();
+  void createMeshBuffer();
 
   void recordCommandBuffer(uint32_t &imageIndex);
 

@@ -4,6 +4,7 @@
 
 #include "vk_mem_alloc.h"
 
+#include "graphics/Mesh.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
 #include "graphics/vulkan/VulkanQueues.hpp"
 
@@ -27,11 +28,11 @@ public:
                   VkDevice const &device, VulkanQueues const &queues);
   void destroy() const;
 
-  void createVertexBuffer(VulkanBuffer &vertexBuffer, void *data, VkDeviceSize const &dataSize);
+  void createMeshBuffer(VulkanBuffer &vertexBuffer, Mesh &mesh);
   void createStagingBuffer(VulkanBuffer &stagingBuffer, void *data, VkDeviceSize const &dataSize);
 
-  void copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
-                  VkDeviceSize const &bufferSize) const;
+  void copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer, VkDeviceSize const &bufferSize,
+                  VkDeviceSize const srcOffset, VkDeviceSize const dstOffset) const;
 
   void destroyBuffer(VulkanBuffer const &buffer) const;
 };

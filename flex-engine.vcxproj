@@ -202,6 +202,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\core\InputHandler.cpp" />
+    <ClCompile Include="src\graphics\Mesh.cpp" />
     <ClCompile Include="src\graphics\Vertex.cpp" />
     <ClCompile Include="src\graphics\vulkan\vk_mem_alloc.cpp" />
     <ClCompile Include="src\graphics\vulkan\VulkanHelpers.cpp" />
@@ -219,6 +220,7 @@
     <ClInclude Include="include\core\InputHandler.hpp" />
     <ClInclude Include="include\core\Main.hpp" />
     <ClInclude Include="include\FlexEngine.hpp" />
+    <ClInclude Include="include\graphics\Mesh.hpp" />
     <ClInclude Include="include\graphics\RenderAPI.hpp" />
     <ClInclude Include="include\graphics\Vertex.hpp" />
     <ClInclude Include="include\graphics\vulkan\vk_mem_alloc.h" />
