@@ -40,72 +40,6 @@ void VulkanMemoryManager::endTransferCommandBuffer() const {
   vkQueueWaitIdle(mTransferQueue);
 }
 
-void VulkanMemoryManager::initialize(VkInstance const &instance,
-                                     VkPhysicalDevice const &physicalDevice, VkDevice const &device,
-                                     VulkanQueues const &queues) {
-  mDevice = device;
-
-  VmaAllocatorCreateInfo allocatorCreateInfo{};
-  allocatorCreateInfo.instance = instance;
-  allocatorCreateInfo.physicalDevice = physicalDevice;
-  allocatorCreateInfo.device = device;
-
-  validateVkResult(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
-
-  mTransferQueue = queues.transfer;
-  mQueueFamilyIndices = queues.familyIndices;
-
-  VkCommandPoolCreateInfo commandPoolCreateInfo{};
-  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  commandPoolCreateInfo.flags =
-      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = queues.familyIndices.transfer.value();
-
-  validateVkResult(
-      vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
-
-  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandPool = mTransferCommandPool;
-  commandBufferAllocateInfo.commandBufferCount = 1;
-
-  validateVkResult(
-      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, &mTransferCommandBuffer));
-}
-
-void VulkanMemoryManager::destroy() const {
-  vkDestroyCommandPool(mDevice, mTransferCommandPool, nullptr);
-  vmaDestroyAllocator(mAllocator);
-}
-
-void VulkanMemoryManager::buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
-
-  VkDeviceSize const indicesSize = mesh.getIndicesSize();
-  VkDeviceSize const verticesSize = mesh.getVerticesSize();
-  VkDeviceSize const meshDataSize = indicesSize + verticesSize;
-
-  VkBufferCreateInfo bufferCreateInfo = buildTransferBufferCreateInfo(meshDataSize);
-  bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                           VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-
-  VmaAllocationCreateInfo allocationCreateInfo{};
-  allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-  validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
-                                   &meshBuffer.buffer, &meshBuffer.allocation, nullptr));
-
-  VulkanBuffer stagingBuffer;
-  createStagingBuffer(stagingBuffer, meshDataSize);
-  copyDataToBuffer(mesh.indices.data(), stagingBuffer, indicesSize, 0, 0);
-  copyDataToBuffer(mesh.vertices.data(), stagingBuffer, verticesSize, 0, indicesSize);
-  copyBufferToBuffer(stagingBuffer, meshBuffer, meshDataSize, 0, 0);
-  destroyBuffer(stagingBuffer);
-
-  transferBufferOwnership(meshBuffer.buffer, mQueueFamilyIndices.transfer.value(),
-                          mQueueFamilyIndices.graphics.value());
-}
-
 void VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
                                               VkDeviceSize const &bufferSize) {
   VkBufferCreateInfo bufferCreateInfo = buildTransferBufferCreateInfo(bufferSize);
@@ -116,17 +50,6 @@ void VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
                                    &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
-}
-
-void VulkanMemoryManager::copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer,
-                                           VkDeviceSize const &dataSize,
-                                           VkDeviceSize const &srcOffset,
-                                           VkDeviceSize const &dstOffset) const {
-  void *mappedMemory;
-  vmaMapMemory(mAllocator, dstBuffer.allocation, &mappedMemory);
-  std::memcpy(static_cast<char *>(mappedMemory) + dstOffset,
-              static_cast<char *>(srcData) + srcOffset, dataSize);
-  vmaUnmapMemory(mAllocator, dstBuffer.allocation);
 }
 
 void VulkanMemoryManager::copyBufferToBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
@@ -167,7 +90,85 @@ void VulkanMemoryManager::transferBufferOwnership(VkBuffer const &buffer,
   endTransferCommandBuffer();
 }
 
+void VulkanMemoryManager::initialize(VkInstance const &instance,
+                                     VkPhysicalDevice const &physicalDevice, VkDevice const &device,
+                                     VulkanQueues const &queues) {
+  mDevice = device;
+
+  VmaAllocatorCreateInfo allocatorCreateInfo{};
+  allocatorCreateInfo.instance = instance;
+  allocatorCreateInfo.physicalDevice = physicalDevice;
+  allocatorCreateInfo.device = device;
+
+  validateVkResult(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
+
+  mTransferQueue = queues.transfer;
+  mQueueFamilyIndices = queues.familyIndices;
+
+  VkCommandPoolCreateInfo commandPoolCreateInfo{};
+  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  commandPoolCreateInfo.flags =
+      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  commandPoolCreateInfo.queueFamilyIndex = queues.familyIndices.transfer.value();
+
+  validateVkResult(
+      vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
+
+  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  commandBufferAllocateInfo.commandPool = mTransferCommandPool;
+  commandBufferAllocateInfo.commandBufferCount = 1;
+
+  validateVkResult(
+      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, &mTransferCommandBuffer));
+}
+
+void VulkanMemoryManager::destroy() const {
+  vkDestroyCommandPool(mDevice, mTransferCommandPool, nullptr);
+  vmaDestroyAllocator(mAllocator);
+}
+
 void VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
   vmaDestroyBuffer(mAllocator, buffer.buffer, buffer.allocation);
 }
+
+void VulkanMemoryManager::buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
+
+  VkDeviceSize const indicesSize = mesh.getIndicesSize();
+  VkDeviceSize const verticesSize = mesh.getVerticesSize();
+  VkDeviceSize const meshDataSize = indicesSize + verticesSize;
+
+  VkBufferCreateInfo bufferCreateInfo = buildTransferBufferCreateInfo(meshDataSize);
+  bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                           VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+  VmaAllocationCreateInfo allocationCreateInfo{};
+  allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+  validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
+                                   &meshBuffer.buffer, &meshBuffer.allocation, nullptr));
+
+  VulkanBuffer stagingBuffer;
+  createStagingBuffer(stagingBuffer, meshDataSize);
+  copyDataToBuffer(mesh.indices.data(), stagingBuffer, indicesSize, 0, 0);
+  copyDataToBuffer(mesh.vertices.data(), stagingBuffer, verticesSize, 0, indicesSize);
+  copyBufferToBuffer(stagingBuffer, meshBuffer, meshDataSize, 0, 0);
+  destroyBuffer(stagingBuffer);
+
+  transferBufferOwnership(meshBuffer.buffer, mQueueFamilyIndices.transfer.value(),
+                          mQueueFamilyIndices.graphics.value());
+}
+
+void VulkanMemoryManager::copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer,
+                                           VkDeviceSize const &dataSize,
+                                           VkDeviceSize const &srcOffset,
+                                           VkDeviceSize const &dstOffset) const {
+  void *mappedMemory;
+  vmaMapMemory(mAllocator, dstBuffer.allocation, &mappedMemory);
+  std::memcpy(static_cast<char *>(mappedMemory) + dstOffset,
+              static_cast<char *>(srcData) + srcOffset, dataSize);
+  vmaUnmapMemory(mAllocator, dstBuffer.allocation);
+}
+
 } // namespace flex

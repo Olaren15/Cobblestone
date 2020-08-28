@@ -23,20 +23,8 @@ private:
   void beginTransferCommandBuffer() const;
   void endTransferCommandBuffer() const;
 
-public:
-  VulkanMemoryManager() = default;
-  VulkanMemoryManager(VulkanMemoryManager const &) = delete;
-
-  void initialize(VkInstance const &instance, VkPhysicalDevice const &physicalDevice,
-                  VkDevice const &device, VulkanQueues const &queues);
-  void destroy() const;
-
-  void buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
-
   void createStagingBuffer(VulkanBuffer &stagingBuffer, VkDeviceSize const &bufferSize);
 
-  void copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
-                        VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
   void copyBufferToBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
                           VkDeviceSize const &bufferSize, VkDeviceSize srcOffset,
                           VkDeviceSize dstOffset) const;
@@ -44,6 +32,18 @@ public:
   void transferBufferOwnership(VkBuffer const &buffer, uint32_t srcQueueFamilyIndex,
                                uint32_t dstQueueFamilyIndex) const;
 
+public:
+  VulkanMemoryManager() = default;
+  VulkanMemoryManager(VulkanMemoryManager const &) = delete;
+
+  void initialize(VkInstance const &instance, VkPhysicalDevice const &physicalDevice,
+                  VkDevice const &device, VulkanQueues const &queues);
+  void destroy() const;
   void destroyBuffer(VulkanBuffer const &buffer) const;
+
+  void buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
+
+  void copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
+                        VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
 };
 } // namespace flex
