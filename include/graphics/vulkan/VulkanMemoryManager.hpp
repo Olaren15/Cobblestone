@@ -31,7 +31,8 @@ public:
                   VkDevice const &device, VulkanQueues const &queues);
   void destroy() const;
 
-  void createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
+  void buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
+
   void createStagingBuffer(VulkanBuffer &stagingBuffer, VkDeviceSize const &bufferSize);
 
   void copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,

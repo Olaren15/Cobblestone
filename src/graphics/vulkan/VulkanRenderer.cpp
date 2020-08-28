@@ -275,7 +275,7 @@ void VulkanRenderer::createSyncObjects() {
   mImagesInFlight.resize(mSwapchain.images.size(), mInFlightFences[0]);
 }
 
-void VulkanRenderer::createMeshBuffer() { mMemoryManager.createMeshBuffer(mMeshBuffer, mMesh); }
+void VulkanRenderer::createMeshBuffer() { mMemoryManager.buildMeshBuffer(mMeshBuffer, mMesh); }
 
 void VulkanRenderer::recordCommandBuffer(uint32_t &imageIndex) {
 

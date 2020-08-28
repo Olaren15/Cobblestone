@@ -79,7 +79,7 @@ void VulkanMemoryManager::destroy() const {
   vmaDestroyAllocator(mAllocator);
 }
 
-void VulkanMemoryManager::createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
+void VulkanMemoryManager::buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
 
   VkDeviceSize const indicesSize = mesh.getIndicesSize();
   VkDeviceSize const verticesSize = mesh.getVerticesSize();
