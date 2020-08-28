@@ -112,7 +112,7 @@ void flex::VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
   bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
   VmaAllocationCreateInfo allocationCreateInfo{};
-  allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+  allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
                                    &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
