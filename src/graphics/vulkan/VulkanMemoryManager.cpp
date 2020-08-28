@@ -5,8 +5,10 @@
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
+namespace flex {
+
 VkBufferCreateInfo
-flex::VulkanMemoryManager::buildCommonBufferCreateInfo(VkDeviceSize const &bufferSize) {
+VulkanMemoryManager::buildTransferBufferCreateInfo(VkDeviceSize const &bufferSize) {
 
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -18,7 +20,7 @@ flex::VulkanMemoryManager::buildCommonBufferCreateInfo(VkDeviceSize const &buffe
   return bufferCreateInfo;
 }
 
-void flex::VulkanMemoryManager::beginTransferCommandBuffer() const {
+void VulkanMemoryManager::beginTransferCommandBuffer() const {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -26,7 +28,7 @@ void flex::VulkanMemoryManager::beginTransferCommandBuffer() const {
   validateVkResult(vkBeginCommandBuffer(mTransferCommandBuffer, &beginInfo));
 }
 
-void flex::VulkanMemoryManager::endTransferCommandBuffer() const {
+void VulkanMemoryManager::endTransferCommandBuffer() const {
   validateVkResult(vkEndCommandBuffer(mTransferCommandBuffer));
 
   VkSubmitInfo submitInfo{};
@@ -38,10 +40,9 @@ void flex::VulkanMemoryManager::endTransferCommandBuffer() const {
   vkQueueWaitIdle(mTransferQueue);
 }
 
-void flex::VulkanMemoryManager::initialize(VkInstance const &instance,
-                                           VkPhysicalDevice const &physicalDevice,
-                                           VkDevice const &device,
-                                           flex::VulkanQueues const &queues) {
+void VulkanMemoryManager::initialize(VkInstance const &instance,
+                                     VkPhysicalDevice const &physicalDevice, VkDevice const &device,
+                                     VulkanQueues const &queues) {
   mDevice = device;
 
   VmaAllocatorCreateInfo allocatorCreateInfo{};
@@ -60,30 +61,31 @@ void flex::VulkanMemoryManager::initialize(VkInstance const &instance,
       VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   commandPoolCreateInfo.queueFamilyIndex = queues.familyIndices.transfer.value();
 
-  validateVkResult(vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &mCommandPool));
+  validateVkResult(
+      vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
   commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandPool = mCommandPool;
+  commandBufferAllocateInfo.commandPool = mTransferCommandPool;
   commandBufferAllocateInfo.commandBufferCount = 1;
 
   validateVkResult(
       vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, &mTransferCommandBuffer));
 }
 
-void flex::VulkanMemoryManager::destroy() const {
-  vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
+void VulkanMemoryManager::destroy() const {
+  vkDestroyCommandPool(mDevice, mTransferCommandPool, nullptr);
   vmaDestroyAllocator(mAllocator);
 }
 
-void flex::VulkanMemoryManager::createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
+void VulkanMemoryManager::createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
 
   VkDeviceSize const indicesSize = mesh.getIndicesSize();
   VkDeviceSize const verticesSize = mesh.getVerticesSize();
   VkDeviceSize const meshDataSize = indicesSize + verticesSize;
 
-  VkBufferCreateInfo bufferCreateInfo = buildCommonBufferCreateInfo(meshDataSize);
+  VkBufferCreateInfo bufferCreateInfo = buildTransferBufferCreateInfo(meshDataSize);
   bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                            VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
@@ -94,21 +96,19 @@ void flex::VulkanMemoryManager::createMeshBuffer(VulkanBuffer &meshBuffer, Mesh 
                                    &meshBuffer.buffer, &meshBuffer.allocation, nullptr));
 
   VulkanBuffer stagingBuffer;
-  createStagingBuffer(stagingBuffer, mesh.indices.data(), indicesSize);
-  copyBuffer(stagingBuffer, meshBuffer, indicesSize, 0, 0);
+  createStagingBuffer(stagingBuffer, meshDataSize);
+  copyDataToBuffer(mesh.indices.data(), stagingBuffer, indicesSize, 0, 0);
+  copyDataToBuffer(mesh.vertices.data(), stagingBuffer, verticesSize, 0, indicesSize);
+  copyBufferToBuffer(stagingBuffer, meshBuffer, meshDataSize, 0, 0);
   destroyBuffer(stagingBuffer);
 
-  createStagingBuffer(stagingBuffer, mesh.vertices.data(), verticesSize);
-  copyBuffer(stagingBuffer, meshBuffer, verticesSize, 0, indicesSize);
-  destroyBuffer(stagingBuffer);
-
-  transferBufferOwnership(mQueueFamilyIndices.transfer.value(),
-                          mQueueFamilyIndices.graphics.value(), meshBuffer.buffer);
+  transferBufferOwnership(meshBuffer.buffer, mQueueFamilyIndices.transfer.value(),
+                          mQueueFamilyIndices.graphics.value());
 }
 
-void flex::VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer, void *data,
-                                                    VkDeviceSize const &dataSize) {
-  VkBufferCreateInfo bufferCreateInfo = buildCommonBufferCreateInfo(dataSize);
+void VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
+                                              VkDeviceSize const &bufferSize) {
+  VkBufferCreateInfo bufferCreateInfo = buildTransferBufferCreateInfo(bufferSize);
   bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
   VmaAllocationCreateInfo allocationCreateInfo{};
@@ -116,17 +116,23 @@ void flex::VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer,
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
                                    &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
-
-  void *mappedMemory;
-  vmaMapMemory(mAllocator, stagingBuffer.allocation, &mappedMemory);
-  std::memcpy(mappedMemory, data, dataSize);
-  vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
 }
 
-void flex::VulkanMemoryManager::copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
-                                           VkDeviceSize const &bufferSize,
-                                           VkDeviceSize const srcOffset,
-                                           VkDeviceSize const dstOffset) const {
+void VulkanMemoryManager::copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer,
+                                           VkDeviceSize const &dataSize,
+                                           VkDeviceSize const &srcOffset,
+                                           VkDeviceSize const &dstOffset) const {
+  void *mappedMemory;
+  vmaMapMemory(mAllocator, dstBuffer.allocation, &mappedMemory);
+  std::memcpy(static_cast<char *>(mappedMemory) + dstOffset,
+              static_cast<char *>(srcData) + srcOffset, dataSize);
+  vmaUnmapMemory(mAllocator, dstBuffer.allocation);
+}
+
+void VulkanMemoryManager::copyBufferToBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
+                                             VkDeviceSize const &bufferSize,
+                                             VkDeviceSize const srcOffset,
+                                             VkDeviceSize const dstOffset) const {
   beginTransferCommandBuffer();
 
   VkBufferCopy copyRegion;
@@ -139,16 +145,16 @@ void flex::VulkanMemoryManager::copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer
   endTransferCommandBuffer();
 }
 
-void flex::VulkanMemoryManager::transferBufferOwnership(uint32_t const srcQueueFamilyIndex,
-                                                        uint32_t const dstQueueFamilyIndex,
-                                                        VkBuffer const &buffer) const {
+void VulkanMemoryManager::transferBufferOwnership(VkBuffer const &buffer,
+                                                  uint32_t const srcQueueFamilyIndex,
+                                                  uint32_t const dstQueueFamilyIndex) const {
 
   beginTransferCommandBuffer();
 
   VkBufferMemoryBarrier bufferMemoryBarrier{};
   bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
   bufferMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-  bufferMemoryBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  bufferMemoryBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
   bufferMemoryBarrier.srcQueueFamilyIndex = srcQueueFamilyIndex;
   bufferMemoryBarrier.dstQueueFamilyIndex = dstQueueFamilyIndex;
   bufferMemoryBarrier.buffer = buffer;
@@ -161,6 +167,7 @@ void flex::VulkanMemoryManager::transferBufferOwnership(uint32_t const srcQueueF
   endTransferCommandBuffer();
 }
 
-void flex::VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
+void VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
   vmaDestroyBuffer(mAllocator, buffer.buffer, buffer.allocation);
 }
+} // namespace flex

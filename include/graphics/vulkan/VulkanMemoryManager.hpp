@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "vk_mem_alloc.h"
 
 #include "graphics/Mesh.hpp"
@@ -17,10 +15,10 @@ private:
   VkQueue mTransferQueue{};
   VulkanQueueFamilyIndices mQueueFamilyIndices;
 
-  VkCommandPool mCommandPool{};
+  VkCommandPool mTransferCommandPool{};
   VkCommandBuffer mTransferCommandBuffer{};
 
-  VkBufferCreateInfo buildCommonBufferCreateInfo(VkDeviceSize const &bufferSize);
+  VkBufferCreateInfo buildTransferBufferCreateInfo(VkDeviceSize const &bufferSize);
 
   void beginTransferCommandBuffer() const;
   void endTransferCommandBuffer() const;
@@ -34,13 +32,16 @@ public:
   void destroy() const;
 
   void createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
-  void createStagingBuffer(VulkanBuffer &stagingBuffer, void *data, VkDeviceSize const &dataSize);
+  void createStagingBuffer(VulkanBuffer &stagingBuffer, VkDeviceSize const &bufferSize);
 
-  void copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer, VkDeviceSize const &bufferSize,
-                  VkDeviceSize srcOffset, VkDeviceSize dstOffset) const;
+  void copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
+                        VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
+  void copyBufferToBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
+                          VkDeviceSize const &bufferSize, VkDeviceSize srcOffset,
+                          VkDeviceSize dstOffset) const;
 
-  void transferBufferOwnership(uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex,
-                               VkBuffer const &buffer) const;
+  void transferBufferOwnership(VkBuffer const &buffer, uint32_t srcQueueFamilyIndex,
+                               uint32_t dstQueueFamilyIndex) const;
 
   void destroyBuffer(VulkanBuffer const &buffer) const;
 };
