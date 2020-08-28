@@ -11,14 +11,31 @@ flex::VulkanMemoryManager::buildCommonBufferCreateInfo(VkDeviceSize const &buffe
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
   bufferCreateInfo.size = bufferSize;
-  if (mBufferSharedQueues.size() > 1)
-    bufferCreateInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
-  else
-    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  bufferCreateInfo.queueFamilyIndexCount = static_cast<uint32_t>(mBufferSharedQueues.size());
-  bufferCreateInfo.pQueueFamilyIndices = mBufferSharedQueues.data();
+  bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  bufferCreateInfo.queueFamilyIndexCount = 1;
+  bufferCreateInfo.pQueueFamilyIndices = &mQueueFamilyIndices.transfer.value();
 
   return bufferCreateInfo;
+}
+
+void flex::VulkanMemoryManager::beginTransferCommandBuffer() const {
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  validateVkResult(vkBeginCommandBuffer(mTransferCommandBuffer, &beginInfo));
+}
+
+void flex::VulkanMemoryManager::endTransferCommandBuffer() const {
+  validateVkResult(vkEndCommandBuffer(mTransferCommandBuffer));
+
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &mTransferCommandBuffer;
+
+  vkQueueSubmit(mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(mTransferQueue);
 }
 
 void flex::VulkanMemoryManager::initialize(VkInstance const &instance,
@@ -35,18 +52,24 @@ void flex::VulkanMemoryManager::initialize(VkInstance const &instance,
   validateVkResult(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
 
   mTransferQueue = queues.transfer;
-
-  mBufferSharedQueues.push_back(queues.familyIndices.graphics.value());
-  if (queues.familyIndices.hasUniqueTransferQueue()) {
-    mBufferSharedQueues.push_back(queues.familyIndices.transfer.value());
-  }
+  mQueueFamilyIndices = queues.familyIndices;
 
   VkCommandPoolCreateInfo commandPoolCreateInfo{};
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+  commandPoolCreateInfo.flags =
+      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   commandPoolCreateInfo.queueFamilyIndex = queues.familyIndices.transfer.value();
 
   validateVkResult(vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &mCommandPool));
+
+  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  commandBufferAllocateInfo.commandPool = mCommandPool;
+  commandBufferAllocateInfo.commandBufferCount = 1;
+
+  validateVkResult(
+      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, &mTransferCommandBuffer));
 }
 
 void flex::VulkanMemoryManager::destroy() const {
@@ -54,7 +77,7 @@ void flex::VulkanMemoryManager::destroy() const {
   vmaDestroyAllocator(mAllocator);
 }
 
-void flex::VulkanMemoryManager::createMeshBuffer(VulkanBuffer &vertexBuffer, Mesh &mesh) {
+void flex::VulkanMemoryManager::createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
 
   VkDeviceSize const indicesSize = mesh.getIndicesSize();
   VkDeviceSize const verticesSize = mesh.getVerticesSize();
@@ -68,16 +91,19 @@ void flex::VulkanMemoryManager::createMeshBuffer(VulkanBuffer &vertexBuffer, Mes
   allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
-                                   &vertexBuffer.buffer, &vertexBuffer.allocation, nullptr));
+                                   &meshBuffer.buffer, &meshBuffer.allocation, nullptr));
 
   VulkanBuffer stagingBuffer;
   createStagingBuffer(stagingBuffer, mesh.indices.data(), indicesSize);
-  copyBuffer(stagingBuffer, vertexBuffer, indicesSize, 0, 0);
+  copyBuffer(stagingBuffer, meshBuffer, indicesSize, 0, 0);
   destroyBuffer(stagingBuffer);
 
   createStagingBuffer(stagingBuffer, mesh.vertices.data(), verticesSize);
-  copyBuffer(stagingBuffer, vertexBuffer, verticesSize, 0, indicesSize);
+  copyBuffer(stagingBuffer, meshBuffer, verticesSize, 0, indicesSize);
   destroyBuffer(stagingBuffer);
+
+  transferBufferOwnership(mQueueFamilyIndices.transfer.value(),
+                          mQueueFamilyIndices.graphics.value(), meshBuffer.buffer);
 }
 
 void flex::VulkanMemoryManager::createStagingBuffer(VulkanBuffer &stagingBuffer, void *data,
@@ -101,41 +127,38 @@ void flex::VulkanMemoryManager::copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer
                                            VkDeviceSize const &bufferSize,
                                            VkDeviceSize const srcOffset,
                                            VkDeviceSize const dstOffset) const {
-
-  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandPool = mCommandPool;
-  commandBufferAllocateInfo.commandBufferCount = 1;
-
-  VkCommandBuffer transferCommandBuffer;
-  validateVkResult(
-      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, &transferCommandBuffer));
-
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-  validateVkResult(vkBeginCommandBuffer(transferCommandBuffer, &beginInfo));
+  beginTransferCommandBuffer();
 
   VkBufferCopy copyRegion;
   copyRegion.srcOffset = srcOffset;
   copyRegion.dstOffset = dstOffset;
   copyRegion.size = bufferSize;
 
-  vkCmdCopyBuffer(transferCommandBuffer, srcBuffer.buffer, dstBuffer.buffer, 1, &copyRegion);
+  vkCmdCopyBuffer(mTransferCommandBuffer, srcBuffer.buffer, dstBuffer.buffer, 1, &copyRegion);
 
-  validateVkResult(vkEndCommandBuffer(transferCommandBuffer));
+  endTransferCommandBuffer();
+}
 
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &transferCommandBuffer;
+void flex::VulkanMemoryManager::transferBufferOwnership(uint32_t const srcQueueFamilyIndex,
+                                                        uint32_t const dstQueueFamilyIndex,
+                                                        VkBuffer const &buffer) const {
 
-  vkQueueSubmit(mTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
-  vkQueueWaitIdle(mTransferQueue);
+  beginTransferCommandBuffer();
 
-  vkFreeCommandBuffers(mDevice, mCommandPool, 1, &transferCommandBuffer);
+  VkBufferMemoryBarrier bufferMemoryBarrier{};
+  bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+  bufferMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+  bufferMemoryBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  bufferMemoryBarrier.srcQueueFamilyIndex = srcQueueFamilyIndex;
+  bufferMemoryBarrier.dstQueueFamilyIndex = dstQueueFamilyIndex;
+  bufferMemoryBarrier.buffer = buffer;
+  bufferMemoryBarrier.size = VK_WHOLE_SIZE;
+
+  vkCmdPipelineBarrier(mTransferCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier, 0,
+                       nullptr);
+
+  endTransferCommandBuffer();
 }
 
 void flex::VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {

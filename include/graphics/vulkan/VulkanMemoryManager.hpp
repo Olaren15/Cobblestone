@@ -15,10 +15,15 @@ private:
 
   VmaAllocator mAllocator{};
   VkQueue mTransferQueue{};
-  std::vector<uint32_t> mBufferSharedQueues;
+  VulkanQueueFamilyIndices mQueueFamilyIndices;
+
   VkCommandPool mCommandPool{};
+  VkCommandBuffer mTransferCommandBuffer{};
 
   VkBufferCreateInfo buildCommonBufferCreateInfo(VkDeviceSize const &bufferSize);
+
+  void beginTransferCommandBuffer() const;
+  void endTransferCommandBuffer() const;
 
 public:
   VulkanMemoryManager() = default;
@@ -28,11 +33,14 @@ public:
                   VkDevice const &device, VulkanQueues const &queues);
   void destroy() const;
 
-  void createMeshBuffer(VulkanBuffer &vertexBuffer, Mesh &mesh);
+  void createMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
   void createStagingBuffer(VulkanBuffer &stagingBuffer, void *data, VkDeviceSize const &dataSize);
 
   void copyBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer, VkDeviceSize const &bufferSize,
-                  VkDeviceSize const srcOffset, VkDeviceSize const dstOffset) const;
+                  VkDeviceSize srcOffset, VkDeviceSize dstOffset) const;
+
+  void transferBufferOwnership(uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex,
+                               VkBuffer const &buffer) const;
 
   void destroyBuffer(VulkanBuffer const &buffer) const;
 };
