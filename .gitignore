@@ -569,6 +569,7 @@ compile_commands.json
 *.rsuser
 *.suo
 *.user
+!*.vcxproj.user
 *.userosscache
 *.sln.docstates
 
