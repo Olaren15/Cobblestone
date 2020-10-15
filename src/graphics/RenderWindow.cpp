@@ -105,7 +105,7 @@ VkSurfaceKHR RenderWindow::getDrawableVulkanSurface(VkInstance const &vulkanInst
     throw InvalidRenderAPIException{"Cannot get drawable vulkan surface if "
                                     "render API is not set to vulkan"};
 
-  VkSurfaceKHR surface;
+  VkSurfaceKHR surface {};
 
   if (SDL_Vulkan_CreateSurface(mSDLWindow, vulkanInstance, &surface) != SDL_TRUE) {
     throw std::runtime_error("Failed to create vulkan surface");

@@ -1,7 +1,6 @@
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 
-#include <memory>
-#include <vector>
+#include <cstring>
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
 

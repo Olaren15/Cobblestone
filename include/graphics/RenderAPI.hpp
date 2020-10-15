@@ -18,7 +18,7 @@ public:
   explicit InvalidRenderAPIException(std::string errorMessage)
     : mErrorMessage(std::move(errorMessage)) {}
 
-  [[nodiscard]] const char *what() const override {
+  [[nodiscard]] const char *what() const noexcept override {
     return mErrorMessage.c_str();
   }
 };

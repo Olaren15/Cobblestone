@@ -2,9 +2,13 @@
 
 #include <filesystem>
 
+#if _MSC_VER && !__INTEL_COMPILER
 #pragma warning(push, 0)
+#endif
 #include <libconfig.h++>
+#if _MSC_VER && !__INTEL_COMPILER
 #pragma warning(pop)
+#endif
 
 namespace flex {
 struct Configuration {

@@ -1,9 +1,13 @@
+#if _MSC_VER && !__INTEL_COMPILER
 #pragma warning(push, 0)
+#endif
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wnullability-completeness"
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
 #pragma clang diagnostic ignored "-Wunused-variable"
+#endif
 //
 // Copyright (c) 2017-2020 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -4130,7 +4134,7 @@ Following headers are used in this CONFIGURATION section only, so feel free to
 remove them if not needed.
 */
 #include <algorithm> // for min, max
-#include <cassert>   // for assert
+#include <cassert> // for assert
 #include <mutex>
 
 #ifndef VMA_NULL
@@ -16739,5 +16743,11 @@ VMA_CALL_PRE void VMA_CALL_POST vmaDestroyImage(VmaAllocator allocator, VkImage 
 }
 
 #endif // #ifdef VMA_IMPLEMENTATION
+
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
+
+#if _MSC_VER && !__INTEL_COMPILER
 #pragma warning(pop)
+#endif

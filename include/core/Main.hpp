@@ -2,7 +2,7 @@
 #pragma once
 
 #define SDL_MAIN_HANDLED
-#if defined _WIN32 && !defined NDEBUG
+#if defined _WIN32 && !defined NDEBUG && !defined __MINGW32__
 #include <Windows.h>
 #endif
 
@@ -12,7 +12,7 @@ int main() {
   int returnValue;
 
   try {
-#if defined _WIN32 && !defined NDEBUG
+#if defined _WIN32 && !defined NDEBUG && !defined __MINGW32__
     // Show console output in debug mode
     AllocConsole();
 
@@ -26,7 +26,8 @@ int main() {
 
     returnValue = flexMain();
 
-  } catch (...) {
+  } catch (std::exception &ex) {
+    std::cout << ex.what() << '\n';
     return EXIT_FAILURE;
   }
 
