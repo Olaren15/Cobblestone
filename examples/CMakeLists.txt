@@ -1,3 +1,3 @@
-add_executable(example1 example1.cpp)
+ADD_EXECUTABLE(example1 example1.cpp)
 
-target_link_libraries(example1 PRIVATE flex-engine)
+TARGET_LINK_LIBRARIES(example1 PRIVATE flex-engine)

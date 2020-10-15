@@ -3,6 +3,7 @@
 #include <array>
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 
 #include "graphics/Camera.hpp"
 #include "graphics/Vertex.hpp"

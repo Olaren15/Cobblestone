@@ -70,7 +70,7 @@ void VulkanRenderer::createVulkanInstance() {
   appInfo.apiVersion = VK_API_VERSION_1_0;
 
   std::vector<char const *> enabledExtensions = mWindow->getRequiredVulkanExtensions();
-  std::vector<char const *> enabledLayers{"VK_LAYER_LUNARG_monitor"};
+  std::vector<char const *> enabledLayers{};
 
 #ifndef NDEBUG
   enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
