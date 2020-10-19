@@ -13,13 +13,11 @@ protected:
 
 public:
   InvalidRenderAPIException()
-    : mErrorMessage("The chosen render API does not support this feature") {}
+      : mErrorMessage("The chosen render API does not support this feature") {}
 
   explicit InvalidRenderAPIException(std::string errorMessage)
-    : mErrorMessage(std::move(errorMessage)) {}
+      : mErrorMessage(std::move(errorMessage)) {}
 
-  [[nodiscard]] const char *what() const noexcept override {
-    return mErrorMessage.c_str();
-  }
+  [[nodiscard]] const char *what() const noexcept override { return mErrorMessage.c_str(); }
 };
 } // namespace flex

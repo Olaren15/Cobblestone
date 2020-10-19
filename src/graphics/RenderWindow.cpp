@@ -60,14 +60,22 @@ void RenderWindow::update() {
   SDL_Event event{};
 
   while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_QUIT) {
+    switch (event.type) {
+    case SDL_QUIT:
       mShouldExit = true;
-    } else if (event.type == SDL_WINDOWEVENT) {
-      if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+      break;
+    case SDL_WINDOWEVENT: {
+      switch (event.window.event) {
+      case SDL_WINDOWEVENT_FOCUS_LOST:
         mHasFocus = false;
-      } else if (event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+        break;
+      case SDL_WINDOWEVENT_FOCUS_GAINED:
         mHasFocus = true;
+        break;
       }
+    }
+    default:
+      break;
     }
   }
 }
@@ -105,7 +113,7 @@ VkSurfaceKHR RenderWindow::getDrawableVulkanSurface(VkInstance const &vulkanInst
     throw InvalidRenderAPIException{"Cannot get drawable vulkan surface if "
                                     "render API is not set to vulkan"};
 
-  VkSurfaceKHR surface {};
+  VkSurfaceKHR surface{};
 
   if (SDL_Vulkan_CreateSurface(mSDLWindow, vulkanInstance, &surface) != SDL_TRUE) {
     throw std::runtime_error("Failed to create vulkan surface");

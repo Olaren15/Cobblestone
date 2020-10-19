@@ -1,9 +1,7 @@
 ﻿#include "utils/Configuration.hpp"
 
 namespace flex {
-Configuration::Configuration() {
-  mConfigSettings.readFile("settings.cfg");
-}
+Configuration::Configuration() { mConfigSettings.readFile("settings.cfg"); }
 
 Configuration::Configuration(std::filesystem::path const &configFilePath) {
   mConfigSettings.readFile(configFilePath.string().c_str());
