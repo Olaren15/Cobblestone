@@ -31,8 +31,8 @@ TARGET_LINK_LIBRARIES(
 		flex-engine PRIVATE
 		config++
 		SDL2::SDL2
+		Vulkan::Vulkan
 		glm
-		vulkan
 )
 
 TARGET_INCLUDE_DIRECTORIES(flex-engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
