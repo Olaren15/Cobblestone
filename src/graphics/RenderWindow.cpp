@@ -48,7 +48,7 @@ void RenderWindow::createSDLWindow() {
     break;
   }
 
-  mSDLWindow = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+  mSDLWindow = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                 static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
 
   if (mSDLWindow == nullptr) {

@@ -1,15 +1,12 @@
 ﻿#include "graphics/vulkan/VulkanRenderer.hpp"
 
 #include <cstdint>
-#include <cstring>
 #include <map>
 #include <set>
 #include <vector>
 
 #include "graphics/Camera.hpp"
-#include "graphics/RenderAPI.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
-#include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
 
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow &window) {
@@ -108,7 +105,7 @@ void VulkanRenderer::selectPhysicalDevice() {
 }
 
 unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
-                                                VkSurfaceKHR const &vulkanSurface) const {
+                                                VkSurfaceKHR const &vulkanSurface) {
 
   unsigned int score = 1u;
 
@@ -137,7 +134,7 @@ unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physical
 }
 
 bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
-    VkPhysicalDevice const &physicalDevice) const {
+    VkPhysicalDevice const &physicalDevice) {
 
   uint32_t availableExtensionsCount;
   vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount, nullptr);
@@ -148,7 +145,7 @@ bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
   for (std::string const &requiredExtensionName : mRequiredDeviceExtensionsNames) {
     bool extensionFound = false;
     for (VkExtensionProperties const &availableExtension : availableExtensions) {
-      if (std::strcmp(requiredExtensionName.c_str(), availableExtension.extensionName) == 0) {
+      if (strcmp(requiredExtensionName.c_str(), availableExtension.extensionName) == 0) {
         extensionFound = true;
       }
     }

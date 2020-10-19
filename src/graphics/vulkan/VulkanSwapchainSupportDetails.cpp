@@ -2,7 +2,8 @@
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
-flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
+namespace flex {
+VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
     VulkanSwapchainSupportDetails const &swapchainSupportDetails) {
   capabilities = swapchainSupportDetails.capabilities;
   formats = swapchainSupportDetails.formats;
@@ -28,6 +29,7 @@ flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
                                                              presentModes.data()));
 }
 
-bool flex::VulkanSwapchainSupportDetails::isUsable() const {
+bool VulkanSwapchainSupportDetails::isUsable() const {
   return !(formats.empty() || presentModes.empty());
 }
+} // namespace flex

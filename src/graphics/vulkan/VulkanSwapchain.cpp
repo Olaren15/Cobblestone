@@ -1,7 +1,6 @@
 ﻿#include "graphics/vulkan/VulkanSwapchain.hpp"
 
 #include <algorithm>
-#include <array>
 #include <set>
 #include <stdexcept>
 
@@ -9,7 +8,7 @@
 
 namespace flex {
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
-    std::vector<VkSurfaceFormatKHR> const &availableFormats) const {
+    std::vector<VkSurfaceFormatKHR> const &availableFormats) {
   if (availableFormats.empty()) {
     throw std::runtime_error("Cannot choose a format from an empty array");
   }
@@ -25,7 +24,7 @@ VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
 }
 
 VkPresentModeKHR VulkanSwapchain::chooseSwapchainPresentMode(
-    std::vector<VkPresentModeKHR> const &availablePresentModes) const {
+    std::vector<VkPresentModeKHR> const &availablePresentModes) {
 
   const std::set<VkPresentModeKHR> rankedModes{VK_PRESENT_MODE_MAILBOX_KHR,
                                                VK_PRESENT_MODE_IMMEDIATE_KHR};
@@ -42,7 +41,7 @@ VkPresentModeKHR VulkanSwapchain::chooseSwapchainPresentMode(
 }
 
 VkExtent2D VulkanSwapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                                  RenderWindow const &window) const {
+                                                  RenderWindow const &window) {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
     return capabilities.currentExtent;

@@ -11,7 +11,7 @@
 
 namespace flex {
 VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
-                                                  std::filesystem::path const &shaderPath) const {
+                                                  std::filesystem::path const &shaderPath) {
   std::ifstream shaderFile{shaderPath.string(), std::ios::ate | std::ios::binary};
 
   if (!shaderFile.is_open()) {

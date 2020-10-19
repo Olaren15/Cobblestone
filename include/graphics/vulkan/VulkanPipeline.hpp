@@ -10,8 +10,8 @@ private:
   VkShaderModule mVertShaderModule;
   VkShaderModule mFragShaderModule;
 
-  [[nodiscard]] VkShaderModule createShaderModule(VkDevice const &device,
-                                                  std::filesystem::path const &shaderPath) const;
+  [[nodiscard]] static VkShaderModule createShaderModule(VkDevice const &device,
+                                                  std::filesystem::path const &shaderPath) ;
 
 public:
   VkPipelineLayout pipelineLayout;

@@ -11,12 +11,12 @@
 namespace flex {
 struct VulkanSwapchain {
 private:
-  [[nodiscard]] VkSurfaceFormatKHR
-  chooseSwapchainSurfaceFormat(std::vector<VkSurfaceFormatKHR> const &availableFormats) const;
-  [[nodiscard]] VkPresentModeKHR
-  chooseSwapchainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes) const;
-  [[nodiscard]] VkExtent2D chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                                 RenderWindow const &window) const;
+  [[nodiscard]] static VkSurfaceFormatKHR
+  chooseSwapchainSurfaceFormat(std::vector<VkSurfaceFormatKHR> const &availableFormats) ;
+  [[nodiscard]] static VkPresentModeKHR
+  chooseSwapchainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes) ;
+  [[nodiscard]] static VkExtent2D chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
+                                                 RenderWindow const &window) ;
 
   void retrieveSwapchainImages(VkDevice const &device);
   void createImageViews(VkDevice const &device);

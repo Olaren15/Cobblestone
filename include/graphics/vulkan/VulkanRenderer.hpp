@@ -60,10 +60,10 @@ private:
 
   void createVulkanInstance();
   void selectPhysicalDevice();
-  [[nodiscard]] unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
-                                                VkSurfaceKHR const &vulkanSurface) const;
-  [[nodiscard]] bool
-  physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice) const;
+  [[nodiscard]] static unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
+                                                VkSurfaceKHR const &vulkanSurface) ;
+  [[nodiscard]] static bool
+  physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice) ;
   void createVulkanDevice();
   void createRenderPass();
   void createCommandPool();
