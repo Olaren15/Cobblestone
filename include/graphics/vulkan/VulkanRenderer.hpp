@@ -29,7 +29,10 @@ private:
   };
 
   static constexpr unsigned int mMaxFramesInFlight = 2;
-  unsigned int mCurrentFrame;
+  unsigned int mCurrentFrame = 0;
+  unsigned int mImageIndex = 0;
+  bool mAcquiredImageStillValid = false;
+
   bool mDoNotRender = false;
 
   RenderWindow *mWindow;
@@ -71,8 +74,7 @@ private:
   void createSyncObjects();
   void createMeshBuffer();
 
-  void recordCommandBuffer(uint32_t &imageIndex);
-
+  void recordCommandBuffer();
   void handleFrameBufferResize();
 
 public:
@@ -84,6 +86,7 @@ public:
   void operator=(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer) = delete;
 
+  bool acquireNextFrame();
   void draw();
 };
 } // namespace flex

@@ -21,7 +21,9 @@ int flexMain() {
       std::cout << i++ << '\n';
     }
 
-    vulkanRenderer.draw();
+    if (vulkanRenderer.acquireNextFrame()) {
+      vulkanRenderer.draw();
+    }
   }
 
   return EXIT_SUCCESS;
