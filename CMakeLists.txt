@@ -12,6 +12,7 @@ ADD_LIBRARY(
 		flex-engine STATIC
 		src/core/InputHandler.cpp
 		src/graphics/vulkan/vk_mem_alloc.cpp
+		src/graphics/vulkan/VulkanBuffer.cpp
 		src/graphics/vulkan/VulkanHelpers.cpp
 		src/graphics/vulkan/VulkanMemoryManager.cpp
 		src/graphics/vulkan/VulkanPipeline.cpp

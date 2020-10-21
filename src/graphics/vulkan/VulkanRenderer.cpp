@@ -392,17 +392,19 @@ void VulkanRenderer::startDraw() {
                     mPipeline.pipeline);
 }
 
-void VulkanRenderer::drawMesh(const Mesh &mesh, VulkanBuffer const &meshBuffer) {
+void VulkanRenderer::drawMesh(Mesh &mesh) {
+  if (!mesh.getVulkanBuffer().has_value()) {
+    mesh.setVulkanBuffer(mMemoryManager.buildMeshBuffer(mesh));
+  }
 
-  vkCmdBindIndexBuffer(mCommandBuffers[mState.imageIndex], meshBuffer.buffer, 0,
-                       VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(mCommandBuffers[mState.imageIndex], mesh.getVulkanBuffer()->buffer, 0, VK_INDEX_TYPE_UINT32);
 
   std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
-  vkCmdBindVertexBuffers(mCommandBuffers[mState.imageIndex], 0, 1, &meshBuffer.buffer,
+  vkCmdBindVertexBuffers(mCommandBuffers[mState.imageIndex], 0, 1, &mesh.getVulkanBuffer()->buffer,
                          vertexBufferOffset.data());
 
-  vkCmdDrawIndexed(mCommandBuffers[mState.imageIndex], static_cast<uint32_t>(mesh.indices.size()),
-                   1, 0, 0, 0);
+  vkCmdDrawIndexed(mCommandBuffers[mState.imageIndex],
+                   static_cast<uint32_t>(mesh.getIndices().size()), 1, 0, 0, 0);
 }
 
 void VulkanRenderer::endDraw() {

@@ -42,6 +42,7 @@ public:
   void destroyBuffer(VulkanBuffer const &buffer) const;
 
   VulkanBuffer buildMeshBuffer(Mesh const &mesh);
+  void updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &mesh);
 
   void copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
                         VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;

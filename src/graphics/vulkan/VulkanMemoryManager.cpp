@@ -70,6 +70,9 @@ void VulkanMemoryManager::copyBufferToBuffer(VulkanBuffer &srcBuffer, VulkanBuff
 void VulkanMemoryManager::transferBufferOwnership(VkBuffer const &buffer,
                                                   uint32_t const srcQueueFamilyIndex,
                                                   uint32_t const dstQueueFamilyIndex) const {
+  if (srcQueueFamilyIndex == dstQueueFamilyIndex) {
+    return;
+  }
 
   beginTransferCommandBuffer();
 
@@ -133,13 +136,10 @@ void VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
 }
 
 VulkanBuffer VulkanMemoryManager::buildMeshBuffer(Mesh const &mesh) {
-  VulkanBuffer meshBuffer{};
+  VulkanBuffer meshBuffer{this};
 
-  VkDeviceSize const indicesSize = mesh.getIndicesSize();
-  VkDeviceSize const verticesSize = mesh.getVerticesSize();
-  VkDeviceSize const meshDataSize = indicesSize + verticesSize;
-
-  VkBufferCreateInfo bufferCreateInfo = buildTransferBufferCreateInfo(meshDataSize);
+  VkBufferCreateInfo bufferCreateInfo =
+      buildTransferBufferCreateInfo(mesh.getIndicesSize() + mesh.getVerticesSize());
   bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                            VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
@@ -149,17 +149,25 @@ VulkanBuffer VulkanMemoryManager::buildMeshBuffer(Mesh const &mesh) {
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
                                    &meshBuffer.buffer, &meshBuffer.allocation, nullptr));
 
-  VulkanBuffer stagingBuffer;
-  createStagingBuffer(stagingBuffer, meshDataSize);
-  copyDataToBuffer(mesh.indices.data(), stagingBuffer, indicesSize, 0, 0);
-  copyDataToBuffer(mesh.vertices.data(), stagingBuffer, verticesSize, 0, indicesSize);
-  copyBufferToBuffer(stagingBuffer, meshBuffer, meshDataSize, 0, 0);
-  destroyBuffer(stagingBuffer);
+  updateMeshBuffer(meshBuffer, mesh);
 
   transferBufferOwnership(meshBuffer.buffer, mQueueFamilyIndices.transfer.value(),
                           mQueueFamilyIndices.graphics.value());
 
   return meshBuffer;
+}
+
+void VulkanMemoryManager::updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &mesh) {
+  VkDeviceSize const indicesSize = mesh.getIndicesSize();
+  VkDeviceSize const verticesSize = mesh.getVerticesSize();
+  VkDeviceSize const meshDataSize = indicesSize + verticesSize;
+
+  VulkanBuffer stagingBuffer{this};
+  createStagingBuffer(stagingBuffer, meshDataSize);
+  copyDataToBuffer(mesh.getIndices().data(), stagingBuffer, indicesSize, 0, 0);
+  copyDataToBuffer(mesh.getVertices().data(), stagingBuffer, verticesSize, 0, indicesSize);
+  copyBufferToBuffer(stagingBuffer, meshBuffer, meshDataSize, 0, 0);
+  destroyBuffer(stagingBuffer);
 }
 
 void VulkanMemoryManager::copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer,

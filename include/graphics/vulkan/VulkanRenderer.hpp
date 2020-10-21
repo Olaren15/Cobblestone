@@ -17,7 +17,7 @@ enum struct QueueFamily;
 
 struct VulkanRenderer {
 private:
-  struct VulkanRendererState{
+  struct VulkanRendererState {
     unsigned int currentFrame = 0;
     unsigned int imageIndex = 0;
     bool acquiredImageStillValid = false;
@@ -80,7 +80,7 @@ public:
 
   bool acquireNextFrame();
   void startDraw();
-  void drawMesh(Mesh const &mesh, VulkanBuffer const &meshBuffer);
+  void drawMesh(Mesh &mesh);
   void endDraw();
   void present();
 
