@@ -41,9 +41,9 @@ public:
   void destroy() const;
   void destroyBuffer(VulkanBuffer const &buffer) const;
 
-  void buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh);
+  VulkanBuffer buildMeshBuffer(Mesh const &mesh);
 
-  void copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
+  void copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
                         VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
 };
 } // namespace flex

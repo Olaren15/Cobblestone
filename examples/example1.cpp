@@ -12,6 +12,19 @@ int flexMain() {
   flex::RenderWindow window{"window", width, height, fullscreen};
   flex::VulkanRenderer vulkanRenderer{window};
 
+  flex::Mesh quad{{0, 1, 2, 2, 3, 0},
+                  {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                   {{0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}},
+                   {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+                   {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}}};
+  flex::VulkanBuffer quadBuffer = vulkanRenderer.createMeshBuffer(quad);
+
+  flex::Mesh triangle{{0, 1, 2, 2, 3, 0},
+                      {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+                       {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+                       {{-1.f, 0.0f}, {0.0f, 0.0f, 1.0f}}}};
+  flex::VulkanBuffer triangleBuffer = vulkanRenderer.createMeshBuffer(triangle);
+
   unsigned int i = 0;
 
   while (!window.shouldExit()) {
@@ -22,9 +35,18 @@ int flexMain() {
     }
 
     if (vulkanRenderer.acquireNextFrame()) {
-      vulkanRenderer.draw();
+      vulkanRenderer.startDraw();
+      vulkanRenderer.drawMesh(quad, quadBuffer);
+      vulkanRenderer.drawMesh(triangle, triangleBuffer);
+      vulkanRenderer.endDraw();
+      vulkanRenderer.present();
     }
   }
+
+  vulkanRenderer.stop();
+
+  vulkanRenderer.destroyMeshBuffer(quadBuffer);
+  vulkanRenderer.destroyMeshBuffer(triangleBuffer);
 
   return EXIT_SUCCESS;
 }

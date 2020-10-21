@@ -17,23 +17,16 @@ enum struct QueueFamily;
 
 struct VulkanRenderer {
 private:
-  // temporary
-  Mesh mMesh{{0, 1, 2, 2, 3, 0},
-             {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-              {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-              {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-              {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}}};
+  struct VulkanRendererState{
+    unsigned int currentFrame = 0;
+    unsigned int imageIndex = 0;
+    bool acquiredImageStillValid = false;
+    bool doNotRender = false;
+  } mState;
 
   static constexpr std::array<const char *, 1> mRequiredDeviceExtensionsNames{
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
   };
-
-  static constexpr unsigned int mMaxFramesInFlight = 2;
-  unsigned int mCurrentFrame = 0;
-  unsigned int mImageIndex = 0;
-  bool mAcquiredImageStillValid = false;
-
-  bool mDoNotRender = false;
 
   RenderWindow *mWindow;
 
@@ -54,27 +47,23 @@ private:
   VkCommandPool mCommandPool{};
   std::vector<VkCommandBuffer> mCommandBuffers;
 
+  static constexpr unsigned int mMaxFramesInFlight = 2;
   std::array<VkSemaphore, mMaxFramesInFlight> mImageAvailableSemaphores{};
   std::array<VkSemaphore, mMaxFramesInFlight> mRenderFinishedSemaphores{};
   std::array<VkFence, mMaxFramesInFlight> mInFlightFences{};
   std::vector<VkFence> mImagesInFlight;
 
-  VulkanBuffer mMeshBuffer;
-
   void createVulkanInstance();
   void selectPhysicalDevice();
   [[nodiscard]] static unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
-                                                VkSurfaceKHR const &vulkanSurface) ;
+                                                       VkSurfaceKHR const &vulkanSurface);
   [[nodiscard]] static bool
-  physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice) ;
+  physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice);
   void createVulkanDevice();
   void createRenderPass();
   void createCommandPool();
   void createCommandBuffers();
   void createSyncObjects();
-  void createMeshBuffer();
-
-  void recordCommandBuffer();
   void handleFrameBufferResize();
 
 public:
@@ -86,7 +75,15 @@ public:
   void operator=(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer) = delete;
 
+  VulkanBuffer createMeshBuffer(Mesh const &mesh);
+  void destroyMeshBuffer(VulkanBuffer meshBuffer);
+
   bool acquireNextFrame();
-  void draw();
+  void startDraw();
+  void drawMesh(Mesh const &mesh, VulkanBuffer const &meshBuffer);
+  void endDraw();
+  void present();
+
+  void stop();
 };
 } // namespace flex

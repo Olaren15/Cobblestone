@@ -132,7 +132,8 @@ void VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
   vmaDestroyBuffer(mAllocator, buffer.buffer, buffer.allocation);
 }
 
-void VulkanMemoryManager::buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) {
+VulkanBuffer VulkanMemoryManager::buildMeshBuffer(Mesh const &mesh) {
+  VulkanBuffer meshBuffer{};
 
   VkDeviceSize const indicesSize = mesh.getIndicesSize();
   VkDeviceSize const verticesSize = mesh.getVerticesSize();
@@ -157,16 +158,18 @@ void VulkanMemoryManager::buildMeshBuffer(VulkanBuffer &meshBuffer, Mesh &mesh) 
 
   transferBufferOwnership(meshBuffer.buffer, mQueueFamilyIndices.transfer.value(),
                           mQueueFamilyIndices.graphics.value());
+
+  return meshBuffer;
 }
 
-void VulkanMemoryManager::copyDataToBuffer(void *srcData, VulkanBuffer &dstBuffer,
+void VulkanMemoryManager::copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer,
                                            VkDeviceSize const &dataSize,
                                            VkDeviceSize const &srcOffset,
                                            VkDeviceSize const &dstOffset) const {
   void *mappedMemory;
   vmaMapMemory(mAllocator, dstBuffer.allocation, &mappedMemory);
   std::memcpy(static_cast<char *>(mappedMemory) + dstOffset,
-              static_cast<char *>(srcData) + srcOffset, dataSize);
+              static_cast<char const *>(srcData) + srcOffset, dataSize);
   vmaUnmapMemory(mAllocator, dstBuffer.allocation);
 }
 
