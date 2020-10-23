@@ -77,6 +77,10 @@ void RenderWindow::createSDLWindow() {
 }
 
 void RenderWindow::update() {
+  if (mRenderAPI == RenderAPI::OpenGL) {
+    SDL_GL_SwapWindow(mSDLWindow);
+  }
+
   SDL_Event event{};
 
   while (SDL_PollEvent(&event)) {
@@ -98,14 +102,6 @@ void RenderWindow::update() {
       break;
     }
   }
-}
-
-void RenderWindow::swapGLBuffer() const {
-  if (mRenderAPI != RenderAPI::OpenGL) {
-    throw InvalidRenderAPIException("Cannot swap GL buffer if render API is not set to OpenGL");
-  }
-
-  SDL_GL_SwapWindow(mSDLWindow);
 }
 
 bool RenderWindow::shouldExit() const { return mShouldExit; }

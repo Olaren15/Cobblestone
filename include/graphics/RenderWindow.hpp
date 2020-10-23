@@ -46,7 +46,5 @@ public:
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
   [[nodiscard]] VkSurfaceKHR getDrawableVulkanSurface(VkInstance const &vulkanInstance) const;
   [[nodiscard]] VkExtent2D getDrawableVulkanSurfaceSize() const;
-
-  void swapGLBuffer() const;
 };
 } // namespace flex
