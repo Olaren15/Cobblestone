@@ -6,11 +6,13 @@ PROJECT(flex-engine VERSION 1 LANGUAGES CXX)
 FIND_PACKAGE(libconfig++ REQUIRED)
 FIND_PACKAGE(SDL2 REQUIRED)
 FIND_PACKAGE(Vulkan REQUIRED)
+FIND_PACKAGE(GLEW REQUIRED)
 FIND_PACKAGE(glm REQUIRED)
 
 ADD_LIBRARY(
 		flex-engine STATIC
 		src/core/InputHandler.cpp
+		src/graphics/openGL/OpenGLRenderer.cpp
 		src/graphics/vulkan/vk_mem_alloc.cpp
 		src/graphics/vulkan/VulkanBuffer.cpp
 		src/graphics/vulkan/VulkanHelpers.cpp
@@ -33,6 +35,7 @@ TARGET_LINK_LIBRARIES(
 		config++
 		SDL2::SDL2
 		Vulkan::Vulkan
+		GLEW::GLEW
 		glm
 )
 

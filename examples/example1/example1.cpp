@@ -1,6 +1,4 @@
-﻿#include <iostream>
-
-#include <FlexEngine.hpp>
+﻿#include <FlexEngine.hpp>
 
 int flexMain() {
   const flex::Configuration config;
@@ -9,7 +7,7 @@ int flexMain() {
   const unsigned int height = config.getUnsignedInt("display.window.height");
   const bool fullscreen = config.getBool("display.window.fullscreen");
 
-  flex::RenderWindow window{"window", width, height, fullscreen};
+  flex::RenderWindow window{"example1", width, height, fullscreen, flex::RenderAPI::Vulkan};
   flex::VulkanRenderer vulkanRenderer{window};
 
   flex::Mesh quad{{0, 1, 2, 2, 3, 0},

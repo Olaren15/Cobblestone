@@ -21,6 +21,8 @@ private:
   bool mShouldExit = false;
   bool mHasFocus = true;
 
+  SDL_GLContext mGLContext{};
+
   static void initSDL();
   void createSDLWindow();
 
@@ -28,7 +30,7 @@ public:
   RenderWindow();
   RenderWindow(RenderWindow const &) = delete;
   RenderWindow(std::string const &title, unsigned int const &width, unsigned int const &height,
-               bool const &fullscreen);
+               bool const &fullscreen, RenderAPI renderApi);
   ~RenderWindow();
 
   void operator=(RenderWindow const &) = delete;
@@ -40,8 +42,11 @@ public:
   [[nodiscard]] std::string getTitle() const;
   [[nodiscard]] RenderAPI getRenderAPI() const;
   [[nodiscard]] bool hasFocus() const;
+
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
   [[nodiscard]] VkSurfaceKHR getDrawableVulkanSurface(VkInstance const &vulkanInstance) const;
   [[nodiscard]] VkExtent2D getDrawableVulkanSurfaceSize() const;
+
+  void swapGLBuffer() const;
 };
 } // namespace flex

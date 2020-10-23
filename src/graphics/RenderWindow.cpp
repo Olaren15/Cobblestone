@@ -11,17 +11,25 @@ RenderWindow::RenderWindow() {
 }
 
 RenderWindow::RenderWindow(std::string const &title, unsigned int const &width,
-                           unsigned int const &height, bool const &fullscreen) {
+                           unsigned int const &height, bool const &fullscreen,
+                           RenderAPI renderApi) {
   initSDL();
 
   mWidth = width;
   mHeight = height;
   mFullScreen = fullscreen;
   mTitle = title;
+  mRenderAPI = renderApi;
   createSDLWindow();
 }
 
-RenderWindow::~RenderWindow() { SDL_Quit(); }
+RenderWindow::~RenderWindow() {
+  if (mRenderAPI == RenderAPI::OpenGL && mGLContext != nullptr) {
+    SDL_GL_DeleteContext(mGLContext);
+  }
+
+  SDL_Quit();
+}
 
 void RenderWindow::initSDL() {
   SDL_SetMainReady();
@@ -39,20 +47,34 @@ void RenderWindow::createSDLWindow() {
 
   switch (mRenderAPI) {
   case RenderAPI::OpenGL:
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     windowFlags |= SDL_WINDOW_OPENGL;
     break;
   case RenderAPI::Vulkan:
     windowFlags |= SDL_WINDOW_VULKAN;
     break;
   case RenderAPI::DirectX11:
-    break;
+    throw InvalidRenderAPIException{"DX11 is not currently supported!"};
   }
 
   mSDLWindow = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                 static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
 
   if (mSDLWindow == nullptr) {
-    throw std::runtime_error("Failed to create SDL window ");
+    throw std::runtime_error("Failed to create SDL window");
+  }
+
+  if (mRenderAPI == RenderAPI::OpenGL) {
+    mGLContext = SDL_GL_CreateContext(mSDLWindow);
+    if (mGLContext == nullptr) {
+      throw std::runtime_error("Failed to create OpenGL context");
+    }
+
+    // disable vsync
+    SDL_GL_SetSwapInterval(0);
   }
 }
 
@@ -78,6 +100,14 @@ void RenderWindow::update() {
       break;
     }
   }
+}
+
+void RenderWindow::swapGLBuffer() const {
+  if (mRenderAPI != RenderAPI::OpenGL) {
+    throw InvalidRenderAPIException("Cannot swap GL buffer if render API is not set to OpenGL");
+  }
+
+  SDL_GL_SwapWindow(mSDLWindow);
 }
 
 bool RenderWindow::shouldExit() const { return mShouldExit; }
@@ -129,5 +159,4 @@ VkExtent2D RenderWindow::getDrawableVulkanSurfaceSize() const {
 
   return VkExtent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 }
-
 } // namespace flex

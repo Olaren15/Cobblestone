@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <iostream>
+
 int flexMain();
 
 int main() {
