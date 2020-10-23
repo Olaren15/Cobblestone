@@ -56,8 +56,6 @@ void RenderWindow::createSDLWindow() {
   case RenderAPI::Vulkan:
     windowFlags |= SDL_WINDOW_VULKAN;
     break;
-  case RenderAPI::DirectX11:
-    throw InvalidRenderAPIException{"DX11 is not currently supported!"};
   }
 
   mSDLWindow = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,

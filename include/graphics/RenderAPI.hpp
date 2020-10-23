@@ -5,7 +5,7 @@
 #include <utility>
 
 namespace flex {
-enum struct RenderAPI { OpenGL, Vulkan, DirectX11 };
+enum struct RenderAPI { OpenGL, Vulkan };
 
 struct InvalidRenderAPIException final : virtual std::exception {
 protected:
