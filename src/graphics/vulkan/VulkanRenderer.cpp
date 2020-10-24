@@ -9,14 +9,13 @@
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(RenderWindow &window) {
+VulkanRenderer::VulkanRenderer(RenderWindow const &window) : mWindow(window) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
         "Vulkan render API"};
   }
 
-  mWindow = &window;
   createVulkanInstance();
   mSurface = window.getDrawableVulkanSurface(mInstance);
   selectPhysicalDevice();
@@ -52,7 +51,7 @@ VulkanRenderer::~VulkanRenderer() {
 }
 
 void VulkanRenderer::createVulkanInstance() {
-  std::string const title = mWindow->getTitle();
+  std::string const title = mWindow.getTitle();
 
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -62,7 +61,7 @@ void VulkanRenderer::createVulkanInstance() {
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.apiVersion = VK_API_VERSION_1_0;
 
-  std::vector<char const *> enabledExtensions = mWindow->getRequiredVulkanExtensions();
+  std::vector<char const *> enabledExtensions = mWindow.getRequiredVulkanExtensions();
   std::vector<char const *> enabledLayers{};
 
 #ifndef NDEBUG
@@ -268,28 +267,20 @@ void VulkanRenderer::createSyncObjects() {
 }
 
 void VulkanRenderer::handleFrameBufferResize() {
-  if (mWindow->hasFocus()) {
+  if (mWindow.hasFocus()) {
     mState.doNotRender = false;
 
     validateVkResult(vkDeviceWaitIdle(mDevice));
     vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()),
                          mCommandBuffers.data());
 
-    mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, *mWindow, mSurface,
+    mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, mWindow, mSurface,
                                        mQueues.familyIndices, mRenderPass);
 
     createCommandBuffers();
   } else {
     mState.doNotRender = true;
   }
-}
-
-VulkanBuffer VulkanRenderer::createMeshBuffer(Mesh const &mesh) {
-  return mMemoryManager.buildMeshBuffer(mesh);
-}
-
-void VulkanRenderer::destroyMeshBuffer(VulkanBuffer meshBuffer) {
-  mMemoryManager.destroyBuffer(meshBuffer);
 }
 
 bool VulkanRenderer::acquireNextFrame() {
@@ -397,7 +388,8 @@ void VulkanRenderer::drawMesh(Mesh &mesh) {
     mesh.setVulkanBuffer(mMemoryManager.buildMeshBuffer(mesh));
   }
 
-  vkCmdBindIndexBuffer(mCommandBuffers[mState.imageIndex], mesh.getVulkanBuffer()->buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(mCommandBuffers[mState.imageIndex], mesh.getVulkanBuffer()->buffer, 0,
+                       VK_INDEX_TYPE_UINT32);
 
   std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
   vkCmdBindVertexBuffers(mCommandBuffers[mState.imageIndex], 0, 1, &mesh.getVulkanBuffer()->buffer,

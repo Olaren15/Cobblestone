@@ -28,7 +28,7 @@ private:
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
   };
 
-  RenderWindow *mWindow;
+  RenderWindow const &mWindow;
 
   VkInstance mInstance{};
   VkSurfaceKHR mSurface;
@@ -69,14 +69,11 @@ private:
 public:
   VulkanRenderer() = delete;
   VulkanRenderer(VulkanRenderer const &) = delete;
-  explicit VulkanRenderer(RenderWindow &window);
+  explicit VulkanRenderer(RenderWindow const &window);
   ~VulkanRenderer();
 
   void operator=(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer) = delete;
-
-  VulkanBuffer createMeshBuffer(Mesh const &mesh);
-  void destroyMeshBuffer(VulkanBuffer meshBuffer);
 
   bool acquireNextFrame();
   void startDraw();
