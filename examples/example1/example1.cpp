@@ -8,7 +8,8 @@ int flexMain() {
   const bool fullscreen = config.getBool("display.window.fullscreen");
 
   flex::RenderWindow window{"example1", width, height, fullscreen, flex::RenderAPI::Vulkan};
-  flex::VulkanRenderer vulkanRenderer{window};
+  flex::Camera camera;
+  flex::VulkanRenderer vulkanRenderer{window, camera};
 
   flex::Mesh quad{{0, 1, 2, 2, 3, 0},
                   {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -22,7 +23,9 @@ int flexMain() {
                        {{-1.f, 0.0f}, {0.0f, 0.0f, 1.0f}}}};
 
   while (!window.shouldExit()) {
+    Time::tick();
     window.update();
+    camera.update();
 
     if (vulkanRenderer.acquireNextFrame()) {
       vulkanRenderer.startDraw();

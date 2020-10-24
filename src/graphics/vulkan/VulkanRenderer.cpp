@@ -5,11 +5,11 @@
 #include <set>
 #include <vector>
 
-#include "graphics/Camera.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(RenderWindow const &window) : mWindow(window) {
+VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
+    : mWindow(window), mCamera(camera) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
@@ -375,7 +375,7 @@ void VulkanRenderer::startDraw() {
                        VK_SUBPASS_CONTENTS_INLINE);
 
   glm::mat4 cameraView =
-      Camera::getView(static_cast<float>(mSwapchain.extent.width) / mSwapchain.extent.height);
+      mCamera.getViewMatrix(static_cast<float>(mSwapchain.extent.width) / mSwapchain.extent.height);
   vkCmdPushConstants(mCommandBuffers[mState.imageIndex], mPipeline.pipelineLayout,
                      VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof cameraView, &cameraView);
 

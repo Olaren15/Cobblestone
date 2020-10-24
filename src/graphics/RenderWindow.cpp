@@ -4,6 +4,8 @@
 
 #include <SDL2/SDL_vulkan.h>
 
+#include "core/Time.hpp"
+
 namespace flex {
 RenderWindow::RenderWindow() {
   initSDL();

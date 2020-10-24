@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "graphics/Camera.hpp"
 #include "graphics/Mesh.hpp"
 #include "graphics/RenderWindow.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
@@ -29,6 +30,7 @@ private:
   };
 
   RenderWindow const &mWindow;
+  Camera const& mCamera;
 
   VkInstance mInstance{};
   VkSurfaceKHR mSurface;
@@ -69,7 +71,7 @@ private:
 public:
   VulkanRenderer() = delete;
   VulkanRenderer(VulkanRenderer const &) = delete;
-  explicit VulkanRenderer(RenderWindow const &window);
+  explicit VulkanRenderer(RenderWindow const &window, Camera const& camera);
   ~VulkanRenderer();
 
   void operator=(VulkanRenderer const &) = delete;
