@@ -2,18 +2,46 @@
 
 #include <algorithm>
 
-#include <SDL2/SDL.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "core/InputHandler.hpp"
 #include "core/Time.hpp"
 
 namespace flex {
-Camera::Camera() { updateVectors(); }
+Camera::Camera() {
+  RenderWindow::grabCursor();
+  updateVectors();
+}
 
 Camera::Camera(glm::vec3 const &position, glm::vec3 const &up, float const &yaw, float const &pitch)
     : mPosition(position), mUp(up), mYaw(yaw), mPitch(pitch) {
+  RenderWindow::grabCursor();
   updateVectors();
+}
+
+void Camera::handleMouse() {
+  Vector2<int> currentMousePosition = Input.getMouseMovement();
+  mYaw += currentMousePosition.x * mMouseSensitivity;
+  mPitch -= currentMousePosition.y * mMouseSensitivity;
+  mPitch = std::clamp(mPitch, -89.0f, 89.0f);
+}
+
+void Camera::handleKeyboard() {
+  float velocity = Time::deltaSeconds() * mMovementSpeed;
+  if (Input.keyPressed("Left Shift"))
+    velocity *= 3.0f;
+  if (Input.keyPressed("w"))
+    mPosition += mFront * velocity;
+  if (Input.keyPressed("s"))
+    mPosition -= mFront * velocity;
+  if (Input.keyPressed("a"))
+    mPosition -= mRight * velocity;
+  if (Input.keyPressed("d"))
+    mPosition += mRight * velocity;
+  if (Input.keyPressed("q"))
+    mPosition -= mUp * velocity;
+  if (Input.keyPressed("e"))
+    mPosition += mUp * velocity;
 }
 
 void Camera::updateVectors() {
@@ -26,6 +54,25 @@ void Camera::updateVectors() {
   mUp = glm::normalize(glm::cross(mRight, mFront));
 }
 
+void Camera::update() {
+  if (mDisableControls) {
+    if (Input.mouseLeftClicked()) {
+      RenderWindow::grabCursor();
+      mDisableControls = false;
+    }
+  } else {
+    if (Input.keyPressed("Escape")) {
+      RenderWindow::releaseCursor();
+      mDisableControls = true;
+    }
+
+    handleMouse();
+    handleKeyboard();
+  }
+
+  updateVectors();
+}
+
 glm::mat4 Camera::getViewMatrix(float const aspectRatio) const {
   glm::mat4 const view = lookAt(mPosition, mPosition + mFront, mUp);
 
@@ -33,31 +80,5 @@ glm::mat4 Camera::getViewMatrix(float const aspectRatio) const {
   projection[1][1] *= -1;
 
   return projection * view;
-}
-
-void Camera::update() {
-  float x = 0, y = 0;
-  // calculate the mouse offset since last frame
-  mYaw += x * mMouseSensitivity;
-  mPitch += y * mMouseSensitivity;
-  mPitch = std::clamp(mPitch, -89.0f, 89.0f);
-
-  float velocity = Time::deltaSeconds() * mMovementSpeed;
-  if (InputHandler::keyPressed("Left Shift"))
-    velocity *= 3.0f;
-  if (InputHandler::keyPressed("w"))
-    mPosition += mFront * velocity;
-  if (InputHandler::keyPressed("s"))
-    mPosition -= mFront * velocity;
-  if (InputHandler::keyPressed("a"))
-    mPosition -= mRight * velocity;
-  if (InputHandler::keyPressed("d"))
-    mPosition += mRight * velocity;
-  if (InputHandler::keyPressed("q"))
-    mPosition -= mUp * velocity;
-  if (InputHandler::keyPressed("e"))
-    mPosition += mUp * velocity;
-
-  updateVectors();
 }
 } // namespace flex

@@ -15,6 +15,7 @@ ADD_LIBRARY(
 		flex-engine STATIC
 		src/core/InputHandler.cpp
 		src/core/Time.cpp
+		src/core/Vector2.cpp
 		src/graphics/openGL/OpenGLRenderer.cpp
 		src/graphics/vulkan/vk_mem_alloc.cpp
 		src/graphics/vulkan/VulkanBuffer.cpp

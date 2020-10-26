@@ -2,6 +2,9 @@
 
 #include <glm/glm.hpp>
 
+#include "core/Vector2.hpp"
+#include "graphics/RenderWindow.hpp"
+
 namespace flex {
 struct Camera {
 private:
@@ -19,8 +22,12 @@ private:
   float mFarClip = 50.0f;
 
   float mMovementSpeed = 2.25f;
-  float mMouseSensitivity = 0.001f;
+  float mMouseSensitivity = 0.1f;
 
+  bool mDisableControls = false;
+
+  void handleMouse();
+  void handleKeyboard();
   void updateVectors();
 
 public:
