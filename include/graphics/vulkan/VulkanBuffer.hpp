@@ -10,9 +10,10 @@ struct VulkanMemoryManager;
 struct VulkanBuffer {
   VmaAllocation allocation{};
   VkBuffer buffer{};
-  VulkanMemoryManager *memoryManager;
+  VulkanMemoryManager &memoryManager;
 
   VulkanBuffer() = delete;
-  explicit VulkanBuffer(VulkanMemoryManager *manager);
+  explicit VulkanBuffer(VulkanMemoryManager &manager);
+  VulkanBuffer & operator=(VulkanBuffer other);
 };
 } // namespace flex

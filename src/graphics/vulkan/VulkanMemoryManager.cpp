@@ -136,7 +136,7 @@ void VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
 }
 
 VulkanBuffer VulkanMemoryManager::buildMeshBuffer(Mesh const &mesh) {
-  VulkanBuffer meshBuffer{this};
+  VulkanBuffer meshBuffer{*this};
 
   VkBufferCreateInfo bufferCreateInfo =
       buildTransferBufferCreateInfo(mesh.getIndicesSize() + mesh.getVerticesSize());
@@ -162,7 +162,7 @@ void VulkanMemoryManager::updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &
   VkDeviceSize const verticesSize = mesh.getVerticesSize();
   VkDeviceSize const meshDataSize = indicesSize + verticesSize;
 
-  VulkanBuffer stagingBuffer{this};
+  VulkanBuffer stagingBuffer{*this};
   createStagingBuffer(stagingBuffer, meshDataSize);
   copyDataToBuffer(mesh.getIndices().data(), stagingBuffer, indicesSize, 0, 0);
   copyDataToBuffer(mesh.getVertices().data(), stagingBuffer, verticesSize, 0, indicesSize);

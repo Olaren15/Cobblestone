@@ -9,14 +9,14 @@ Mesh::Mesh(std::vector<uint32_t> const &indices, std::vector<Vertex> const &vert
 }
 
 Mesh::~Mesh() {
-  if (mVulkanBuffer.has_value() && mVulkanBuffer->memoryManager != nullptr) {
-    mVulkanBuffer->memoryManager->destroyBuffer(mVulkanBuffer.value());
+  if (mVulkanBuffer.has_value()) {
+    mVulkanBuffer->memoryManager.destroyBuffer(mVulkanBuffer.value());
   }
 }
 
 void Mesh::updateBufferData() {
   if (mVulkanBuffer.has_value()) {
-    mVulkanBuffer->memoryManager->updateMeshBuffer(mVulkanBuffer.value(), *this);
+    mVulkanBuffer->memoryManager.updateMeshBuffer(mVulkanBuffer.value(), *this);
   }
 }
 
