@@ -11,7 +11,7 @@ int flexMain() {
   flex::Camera camera{};
   flex::VulkanRenderer vulkanRenderer{window, camera};
 
-  flex::Mesh quad{{
+  flex::Mesh cube{{
                       0, 1, 2, 2, 3, 0, // front
                       4, 5, 1, 1, 0, 4, // top
                       5, 4, 7, 7, 6, 5, // back
@@ -37,7 +37,7 @@ int flexMain() {
 
     if (vulkanRenderer.acquireNextFrame()) {
       vulkanRenderer.startDraw();
-      vulkanRenderer.drawMesh(quad);
+      vulkanRenderer.drawMesh(cube);
       vulkanRenderer.endDraw();
       vulkanRenderer.present();
     }
