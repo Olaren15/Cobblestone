@@ -22,7 +22,7 @@ Camera::Camera(glm::vec3 const &position, glm::vec3 const &up, float const &yaw,
 void Camera::handleMouse() {
   Vector2<int> currentMousePosition = Input.getMouseMovement();
   mYaw += currentMousePosition.x * mMouseSensitivity;
-  mPitch -= currentMousePosition.y * mMouseSensitivity;
+  mPitch += currentMousePosition.y * mMouseSensitivity;
   mPitch = std::clamp(mPitch, -89.0f, 89.0f);
 }
 
@@ -39,9 +39,9 @@ void Camera::handleKeyboard() {
   if (Input.keyPressed("d"))
     mPosition += mRight * velocity;
   if (Input.keyPressed("q"))
-    mPosition -= mUp * velocity;
-  if (Input.keyPressed("e"))
     mPosition += mUp * velocity;
+  if (Input.keyPressed("e"))
+    mPosition -= mUp * velocity;
 }
 
 void Camera::updateVectors() {
@@ -74,9 +74,8 @@ void Camera::update() {
 
 glm::mat4 Camera::getViewMatrix(float const aspectRatio) const {
   glm::mat4 const view = lookAt(mPosition, mPosition + mFront, mUp);
-
-  glm::mat4 projection = glm::perspective(glm::radians(mFov), aspectRatio, mNearClip, mFarClip);
-  projection[1][1] *= -1;
+  glm::mat4 const projection =
+      glm::perspective(glm::radians(mFov), aspectRatio, mNearClip, mFarClip);
 
   return projection * view;
 }
