@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include <Sdl2/SDL.h>
+#include <SDL2/SDL.h>
 
 #include <core/Vector2.hpp>
 
