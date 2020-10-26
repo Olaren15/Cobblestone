@@ -4,7 +4,6 @@ SET(OpenGL_GL_PREFERENCE GLVND)
 
 PROJECT(flex-engine VERSION 1 LANGUAGES CXX)
 
-FIND_PACKAGE(libconfig++ REQUIRED)
 FIND_PACKAGE(SDL2 REQUIRED)
 FIND_PACKAGE(Vulkan REQUIRED)
 FIND_PACKAGE(OpenGL REQUIRED)
@@ -31,12 +30,10 @@ ADD_LIBRARY(
 		src/graphics/Mesh.cpp
 		src/graphics/RenderWindow.cpp
 		src/graphics/Vertex.cpp
-		src/utils/Configuration.cpp
 )
 
 TARGET_LINK_LIBRARIES(
 		flex-engine PRIVATE
-		config++
 		SDL2::SDL2
 		Vulkan::Vulkan
 		OpenGL::GL

@@ -11,4 +11,3 @@
 #include "graphics/RenderWindow.hpp"
 #include "graphics/openGL/OpenGLRenderer.hpp"
 #include "graphics/vulkan/VulkanRenderer.hpp"
-#include "utils/Configuration.hpp"

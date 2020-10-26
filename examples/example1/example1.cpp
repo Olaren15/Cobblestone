@@ -1,13 +1,7 @@
 ﻿#include <FlexEngine.hpp>
 
 int flexMain() {
-  const flex::Configuration config;
-
-  const unsigned int width = config.getUnsignedInt("display.window.width");
-  const unsigned int height = config.getUnsignedInt("display.window.height");
-  const bool fullscreen = config.getBool("display.window.fullscreen");
-
-  flex::RenderWindow window{"example1", width, height, fullscreen, flex::RenderAPI::Vulkan};
+  flex::RenderWindow window{"example1", 1280, 720, false, flex::RenderAPI::Vulkan};
   flex::Camera camera{};
   flex::VulkanRenderer vulkanRenderer{window, camera};
 
