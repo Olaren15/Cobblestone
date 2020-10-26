@@ -4,6 +4,7 @@
 
 #include <SDL2/SDL_vulkan.h>
 
+#include "core/InputHandler.hpp"
 #include "core/Time.hpp"
 
 namespace flex {
@@ -84,8 +85,9 @@ void RenderWindow::update() {
   }
 
   SDL_Event event{};
-
+  std::vector<SDL_Event> events;
   while (SDL_PollEvent(&event)) {
+    events.push_back(event);
     switch (event.type) {
     case SDL_QUIT:
       mShouldExit = true;
@@ -104,6 +106,8 @@ void RenderWindow::update() {
       break;
     }
   }
+
+  Input.updateEvents(events);
 }
 
 bool RenderWindow::shouldExit() const { return mShouldExit; }

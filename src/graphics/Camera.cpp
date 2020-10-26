@@ -9,13 +9,13 @@
 
 namespace flex {
 Camera::Camera() {
-  RenderWindow::grabCursor();
+  Input.grabCursor();
   updateVectors();
 }
 
 Camera::Camera(glm::vec3 const &position, glm::vec3 const &up, float const &yaw, float const &pitch)
     : mPosition(position), mUp(up), mYaw(yaw), mPitch(pitch) {
-  RenderWindow::grabCursor();
+  Input.grabCursor();
   updateVectors();
 }
 
@@ -55,19 +55,18 @@ void Camera::updateVectors() {
 }
 
 void Camera::update() {
-  if (mDisableControls) {
-    if (Input.mouseLeftClicked()) {
-      RenderWindow::grabCursor();
-      mDisableControls = false;
-    }
-  } else {
+  if (mControlsEnabled) {
     if (Input.keyPressed("Escape")) {
-      RenderWindow::releaseCursor();
-      mDisableControls = true;
+      Input.releaseCursor();
+      mControlsEnabled = false;
     }
-
     handleMouse();
     handleKeyboard();
+  } else {
+    if (Input.mouseLeftClicked()) {
+      Input.grabCursor();
+      mControlsEnabled = true;
+    }
   }
 
   updateVectors();

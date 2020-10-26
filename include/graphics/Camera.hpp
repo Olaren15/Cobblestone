@@ -24,7 +24,7 @@ private:
   float mMovementSpeed = 2.25f;
   float mMouseSensitivity = 0.1f;
 
-  bool mDisableControls = false;
+  bool mControlsEnabled = true;
 
   void handleMouse();
   void handleKeyboard();

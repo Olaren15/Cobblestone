@@ -12,15 +12,10 @@ int flexMain() {
   flex::VulkanRenderer vulkanRenderer{window, camera};
 
   flex::Mesh quad{{0, 1, 2, 2, 3, 0},
-                  {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                   {{0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-                   {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-                   {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}}}};
-
-  flex::Mesh triangle{{0, 1, 2},
-                      {{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-                       {{-0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-                       {{-1.f, 0.0f}, {0.0f, 0.0f, 1.0f}}}};
+                  {{{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+                   {{0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}},
+                   {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+                   {{-0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}}}};
 
   while (!window.shouldExit()) {
     flex::Time::tick();
@@ -30,9 +25,6 @@ int flexMain() {
     if (vulkanRenderer.acquireNextFrame()) {
       vulkanRenderer.startDraw();
       vulkanRenderer.drawMesh(quad);
-      if (flex::Input.keyPressed("Space")) {
-        vulkanRenderer.drawMesh(triangle);
-      }
       vulkanRenderer.endDraw();
       vulkanRenderer.present();
     }
