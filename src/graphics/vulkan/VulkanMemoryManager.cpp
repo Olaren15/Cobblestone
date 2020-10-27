@@ -95,6 +95,7 @@ void VulkanMemoryManager::transferBufferOwnership(VkBuffer const &buffer,
 void VulkanMemoryManager::initialize(VkInstance const &instance,
                                      VkPhysicalDevice const &physicalDevice, VkDevice const &device,
                                      VulkanQueues const &queues) {
+  mPhysicalDevice = physicalDevice;
   mDevice = device;
 
   VmaAllocatorCreateInfo allocatorCreateInfo{};
@@ -179,6 +180,71 @@ void VulkanMemoryManager::copyDataToBuffer(void const *srcData, VulkanBuffer &ds
   std::memcpy(static_cast<char *>(mappedMemory) + dstOffset,
               static_cast<char const *>(srcData) + srcOffset, dataSize);
   vmaUnmapMemory(mAllocator, dstBuffer.allocation);
+}
+
+VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &imageExtent, VkFormat const &format,
+                                             VkImageTiling const &tiling,
+                                             VkImageUsageFlags const &usage,
+                                             VkImageAspectFlags const &imageAspect) {
+  VulkanImage image = VulkanImage{*this};
+
+  // image memory
+  VkImageCreateInfo imageCreateInfo{};
+  imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageCreateInfo.extent.width = imageExtent.width;
+  imageCreateInfo.extent.height = imageExtent.height;
+  imageCreateInfo.extent.depth = 1;
+  imageCreateInfo.mipLevels = 1;
+  imageCreateInfo.arrayLayers = 1;
+  imageCreateInfo.format = format;
+  imageCreateInfo.tiling = tiling;
+  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageCreateInfo.usage = usage;
+  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  VmaAllocationCreateInfo allocationCreateInfo{};
+  allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+  validateVkResult(vmaCreateImage(mAllocator, &imageCreateInfo, &allocationCreateInfo, &image.image,
+                                  &image.allocation, nullptr));
+
+  // image view
+  VkImageSubresourceRange subresourceRange{};
+  subresourceRange.aspectMask = imageAspect;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = 1;
+  subresourceRange.baseArrayLayer = 0;
+  subresourceRange.layerCount = 1;
+
+  VkComponentMapping componentMapping{};
+  componentMapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+  componentMapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+  componentMapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+  componentMapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+  VkImageViewCreateInfo imageViewCreateInfo{};
+  imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  imageViewCreateInfo.image = image.image;
+  imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  imageViewCreateInfo.format = format;
+  imageViewCreateInfo.components = componentMapping;
+  imageViewCreateInfo.subresourceRange = subresourceRange;
+
+  validateVkResult(vkCreateImageView(mDevice, &imageViewCreateInfo, nullptr, &image.imageView));
+
+  return image;
+}
+
+void VulkanMemoryManager::destroyImage(VulkanImage &image) {
+  vmaDestroyImage(mAllocator, image.image, image.allocation);
+}
+
+VulkanImage VulkanMemoryManager::createDepthBufferImage(VkExtent2D const &swapchainExtent) {
+  return createImage(swapchainExtent, VulkanImage::getDepthBufferFormat(mPhysicalDevice),
+                     VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                     VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 } // namespace flex

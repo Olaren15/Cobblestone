@@ -122,6 +122,14 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   multiSampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
   multiSampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
 
+  VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
+  depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+  depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+  depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+  depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+  depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+
   VkPushConstantRange pushConstantRange;
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   pushConstantRange.offset = 0;
@@ -145,6 +153,7 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   pipelineCreateInfo.pMultisampleState = &multiSampleStateCreateInfo;
   pipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
   pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
+  pipelineCreateInfo.pDepthStencilState = &depthStencilStateCreateInfo;
   pipelineCreateInfo.layout = pipelineLayout;
   pipelineCreateInfo.renderPass = renderPass;
   pipelineCreateInfo.subpass = 0;

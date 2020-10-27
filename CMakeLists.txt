@@ -19,6 +19,7 @@ ADD_LIBRARY(
 		src/graphics/vulkan/vk_mem_alloc.cpp
 		src/graphics/vulkan/VulkanBuffer.cpp
 		src/graphics/vulkan/VulkanHelpers.cpp
+		src/graphics/vulkan/VulkanImage.cpp
 		src/graphics/vulkan/VulkanMemoryManager.cpp
 		src/graphics/vulkan/VulkanPipeline.cpp
 		src/graphics/vulkan/VulkanQueueFamilyIndices.cpp

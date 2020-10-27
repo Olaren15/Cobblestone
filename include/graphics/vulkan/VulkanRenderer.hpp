@@ -30,7 +30,7 @@ private:
   };
 
   RenderWindow const &mWindow;
-  Camera const& mCamera;
+  Camera const &mCamera;
 
   VkInstance mInstance{};
   VkSurfaceKHR mSurface;
@@ -43,6 +43,8 @@ private:
   VulkanMemoryManager mMemoryManager;
 
   VulkanSwapchain mSwapchain;
+  VulkanImage mDepthBufferImage;
+
   VulkanPipeline mPipeline{};
   VkRenderPass mRenderPass{};
 
@@ -71,7 +73,7 @@ private:
 public:
   VulkanRenderer() = delete;
   VulkanRenderer(VulkanRenderer const &) = delete;
-  explicit VulkanRenderer(RenderWindow const &window, Camera const& camera);
+  explicit VulkanRenderer(RenderWindow const &window, Camera const &camera);
   ~VulkanRenderer();
 
   void operator=(VulkanRenderer const &) = delete;

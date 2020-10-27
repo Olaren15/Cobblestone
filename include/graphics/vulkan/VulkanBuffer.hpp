@@ -14,6 +14,6 @@ struct VulkanBuffer {
 
   VulkanBuffer() = delete;
   explicit VulkanBuffer(VulkanMemoryManager &manager);
-  VulkanBuffer & operator=(VulkanBuffer other);
+  VulkanBuffer &operator=(VulkanBuffer other);
 };
 } // namespace flex

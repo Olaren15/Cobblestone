@@ -9,7 +9,7 @@
 
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
-    : mWindow(window), mCamera(camera) {
+    : mWindow(window), mCamera(camera), mDepthBufferImage(mMemoryManager) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
@@ -25,8 +25,9 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
   mMemoryManager.initialize(mInstance, mPhysicalDevice, mDevice, mQueues);
   mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueues.familyIndices);
   createRenderPass();
+  mDepthBufferImage = mMemoryManager.createDepthBufferImage(mSwapchain.extent);
   mPipeline.createPipeline(mDevice, mRenderPass);
-  mSwapchain.createFrameBuffers(mDevice, mRenderPass);
+  mSwapchain.createFrameBuffers(mDevice, mRenderPass, mDepthBufferImage);
   createCommandPool();
   createCommandBuffers();
   createSyncObjects();
@@ -43,6 +44,7 @@ VulkanRenderer::~VulkanRenderer() {
   vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
   mPipeline.destroy(mDevice);
   mSwapchain.destroy(mDevice);
+  mMemoryManager.destroyImage(mDepthBufferImage);
   vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
   mMemoryManager.destroy();
   vkDestroyDevice(mDevice, nullptr);
@@ -199,10 +201,25 @@ void VulkanRenderer::createRenderPass() {
   colorAttachmentReference.attachment = 0;
   colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+  VkAttachmentDescription depthAttachment{};
+  depthAttachment.format = VulkanImage::getDepthBufferFormat(mPhysicalDevice);
+  depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+  VkAttachmentReference depthAttachmentReference{};
+  depthAttachmentReference.attachment = 1;
+  depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
   VkSubpassDescription subpassDescription{};
   subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpassDescription.colorAttachmentCount = 1;
   subpassDescription.pColorAttachments = &colorAttachmentReference;
+  subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
 
   VkSubpassDependency subpassDependency{};
   subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -212,10 +229,11 @@ void VulkanRenderer::createRenderPass() {
   subpassDependency.srcAccessMask = 0;
   subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
   VkRenderPassCreateInfo renderPassCreateInfo{};
   renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassCreateInfo.attachmentCount = 1;
-  renderPassCreateInfo.pAttachments = &colorAttachment;
+  renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+  renderPassCreateInfo.pAttachments = attachments.data();
   renderPassCreateInfo.subpassCount = 1;
   renderPassCreateInfo.pSubpasses = &subpassDescription;
   renderPassCreateInfo.dependencyCount = 1;
@@ -275,7 +293,7 @@ void VulkanRenderer::handleFrameBufferResize() {
                          mCommandBuffers.data());
 
     mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, mWindow, mSurface,
-                                       mQueues.familyIndices, mRenderPass);
+                                       mQueues.familyIndices, mRenderPass, mDepthBufferImage);
 
     createCommandBuffers();
   } else {
@@ -360,16 +378,17 @@ void VulkanRenderer::startDraw() {
   renderArea.offset = {0, 0};
   renderArea.extent = mSwapchain.extent;
 
-  VkClearValue clearValue;
-  clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  std::array<VkClearValue, 2> clearValues{};
+  clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+  clearValues[1].depthStencil = {1.0f, 0};
 
   VkRenderPassBeginInfo renderPassBeginInfo{};
   renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassBeginInfo.renderPass = mRenderPass;
   renderPassBeginInfo.framebuffer = mSwapchain.framebuffers[mState.imageIndex];
   renderPassBeginInfo.renderArea = renderArea;
-  renderPassBeginInfo.clearValueCount = 1;
-  renderPassBeginInfo.pClearValues = &clearValue;
+  renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+  renderPassBeginInfo.pClearValues = clearValues.data();
 
   vkCmdBeginRenderPass(mCommandBuffers[mState.imageIndex], &renderPassBeginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);

@@ -4,11 +4,13 @@
 
 #include "graphics/Mesh.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
+#include "graphics/vulkan/VulkanImage.hpp"
 #include "graphics/vulkan/VulkanQueues.hpp"
 
 namespace flex {
 struct VulkanMemoryManager {
 private:
+  VkPhysicalDevice mPhysicalDevice{};
   VkDevice mDevice{};
 
   VmaAllocator mAllocator{};
@@ -46,5 +48,12 @@ public:
 
   void copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
                         VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
+
+  VulkanImage createImage(VkExtent2D const &imageExtent, VkFormat const &format,
+                          VkImageTiling const &tiling, VkImageUsageFlags const &usage,
+                          VkImageAspectFlags const &imageAspect);
+  void destroyImage(VulkanImage &image);
+
+  VulkanImage createDepthBufferImage(VkExtent2D const &swapchainExtent);
 };
 } // namespace flex

@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
+#include "graphics/vulkan/VulkanMemoryManager.hpp"
 
 namespace flex {
 VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
@@ -149,15 +150,18 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
   createImageViews(device);
 }
 
-void VulkanSwapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass) {
+void VulkanSwapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass,
+                                         VulkanImage const &depthImage) {
   framebuffers.resize(imageViews.size(), {});
 
   for (size_t i = 0; i < imageViews.size(); i++) {
+    std::array<VkImageView, 2> attachments{imageViews[i], depthImage.imageView};
+
     VkFramebufferCreateInfo framebufferCreateInfo{};
     framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferCreateInfo.renderPass = renderPass;
-    framebufferCreateInfo.attachmentCount = 1;
-    framebufferCreateInfo.pAttachments = &imageViews[i];
+    framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+    framebufferCreateInfo.pAttachments = attachments.data();
     framebufferCreateInfo.width = extent.width;
     framebufferCreateInfo.height = extent.height;
     framebufferCreateInfo.layers = 1;
@@ -171,7 +175,8 @@ void VulkanSwapchain::handleFrameBufferResize(VkPhysicalDevice const &physicalDe
                                               VkDevice const &device, RenderWindow const &window,
                                               VkSurfaceKHR const &surface,
                                               VulkanQueueFamilyIndices const &queueFamilyIndices,
-                                              VkRenderPass const &renderPass) {
+                                              VkRenderPass const &renderPass,
+                                              VulkanImage &depthBufferImage) {
 
   for (VkFramebuffer &framebuffer : framebuffers) {
     vkDestroyFramebuffer(device, framebuffer, nullptr);
@@ -184,7 +189,12 @@ void VulkanSwapchain::handleFrameBufferResize(VkPhysicalDevice const &physicalDe
   // ReSharper disable once CppLocalVariableMayBeConst
   VkSwapchainKHR oldSwapchain = swapchain;
   createSwapchain(physicalDevice, device, window, surface, queueFamilyIndices);
-  createFrameBuffers(device, renderPass);
+
+  VulkanMemoryManager &memoryManager = depthBufferImage.memoryManager;
+  memoryManager.destroyImage(depthBufferImage);
+  depthBufferImage = memoryManager.createDepthBufferImage(extent);
+
+  createFrameBuffers(device, renderPass, depthBufferImage);
 
   vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
 }
