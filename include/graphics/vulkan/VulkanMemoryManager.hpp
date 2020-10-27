@@ -49,9 +49,10 @@ public:
   void copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
                         VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
 
-  VulkanImage createImage(VkExtent2D const &imageExtent, VkFormat const &format,
+  VulkanImage createImage(VkExtent2D const &extent, VkFormat const &format,
                           VkImageTiling const &tiling, VkImageUsageFlags const &usage,
                           VkImageAspectFlags const &imageAspect);
+  void createImageView(VulkanImage &image, VkImageAspectFlags const &imageAspect);
   void destroyImage(VulkanImage &image);
 
   VulkanImage createDepthBufferImage(VkExtent2D const &swapchainExtent);

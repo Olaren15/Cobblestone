@@ -9,7 +9,7 @@
 
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
-    : mWindow(window), mCamera(camera), mDepthBufferImage(mMemoryManager) {
+    : mWindow(window), mCamera(camera), mSwapchain(mMemoryManager) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
@@ -22,12 +22,11 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
   mQueues.buildQueueFamilyIndices(mPhysicalDevice, mSurface);
   createVulkanDevice();
   mQueues.retrieveQueues(mDevice);
-  mMemoryManager.initialize(mInstance, mPhysicalDevice, mDevice, mQueues);
-  mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mQueues.familyIndices);
   createRenderPass();
-  mDepthBufferImage = mMemoryManager.createDepthBufferImage(mSwapchain.extent);
+  mMemoryManager.initialize(mInstance, mPhysicalDevice, mDevice, mQueues);
+  mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mRenderPass,
+                             mQueues.familyIndices, mMemoryManager);
   mPipeline.createPipeline(mDevice, mRenderPass);
-  mSwapchain.createFrameBuffers(mDevice, mRenderPass, mDepthBufferImage);
   createCommandPool();
   createCommandBuffers();
   createSyncObjects();
@@ -44,7 +43,6 @@ VulkanRenderer::~VulkanRenderer() {
   vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
   mPipeline.destroy(mDevice);
   mSwapchain.destroy(mDevice);
-  mMemoryManager.destroyImage(mDepthBufferImage);
   vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
   mMemoryManager.destroy();
   vkDestroyDevice(mDevice, nullptr);
@@ -188,7 +186,9 @@ void VulkanRenderer::createVulkanDevice() {
 void VulkanRenderer::createRenderPass() {
 
   VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = static_cast<VkFormat>(mSwapchain.format);
+  colorAttachment.format = VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
+                               VulkanSwapchainSupportDetails{mPhysicalDevice, mSurface})
+                               .format;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -202,7 +202,7 @@ void VulkanRenderer::createRenderPass() {
   colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = VulkanImage::getDepthBufferFormat(mPhysicalDevice);
+  depthAttachment.format = VulkanImage::getSupportedDepthBufferFormat(mPhysicalDevice);
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -281,7 +281,7 @@ void VulkanRenderer::createSyncObjects() {
     validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
   }
 
-  mImagesInFlight.resize(mSwapchain.images.size(), mInFlightFences[0]);
+  mImagesInFlight.resize(mSwapchain.frameBufferImages.size(), mInFlightFences[0]);
 }
 
 void VulkanRenderer::handleFrameBufferResize() {
@@ -293,7 +293,7 @@ void VulkanRenderer::handleFrameBufferResize() {
                          mCommandBuffers.data());
 
     mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, mWindow, mSurface,
-                                       mQueues.familyIndices, mRenderPass, mDepthBufferImage);
+                                       mQueues.familyIndices, mRenderPass);
 
     createCommandBuffers();
   } else {
@@ -359,14 +359,14 @@ void VulkanRenderer::startDraw() {
   std::array<VkViewport, 1> viewport{};
   viewport[0].x = 0.0f;
   viewport[0].y = 0.0f;
-  viewport[0].width = static_cast<float>(mSwapchain.extent.width);
-  viewport[0].height = static_cast<float>(mSwapchain.extent.height);
+  viewport[0].width = static_cast<float>(mSwapchain.frameBufferImages[0].extent.width);
+  viewport[0].height = static_cast<float>(mSwapchain.frameBufferImages[0].extent.height);
   viewport[0].minDepth = 0.0f;
   viewport[0].maxDepth = 1.0f;
 
   std::array<VkRect2D, 1> scissors{};
   scissors[0].offset = {0, 0};
-  scissors[0].extent = mSwapchain.extent;
+  scissors[0].extent = mSwapchain.frameBufferImages[0].extent;
 
   // dynamic states
   vkCmdSetViewport(mCommandBuffers[mState.imageIndex], 0, static_cast<uint32_t>(viewport.size()),
@@ -376,7 +376,7 @@ void VulkanRenderer::startDraw() {
 
   VkRect2D renderArea;
   renderArea.offset = {0, 0};
-  renderArea.extent = mSwapchain.extent;
+  renderArea.extent = mSwapchain.frameBufferImages[0].extent;
 
   std::array<VkClearValue, 2> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -394,7 +394,8 @@ void VulkanRenderer::startDraw() {
                        VK_SUBPASS_CONTENTS_INLINE);
 
   glm::mat4 cameraView =
-      mCamera.getViewMatrix(static_cast<float>(mSwapchain.extent.width) / mSwapchain.extent.height);
+      mCamera.getViewMatrix(static_cast<float>(mSwapchain.frameBufferImages[0].extent.width) /
+                            mSwapchain.frameBufferImages[0].extent.height);
   vkCmdPushConstants(mCommandBuffers[mState.imageIndex], mPipeline.pipelineLayout,
                      VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof cameraView, &cameraView);
 

@@ -43,7 +43,6 @@ private:
   VulkanMemoryManager mMemoryManager;
 
   VulkanSwapchain mSwapchain;
-  VulkanImage mDepthBufferImage;
 
   VulkanPipeline mPipeline{};
   VkRenderPass mRenderPass{};

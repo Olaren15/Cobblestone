@@ -20,12 +20,11 @@ public:
   VmaAllocation allocation{};
   VkImage image{};
   VkImageView imageView{};
-  VulkanMemoryManager &memoryManager;
 
-  explicit VulkanImage(VulkanMemoryManager &manager);
-  VulkanImage &operator=(VulkanImage other);
+  VkFormat format{};
+  VkExtent2D extent{};
 
-  static VkFormat getDepthBufferFormat(VkPhysicalDevice const &physicalDevice);
+  static VkFormat getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice);
   static bool hasStencilComponent(VkFormat format);
 };
 } // namespace flex

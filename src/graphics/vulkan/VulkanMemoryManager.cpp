@@ -182,18 +182,20 @@ void VulkanMemoryManager::copyDataToBuffer(void const *srcData, VulkanBuffer &ds
   vmaUnmapMemory(mAllocator, dstBuffer.allocation);
 }
 
-VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &imageExtent, VkFormat const &format,
+VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &extent, VkFormat const &format,
                                              VkImageTiling const &tiling,
                                              VkImageUsageFlags const &usage,
                                              VkImageAspectFlags const &imageAspect) {
-  VulkanImage image = VulkanImage{*this};
+  VulkanImage image{};
+  image.format = format;
+  image.extent = extent;
 
   // image memory
   VkImageCreateInfo imageCreateInfo{};
   imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-  imageCreateInfo.extent.width = imageExtent.width;
-  imageCreateInfo.extent.height = imageExtent.height;
+  imageCreateInfo.extent.width = extent.width;
+  imageCreateInfo.extent.height = extent.height;
   imageCreateInfo.extent.depth = 1;
   imageCreateInfo.mipLevels = 1;
   imageCreateInfo.arrayLayers = 1;
@@ -210,7 +212,23 @@ VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &imageExtent, VkFo
   validateVkResult(vmaCreateImage(mAllocator, &imageCreateInfo, &allocationCreateInfo, &image.image,
                                   &image.allocation, nullptr));
 
-  // image view
+  createImageView(image, imageAspect);
+
+  return image;
+}
+
+void VulkanMemoryManager::destroyImage(VulkanImage &image) {
+  vkDestroyImageView(mDevice, image.imageView, nullptr);
+  vmaDestroyImage(mAllocator, image.image, image.allocation);
+}
+
+VulkanImage VulkanMemoryManager::createDepthBufferImage(VkExtent2D const &swapchainExtent) {
+  return createImage(swapchainExtent, VulkanImage::getSupportedDepthBufferFormat(mPhysicalDevice),
+                     VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                     VK_IMAGE_ASPECT_DEPTH_BIT);
+}
+void VulkanMemoryManager::createImageView(VulkanImage &image,
+                                          VkImageAspectFlags const &imageAspect) {
   VkImageSubresourceRange subresourceRange{};
   subresourceRange.aspectMask = imageAspect;
   subresourceRange.baseMipLevel = 0;
@@ -228,23 +246,11 @@ VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &imageExtent, VkFo
   imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   imageViewCreateInfo.image = image.image;
   imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  imageViewCreateInfo.format = format;
+  imageViewCreateInfo.format = image.format;
   imageViewCreateInfo.components = componentMapping;
   imageViewCreateInfo.subresourceRange = subresourceRange;
 
   validateVkResult(vkCreateImageView(mDevice, &imageViewCreateInfo, nullptr, &image.imageView));
-
-  return image;
-}
-
-void VulkanMemoryManager::destroyImage(VulkanImage &image) {
-  vmaDestroyImage(mAllocator, image.image, image.allocation);
-}
-
-VulkanImage VulkanMemoryManager::createDepthBufferImage(VkExtent2D const &swapchainExtent) {
-  return createImage(swapchainExtent, VulkanImage::getDepthBufferFormat(mPhysicalDevice),
-                     VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                     VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 } // namespace flex

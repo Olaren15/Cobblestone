@@ -2,18 +2,7 @@
 
 #include <stdexcept>
 
-#include "graphics/vulkan/VulkanMemoryManager.hpp"
-
 namespace flex {
-VulkanImage::VulkanImage(VulkanMemoryManager &manager) : memoryManager(manager) {}
-
-VulkanImage &VulkanImage::operator=(VulkanImage other) {
-  allocation = other.allocation;
-  image = other.image;
-  imageView = other.imageView;
-  memoryManager = other.memoryManager;
-  return *this;
-}
 
 VkFormat VulkanImage::findSupportedFormat(VkPhysicalDevice const &physicalDevice,
                                           std::vector<VkFormat> const &formatChoices,
@@ -43,7 +32,7 @@ VkFormat VulkanImage::findSupportedFormat(VkPhysicalDevice const &physicalDevice
   throw std::runtime_error("Failed to find supported VkFormat");
 }
 
-VkFormat VulkanImage::getDepthBufferFormat(VkPhysicalDevice const &physicalDevice) {
+VkFormat VulkanImage::getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice) {
   std::vector<VkFormat> const preferredFormats{
       VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT};
 

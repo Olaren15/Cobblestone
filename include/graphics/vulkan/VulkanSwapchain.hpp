@@ -12,39 +12,36 @@
 namespace flex {
 struct VulkanSwapchain {
 private:
-  [[nodiscard]] static VkSurfaceFormatKHR
-  chooseSwapchainSurfaceFormat(std::vector<VkSurfaceFormatKHR> const &availableFormats);
-  [[nodiscard]] static VkPresentModeKHR
-  chooseSwapchainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes);
-  [[nodiscard]] static VkExtent2D
-  chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities, RenderWindow const &window);
+  VulkanMemoryManager &mMemoryManager;
 
-  void retrieveSwapchainImages(VkDevice const &device);
-  void createImageViews(VkDevice const &device);
+  [[nodiscard]] static VkPresentModeKHR
+  getSupportedSwapchainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes);
+  [[nodiscard]] static VkExtent2D getSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
+                                                     RenderWindow const &window);
 
 public:
   VulkanSwapchainSupportDetails swapchainSupportDetails{};
-  VkSwapchainKHR swapchain = nullptr;
-  std::vector<VkImage> images;
-  VkFormat format{};
-  VkExtent2D extent{};
-  std::vector<VkImageView> imageViews;
+  VkSwapchainKHR swapchain{};
+  std::vector<VulkanImage> frameBufferImages;
+  VulkanImage depthBufferImage;
   std::vector<VkFramebuffer> framebuffers;
 
-  VulkanSwapchain() = default;
+  explicit VulkanSwapchain(VulkanMemoryManager &memoryManager);
   VulkanSwapchain(VulkanSwapchain const &swapchain) = delete;
+
+  [[nodiscard]] static VkSurfaceFormatKHR
+  getSupportedSwapchainSurfaceFormat(VulkanSwapchainSupportDetails const &swapchainSupportDetails);
 
   void createSwapchain(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
                        RenderWindow const &window, VkSurfaceKHR const &surface,
-                       VulkanQueueFamilyIndices const &queueFamilyIndices);
-
-  void createFrameBuffers(VkDevice const &device, VkRenderPass renderPass,
-                          VulkanImage const &depthImage);
+                       VkRenderPass const &renderPass,
+                       VulkanQueueFamilyIndices const &queueFamilyIndices,
+                       VulkanMemoryManager &memoryManager);
 
   void handleFrameBufferResize(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
                                RenderWindow const &window, VkSurfaceKHR const &surface,
                                VulkanQueueFamilyIndices const &queueFamilyIndices,
-                               VkRenderPass const &renderPass, VulkanImage &depthBufferImage);
-  void destroy(VkDevice const &device) const;
+                               VkRenderPass const &renderPass);
+  void destroy(VkDevice const &device);
 };
 } // namespace flex

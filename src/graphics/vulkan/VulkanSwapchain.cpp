@@ -8,23 +8,11 @@
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 
 namespace flex {
-VkSurfaceFormatKHR VulkanSwapchain::chooseSwapchainSurfaceFormat(
-    std::vector<VkSurfaceFormatKHR> const &availableFormats) {
-  if (availableFormats.empty()) {
-    throw std::runtime_error("Cannot choose a format from an empty array");
-  }
 
-  for (VkSurfaceFormatKHR const &availableFormat : availableFormats) {
-    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
-        availableFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
-      return availableFormat;
-    }
-  }
+VulkanSwapchain::VulkanSwapchain(VulkanMemoryManager &memoryManager)
+    : mMemoryManager(memoryManager) {}
 
-  return availableFormats.front();
-}
-
-VkPresentModeKHR VulkanSwapchain::chooseSwapchainPresentMode(
+VkPresentModeKHR VulkanSwapchain::getSupportedSwapchainPresentMode(
     std::vector<VkPresentModeKHR> const &availablePresentModes) {
 
   const std::set<VkPresentModeKHR> rankedModes{VK_PRESENT_MODE_MAILBOX_KHR,
@@ -41,8 +29,8 @@ VkPresentModeKHR VulkanSwapchain::chooseSwapchainPresentMode(
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D VulkanSwapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                                  RenderWindow const &window) {
+VkExtent2D VulkanSwapchain::getSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
+                                               RenderWindow const &window) {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
     return capabilities.currentExtent;
@@ -60,57 +48,39 @@ VkExtent2D VulkanSwapchain::chooseSwapchainExtent(VkSurfaceCapabilitiesKHR const
   return VkExtent2D{actualWidth, actualHeight};
 }
 
-void VulkanSwapchain::retrieveSwapchainImages(VkDevice const &device) {
-  uint32_t swapchainImageCount;
-  validateVkResult(vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr));
-  images.resize(swapchainImageCount);
-  validateVkResult(vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, images.data()));
-}
-
-void VulkanSwapchain::createImageViews(VkDevice const &device) {
-  imageViews.resize(images.size(), {});
-
-  VkImageSubresourceRange subresourceRange;
-  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresourceRange.baseMipLevel = 0;
-  subresourceRange.levelCount = 1;
-  subresourceRange.baseArrayLayer = 0;
-  subresourceRange.layerCount = 1;
-
-  VkComponentMapping componentMapping;
-  componentMapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-  componentMapping.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-  componentMapping.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-  componentMapping.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-  for (size_t i = 0; i < images.size(); i++) {
-    VkImageViewCreateInfo imageViewCreateInfo{};
-    imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    imageViewCreateInfo.image = images[i];
-    imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    imageViewCreateInfo.format = format;
-    imageViewCreateInfo.components = componentMapping;
-    imageViewCreateInfo.subresourceRange = subresourceRange;
-
-    validateVkResult(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageViews[i]));
+VkSurfaceFormatKHR VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
+    VulkanSwapchainSupportDetails const &swapchainSupportDetails) {
+  if (swapchainSupportDetails.formats.empty()) {
+    throw std::runtime_error("Cannot choose a format from an empty array");
   }
+
+  for (VkSurfaceFormatKHR const &availableFormat : swapchainSupportDetails.formats) {
+    if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+        availableFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
+      return availableFormat;
+    }
+  }
+
+  return swapchainSupportDetails.formats.front();
 }
 
 void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
                                       VkDevice const &device, RenderWindow const &window,
-                                      VkSurfaceKHR const &surface,
-                                      VulkanQueueFamilyIndices const &queueFamilyIndices) {
+                                      VkSurfaceKHR const &surface, VkRenderPass const &renderPass,
+                                      VulkanQueueFamilyIndices const &queueFamilyIndices,
+                                      VulkanMemoryManager &memoryManager) {
+  mMemoryManager = memoryManager;
   swapchainSupportDetails = VulkanSwapchainSupportDetails{physicalDevice, surface};
 
   VkSurfaceFormatKHR const surfaceFormat =
-      chooseSwapchainSurfaceFormat(swapchainSupportDetails.formats);
+      getSupportedSwapchainSurfaceFormat(swapchainSupportDetails);
 
-  format = surfaceFormat.format;
+  VkFormat format = surfaceFormat.format;
 
   VkPresentModeKHR const presentMode =
-      chooseSwapchainPresentMode(swapchainSupportDetails.presentModes);
+      getSupportedSwapchainPresentMode(swapchainSupportDetails.presentModes);
 
-  extent = chooseSwapchainExtent(swapchainSupportDetails.capabilities, window);
+  VkExtent2D extent = getSwapchainExtent(swapchainSupportDetails.capabilities, window);
 
   uint32_t const minimumImageCount =
       swapchainSupportDetails.capabilities.maxImageCount > 0
@@ -146,24 +116,35 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
 
   validateVkResult(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain));
 
-  retrieveSwapchainImages(device);
-  createImageViews(device);
-}
+  uint32_t swapchainImageCount;
+  validateVkResult(vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr));
+  std::vector<VkImage> swapChainImages{swapchainImageCount};
+  validateVkResult(
+      vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, swapChainImages.data()));
 
-void VulkanSwapchain::createFrameBuffers(VkDevice const &device, VkRenderPass renderPass,
-                                         VulkanImage const &depthImage) {
-  framebuffers.resize(imageViews.size(), {});
+  frameBufferImages.resize(swapChainImages.size());
+  for (size_t i = 0; i < swapChainImages.size(); i++) {
+    frameBufferImages[i].image = swapChainImages[i];
+    frameBufferImages[i].format = format;
+    frameBufferImages[i].extent = extent;
+    mMemoryManager.createImageView(frameBufferImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
+  }
 
-  for (size_t i = 0; i < imageViews.size(); i++) {
-    std::array<VkImageView, 2> attachments{imageViews[i], depthImage.imageView};
+  depthBufferImage = memoryManager.createDepthBufferImage(frameBufferImages[0].extent);
+
+  framebuffers.resize(frameBufferImages.size());
+
+  for (size_t i = 0; i < framebuffers.size(); i++) {
+    std::array<VkImageView, 2> attachments{frameBufferImages[i].imageView,
+                                           depthBufferImage.imageView};
 
     VkFramebufferCreateInfo framebufferCreateInfo{};
     framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebufferCreateInfo.renderPass = renderPass;
     framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
     framebufferCreateInfo.pAttachments = attachments.data();
-    framebufferCreateInfo.width = extent.width;
-    framebufferCreateInfo.height = extent.height;
+    framebufferCreateInfo.width = frameBufferImages[i].extent.width;
+    framebufferCreateInfo.height = frameBufferImages[i].extent.height;
     framebufferCreateInfo.layers = 1;
 
     validateVkResult(
@@ -175,40 +156,35 @@ void VulkanSwapchain::handleFrameBufferResize(VkPhysicalDevice const &physicalDe
                                               VkDevice const &device, RenderWindow const &window,
                                               VkSurfaceKHR const &surface,
                                               VulkanQueueFamilyIndices const &queueFamilyIndices,
-                                              VkRenderPass const &renderPass,
-                                              VulkanImage &depthBufferImage) {
+                                              VkRenderPass const &renderPass) {
 
   for (VkFramebuffer &framebuffer : framebuffers) {
     vkDestroyFramebuffer(device, framebuffer, nullptr);
   }
 
-  for (VkImageView &imageView : imageViews) {
-    vkDestroyImageView(device, imageView, nullptr);
+  for (VulkanImage image : frameBufferImages) {
+    vkDestroyImageView(device, image.imageView, nullptr);
   }
+  mMemoryManager.destroyImage(depthBufferImage);
 
-  // ReSharper disable once CppLocalVariableMayBeConst
   VkSwapchainKHR oldSwapchain = swapchain;
-  createSwapchain(physicalDevice, device, window, surface, queueFamilyIndices);
-
-  VulkanMemoryManager &memoryManager = depthBufferImage.memoryManager;
-  memoryManager.destroyImage(depthBufferImage);
-  depthBufferImage = memoryManager.createDepthBufferImage(extent);
-
-  createFrameBuffers(device, renderPass, depthBufferImage);
+  createSwapchain(physicalDevice, device, window, surface, renderPass, queueFamilyIndices,
+                  mMemoryManager);
 
   vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
 }
 
-void VulkanSwapchain::destroy(VkDevice const &device) const {
+void VulkanSwapchain::destroy(VkDevice const &device) {
   for (VkFramebuffer const &framebuffer : framebuffers) {
     vkDestroyFramebuffer(device, framebuffer, nullptr);
   }
 
-  for (VkImageView const &imageView : imageViews) {
-    vkDestroyImageView(device, imageView, nullptr);
+  for (VulkanImage image : frameBufferImages) {
+    vkDestroyImageView(device, image.imageView, nullptr);
   }
+  mMemoryManager.destroyImage(depthBufferImage);
 
   vkDestroySwapchainKHR(device, swapchain, nullptr);
-};
+}
 
 } // namespace flex
