@@ -185,10 +185,12 @@ void VulkanRenderer::createVulkanDevice() {
 
 void VulkanRenderer::createRenderPass() {
 
+  VulkanSwapchainSupportDetails const swapchainSupportDetails =
+      VulkanSwapchainSupportDetails{mPhysicalDevice, mSurface};
+
   VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
-                               VulkanSwapchainSupportDetails{mPhysicalDevice, mSurface})
-                               .format;
+  colorAttachment.format =
+      VulkanSwapchain::getSupportedSwapchainSurfaceFormat(swapchainSupportDetails).format;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -202,7 +204,7 @@ void VulkanRenderer::createRenderPass() {
   colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = VulkanImage::getSupportedDepthBufferFormat(mPhysicalDevice);
+  depthAttachment.format = VulkanSwapchain::getSupportedDepthBufferFormat(mPhysicalDevice);
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;

@@ -64,6 +64,14 @@ VkSurfaceFormatKHR VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
   return swapchainSupportDetails.formats.front();
 }
 
+VkFormat VulkanSwapchain::getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice) {
+  std::vector<VkFormat> const preferredFormats{
+      VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT};
+
+  return VulkanImage::findSupportedFormat(physicalDevice, preferredFormats, VK_IMAGE_TILING_OPTIMAL,
+                                          VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
 void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
                                       VkDevice const &device, RenderWindow const &window,
                                       VkSurfaceKHR const &surface, VkRenderPass const &renderPass,
@@ -130,7 +138,10 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
     mMemoryManager.createImageView(frameBufferImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
   }
 
-  depthBufferImage = memoryManager.createDepthBufferImage(frameBufferImages[0].extent);
+  depthBufferImage = memoryManager.createImage(
+      frameBufferImages[0].extent, getSupportedDepthBufferFormat(physicalDevice),
+      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+      VK_IMAGE_ASPECT_DEPTH_BIT);
 
   framebuffers.resize(frameBufferImages.size());
 

@@ -222,11 +222,6 @@ void VulkanMemoryManager::destroyImage(VulkanImage &image) {
   vmaDestroyImage(mAllocator, image.image, image.allocation);
 }
 
-VulkanImage VulkanMemoryManager::createDepthBufferImage(VkExtent2D const &swapchainExtent) {
-  return createImage(swapchainExtent, VulkanImage::getSupportedDepthBufferFormat(mPhysicalDevice),
-                     VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                     VK_IMAGE_ASPECT_DEPTH_BIT);
-}
 void VulkanMemoryManager::createImageView(VulkanImage &image,
                                           VkImageAspectFlags const &imageAspect) {
   VkImageSubresourceRange subresourceRange{};

@@ -10,12 +10,6 @@ namespace flex {
 struct VulkanMemoryManager;
 
 struct VulkanImage {
-private:
-  static VkFormat findSupportedFormat(VkPhysicalDevice const& physicalDevice, std::vector<VkFormat> const
-      &formatChoices,
-                                      VkImageTiling const &requestedTiling,
-                                      VkFormatFeatureFlags const &requestedFeatures);
-
 public:
   VmaAllocation allocation{};
   VkImage image{};
@@ -24,7 +18,10 @@ public:
   VkFormat format{};
   VkExtent2D extent{};
 
-  static VkFormat getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice);
+  static VkFormat findSupportedFormat(VkPhysicalDevice const &physicalDevice,
+                                      std::vector<VkFormat> const &formatChoices,
+                                      VkImageTiling const &requestedTiling,
+                                      VkFormatFeatureFlags const &requestedFeatures);
   static bool hasStencilComponent(VkFormat format);
 };
 } // namespace flex

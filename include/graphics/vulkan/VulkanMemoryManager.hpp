@@ -54,7 +54,5 @@ public:
                           VkImageAspectFlags const &imageAspect);
   void createImageView(VulkanImage &image, VkImageAspectFlags const &imageAspect);
   void destroyImage(VulkanImage &image);
-
-  VulkanImage createDepthBufferImage(VkExtent2D const &swapchainExtent);
 };
 } // namespace flex

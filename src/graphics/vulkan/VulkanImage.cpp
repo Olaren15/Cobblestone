@@ -32,13 +32,6 @@ VkFormat VulkanImage::findSupportedFormat(VkPhysicalDevice const &physicalDevice
   throw std::runtime_error("Failed to find supported VkFormat");
 }
 
-VkFormat VulkanImage::getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice) {
-  std::vector<VkFormat> const preferredFormats{
-      VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT};
-
-  return findSupportedFormat(physicalDevice, preferredFormats, VK_IMAGE_TILING_OPTIMAL,
-                             VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-}
 bool VulkanImage::hasStencilComponent(VkFormat format) {
   switch (format) {
   case VK_FORMAT_S8_UINT:

@@ -31,6 +31,8 @@ public:
 
   [[nodiscard]] static VkSurfaceFormatKHR
   getSupportedSwapchainSurfaceFormat(VulkanSwapchainSupportDetails const &swapchainSupportDetails);
+  [[nodiscard]] static VkFormat
+  getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice);
 
   void createSwapchain(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
                        RenderWindow const &window, VkSurfaceKHR const &surface,
