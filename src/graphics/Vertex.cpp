@@ -18,13 +18,13 @@ std::array<VkVertexInputAttributeDescription, 2> Vertex::getVulkanAttributeDescr
   attributeDescriptions[0].binding = 0;
   attributeDescriptions[0].location = 0;
   attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attributeDescriptions[0].offset = offsetof(Vertex, position);
+  attributeDescriptions[0].offset = static_cast<uint32_t>(offsetof(Vertex, position));
 
   // color
   attributeDescriptions[1].binding = 0;
   attributeDescriptions[1].location = 1;
   attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-  attributeDescriptions[1].offset = offsetof(Vertex, color);
+  attributeDescriptions[1].offset = static_cast<uint32_t>(offsetof(Vertex, color));
 
   return attributeDescriptions;
 }

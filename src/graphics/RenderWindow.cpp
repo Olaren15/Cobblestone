@@ -5,7 +5,6 @@
 #include <SDL2/SDL_vulkan.h>
 
 #include "core/InputHandler.hpp"
-#include "core/Time.hpp"
 
 namespace flex {
 RenderWindow::RenderWindow() {
@@ -99,6 +98,8 @@ void RenderWindow::update() {
         break;
       case SDL_WINDOWEVENT_FOCUS_GAINED:
         mHasFocus = true;
+        break;
+      default:
         break;
       }
     }

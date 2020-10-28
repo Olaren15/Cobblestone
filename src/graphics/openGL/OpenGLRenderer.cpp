@@ -1,7 +1,7 @@
 #include "graphics/openGL/OpenGLRenderer.hpp"
 
 namespace flex {
-OpenGLRenderer::OpenGLRenderer(RenderWindow const &window) : mRenderWindow(window) {
+OpenGLRenderer::OpenGLRenderer() {
 
   glewExperimental = GL_TRUE;
   glewInit();
@@ -43,11 +43,11 @@ OpenGLRenderer::OpenGLRenderer(RenderWindow const &window) : mRenderWindow(windo
   glLinkProgram(mShaderProgram);
   glUseProgram(mShaderProgram);
 
-  GLint posAttrib = glGetAttribLocation(mShaderProgram, "position");
+  GLuint posAttrib = glGetAttribLocation(mShaderProgram, "position");
   glEnableVertexAttribArray(posAttrib);
   glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
 
-  GLint colorAttribute = glGetAttribLocation(mShaderProgram, "color");
+  GLuint colorAttribute = glGetAttribLocation(mShaderProgram, "color");
   glEnableVertexAttribArray(colorAttribute);
   glVertexAttribPointer(colorAttribute, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                         (void *)(2 * sizeof(float)));

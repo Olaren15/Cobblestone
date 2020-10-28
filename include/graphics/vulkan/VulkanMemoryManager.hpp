@@ -36,7 +36,6 @@ private:
 
 public:
   VulkanMemoryManager() = default;
-  VulkanMemoryManager(VulkanMemoryManager const &) = delete;
 
   void initialize(VkInstance const &instance, VkPhysicalDevice const &physicalDevice,
                   VkDevice const &device, VulkanQueues const &queues);

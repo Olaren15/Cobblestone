@@ -2,7 +2,7 @@
 
 int flexMain() {
   flex::RenderWindow window{"example2", 1280, 720, false, flex::RenderAPI::OpenGL};
-  flex::OpenGLRenderer renderer{window};
+  flex::OpenGLRenderer renderer{};
 
   while (!window.shouldExit()) {
     window.update();

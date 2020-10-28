@@ -43,11 +43,8 @@ void main()
   GLuint mVBO{};
   GLuint mEBO{};
 
-  RenderWindow const &mRenderWindow;
-
 public:
-  OpenGLRenderer() = delete;
-  explicit OpenGLRenderer(RenderWindow const &window);
+  OpenGLRenderer();
   ~OpenGLRenderer();
 
   void draw();

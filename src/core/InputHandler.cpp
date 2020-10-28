@@ -1,7 +1,6 @@
 #include "core/InputHandler.hpp"
 
 #include <stdexcept>
-#include <string>
 
 namespace flex {
 InputHandler &InputHandler::get() {
