@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 void flex::validateVkResult(VkResult const &result) {
+#ifndef NDEBUG
   switch (result) {
   case VK_SUCCESS:
   case VK_NOT_READY:
@@ -75,4 +76,5 @@ void flex::validateVkResult(VkResult const &result) {
   case VK_RESULT_MAX_ENUM:
     throw std::runtime_error("VkResult max enum");
   }
+#endif
 }
