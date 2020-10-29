@@ -17,7 +17,6 @@ private:
 
 public:
   explicit Mesh(std::vector<uint32_t> const &indices, std::vector<Vertex> const &vertices);
-  ~Mesh();
 
   void setIndices(std::vector<uint32_t> const &indices);
   void setVertices(std::vector<Vertex> const &vertices);

@@ -6,8 +6,8 @@
 #include <vector>
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
-    : mWindow(window), mCamera(camera), mSwapchain(mMemoryManager) {
+VulkanRenderer::VulkanRenderer(RenderWindow const &window)
+    : mWindow(window), mSwapchain(mMemoryManager) {
   if (window.getRenderAPI() != RenderAPI::Vulkan) {
     throw InvalidRenderAPIException{
         "Can't create vulkan renderer if window is not initialized with the "
@@ -82,7 +82,8 @@ void VulkanRenderer::selectPhysicalDevice() {
   std::multimap<int, VkPhysicalDevice> rankedPhysicalDevices = {};
 
   for (VkPhysicalDevice const &physicalDevice : availablePhysicalDevices) {
-    unsigned int deviceScore = ratePhysicalDevice(physicalDevice, mSurface);
+    unsigned int deviceScore =
+        ratePhysicalDevice(physicalDevice, mSurface, mRequiredDeviceExtensionsNames);
     rankedPhysicalDevices.insert(std::make_pair(deviceScore, physicalDevice));
   }
 
@@ -91,59 +92,6 @@ void VulkanRenderer::selectPhysicalDevice() {
   } else {
     throw std::runtime_error("No suitable device supporting vulkan found");
   }
-}
-
-unsigned int VulkanRenderer::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
-                                                VkSurfaceKHR const &vulkanSurface) {
-
-  unsigned int score = 1u;
-
-  VkPhysicalDeviceProperties physicalDeviceProperties;
-  vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-  if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-    score += 1000u;
-  }
-
-  if (VulkanQueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
-      !queueFamilyIndices.isComplete()) {
-    return 0u;
-  }
-
-  if (!physicalDeviceSupportsRequiredExtensions(physicalDevice)) {
-    return 0u;
-  }
-
-  if (VulkanSwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
-      !swapchainSupportDetails.isUsable()) {
-    return 0u;
-  }
-
-  return score;
-}
-
-bool VulkanRenderer::physicalDeviceSupportsRequiredExtensions(
-    VkPhysicalDevice const &physicalDevice) {
-
-  uint32_t availableExtensionsCount;
-  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount, nullptr);
-  std::vector<VkExtensionProperties> availableExtensions{availableExtensionsCount};
-  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount,
-                                       availableExtensions.data());
-
-  for (std::string const &requiredExtensionName : mRequiredDeviceExtensionsNames) {
-    bool extensionFound = false;
-    for (VkExtensionProperties const &availableExtension : availableExtensions) {
-      if (strcmp(requiredExtensionName.c_str(), availableExtension.extensionName) == 0) {
-        extensionFound = true;
-      }
-    }
-    if (!extensionFound) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 void VulkanRenderer::createVulkanDevice() {
@@ -343,7 +291,7 @@ void VulkanRenderer::startDraw() {
 
   float const aspectRatio = static_cast<float>(mSwapchain.frameBufferImages[0].extent.width) /
                             static_cast<float>(mSwapchain.frameBufferImages[0].extent.height);
-  glm::mat4 cameraView = mCamera.getViewMatrix(aspectRatio);
+  glm::mat4 cameraView = mState.currentScene->camera.getViewMatrix(aspectRatio);
   vkCmdPushConstants(mState.currentFrame->commandBuffer, mPipeline.pipelineLayout,
                      VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof cameraView, &cameraView);
 
@@ -351,10 +299,7 @@ void VulkanRenderer::startDraw() {
                     mPipeline.pipeline);
 }
 
-void VulkanRenderer::drawMesh(Mesh &mesh) {
-  if (!mesh.getVulkanBuffer().has_value()) {
-    mesh.setVulkanBuffer(mMemoryManager.buildMeshBuffer(mesh));
-  }
+void VulkanRenderer::drawMesh(Mesh &mesh) const {
 
   vkCmdBindIndexBuffer(mState.currentFrame->commandBuffer, mesh.getVulkanBuffer()->buffer, 0,
                        VK_INDEX_TYPE_UINT32);
@@ -367,7 +312,7 @@ void VulkanRenderer::drawMesh(Mesh &mesh) {
                    static_cast<uint32_t>(mesh.getIndices().size()), 1, 0, 0, 0);
 }
 
-void VulkanRenderer::endDraw() {
+void VulkanRenderer::endDraw() const {
   vkCmdEndRenderPass(mState.currentFrame->commandBuffer);
   validateVkResult(vkEndCommandBuffer(mState.currentFrame->commandBuffer));
 }
@@ -408,6 +353,46 @@ void VulkanRenderer::present() {
   mState.acquiredImageStillValid = false;
 }
 
-void VulkanRenderer::stop() { vkDeviceWaitIdle(mDevice); }
+void VulkanRenderer::drawScene() {
+  if (mState.currentScene == nullptr) {
+    return;
+  }
+
+  while (!acquireNextFrame())
+    ;
+  startDraw();
+  for (Mesh &mesh : mState.currentScene->meshes) {
+    drawMesh(mesh);
+  }
+  endDraw();
+  present();
+}
+
+void VulkanRenderer::loadScene(Scene &scene) {
+  if (mState.currentScene != nullptr) {
+    unloadScene();
+  }
+
+  mState.currentScene = &scene;
+
+  for (Mesh &mesh : mState.currentScene->meshes) {
+    if (!mesh.getVulkanBuffer().has_value()) {
+      mesh.setVulkanBuffer(mMemoryManager.buildMeshBuffer(mesh));
+    }
+  }
+}
+
+void VulkanRenderer::unloadScene() {
+  if (mState.currentScene == nullptr) {
+    return;
+  }
+
+  vkDeviceWaitIdle(mDevice);
+
+  for (Mesh &mesh : mState.currentScene->meshes) {
+    // TODO: should probably review the way the mesh buffers are handled
+    mesh.getVulkanBuffer()->memoryManager.destroyBuffer(mesh.getVulkanBuffer().value());
+  }
+}
 
 } // namespace flex

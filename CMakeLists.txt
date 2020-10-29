@@ -13,6 +13,7 @@ FIND_PACKAGE(glm REQUIRED)
 ADD_LIBRARY(
 		flex-engine STATIC
 		src/core/InputHandler.cpp
+		src/core/Scene.cpp
 		src/core/Time.cpp
 		src/core/Vector2.cpp
 		src/graphics/openGL/OpenGLRenderer.cpp

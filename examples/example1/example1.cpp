@@ -2,9 +2,9 @@
 
 int flexMain() {
   flex::RenderWindow window{"example1", 1280, 720, false, flex::RenderAPI::Vulkan};
-  flex::Camera camera{};
-  flex::VulkanRenderer vulkanRenderer{window, camera};
+  flex::VulkanRenderer vulkanRenderer{window};
 
+  flex::Scene scene;
   flex::Mesh cube{{
                       0, 1, 2, 2, 3, 0, // front
                       4, 5, 1, 1, 0, 4, // top
@@ -23,21 +23,19 @@ int flexMain() {
                       {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},   // 6
                       {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  // 7
                   }};
+  scene.meshes.push_back(cube);
+
+  vulkanRenderer.loadScene(scene);
 
   while (!window.shouldExit()) {
     flex::Time::tick();
     window.update();
-    camera.update();
+    scene.update();
 
-    if (vulkanRenderer.acquireNextFrame()) {
-      vulkanRenderer.startDraw();
-      vulkanRenderer.drawMesh(cube);
-      vulkanRenderer.endDraw();
-      vulkanRenderer.present();
-    }
+    vulkanRenderer.drawScene();
   }
 
-  vulkanRenderer.stop();
+  vulkanRenderer.unloadScene();
 
   return EXIT_SUCCESS;
 }

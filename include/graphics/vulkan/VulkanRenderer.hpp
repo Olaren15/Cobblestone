@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "core/Scene.hpp"
 #include "graphics/Camera.hpp"
 #include "graphics/Mesh.hpp"
 #include "graphics/RenderWindow.hpp"
@@ -19,20 +20,22 @@ enum struct QueueFamily;
 
 struct VulkanRenderer {
 private:
+  // constants
+  std::vector<const char *> mRequiredDeviceExtensionsNames{
+      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+  };
+  static constexpr unsigned int mMaxFramesInFlight = 2;
+
   struct {
-    VulkanFrame *currentFrame{};
+    Scene *currentScene = nullptr;
+    VulkanFrame *currentFrame = nullptr;
     unsigned int currentFrameNumber = 0;
     unsigned int imageIndex = 0;
     bool acquiredImageStillValid = false;
     bool doNotRender = false;
   } mState;
 
-  static constexpr std::array<const char *, 1> mRequiredDeviceExtensionsNames{
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-  };
-
   RenderWindow const &mWindow;
-  Camera const &mCamera;
 
   VkInstance mInstance{};
   VkSurfaceKHR mSurface;
@@ -49,35 +52,33 @@ private:
 
   VulkanPipeline mPipeline{};
 
-  static constexpr unsigned int mMaxFramesInFlight = 2;
   std::array<VulkanFrame, mMaxFramesInFlight> mFrames;
 
   void createVulkanInstance();
   void selectPhysicalDevice();
-  [[nodiscard]] static unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
-                                                       VkSurfaceKHR const &vulkanSurface);
-  [[nodiscard]] static bool
-  physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice);
   void createVulkanDevice();
   void createRenderPass();
   void initialiseFrames();
   void handleFrameBufferResize();
 
+  bool acquireNextFrame();
+  void startDraw();
+  void drawMesh(Mesh &mesh) const;
+  void endDraw() const;
+  void present();
+
 public:
   VulkanRenderer() = delete;
   VulkanRenderer(VulkanRenderer const &) = delete;
-  explicit VulkanRenderer(RenderWindow const &window, Camera const &camera);
+  explicit VulkanRenderer(RenderWindow const &window);
   ~VulkanRenderer();
 
   void operator=(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer) = delete;
 
-  bool acquireNextFrame();
-  void startDraw();
-  void drawMesh(Mesh &mesh);
-  void endDraw();
-  void present();
+  void drawScene();
 
-  void stop();
+  void loadScene(Scene &scene);
+  void unloadScene();
 };
 } // namespace flex

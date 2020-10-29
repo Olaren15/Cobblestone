@@ -1,8 +1,13 @@
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
+#include <cstring>
 #include <stdexcept>
 
-void flex::validateVkResult(VkResult const &result) {
+#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
+#include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
+
+namespace flex {
+void validateVkResult(VkResult const &result) {
 #ifndef NDEBUG
   switch (result) {
   case VK_SUCCESS:
@@ -78,3 +83,59 @@ void flex::validateVkResult(VkResult const &result) {
   }
 #endif
 }
+
+unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
+                                VkSurfaceKHR const &vulkanSurface,
+                                std::vector<char const *> const &requiredExtensions) {
+
+  unsigned int score = 1u;
+
+  VkPhysicalDeviceProperties physicalDeviceProperties;
+  vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+  if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+    score += 1000u;
+  }
+
+  if (VulkanQueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
+      !queueFamilyIndices.isComplete()) {
+    return 0u;
+  }
+
+  if (!physicalDeviceSupportsExtensions(physicalDevice, requiredExtensions)) {
+    return 0u;
+  }
+
+  if (VulkanSwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
+      !swapchainSupportDetails.isUsable()) {
+    return 0u;
+  }
+
+  return score;
+}
+
+bool physicalDeviceSupportsExtensions(VkPhysicalDevice const &physicalDevice,
+                                      std::vector<const char *> const &extensions) {
+
+  uint32_t availableExtensionsCount;
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount, nullptr);
+  std::vector<VkExtensionProperties> availableExtensions{availableExtensionsCount};
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount,
+                                       availableExtensions.data());
+
+  for (std::string const &requiredExtensionName : extensions) {
+    bool extensionFound = false;
+    for (VkExtensionProperties const &availableExtension : availableExtensions) {
+      if (strcmp(requiredExtensionName.c_str(), availableExtension.extensionName) == 0) {
+        extensionFound = true;
+      }
+    }
+    if (!extensionFound) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+} // namespace flex
