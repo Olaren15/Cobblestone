@@ -5,8 +5,6 @@
 #include <set>
 #include <vector>
 
-#include "graphics/vulkan/VulkanHelpers.hpp"
-
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
     : mWindow(window), mCamera(camera), mSwapchain(mMemoryManager) {
@@ -22,25 +20,21 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window, Camera const &camera)
   mQueues.buildQueueFamilyIndices(mPhysicalDevice, mSurface);
   createVulkanDevice();
   mQueues.retrieveQueues(mDevice);
-  createRenderPass();
   mMemoryManager.initialize(mInstance, mPhysicalDevice, mDevice, mQueues);
+  createRenderPass();
   mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mRenderPass,
                              mQueues.familyIndices, mMemoryManager);
   mPipeline.createPipeline(mDevice, mRenderPass);
-  createCommandPool();
-  createCommandBuffers();
-  createSyncObjects();
+  initialiseFrames();
 }
 
 VulkanRenderer::~VulkanRenderer() {
   vkDeviceWaitIdle(mDevice);
 
-  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
-    vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
-    vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
+  for (VulkanFrame &frame : mFrames) {
+    frame.destroy(mDevice);
   }
-  vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
+
   mPipeline.destroy(mDevice);
   mSwapchain.destroy(mDevice);
   vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
@@ -244,46 +238,11 @@ void VulkanRenderer::createRenderPass() {
   validateVkResult(vkCreateRenderPass(mDevice, &renderPassCreateInfo, nullptr, &mRenderPass));
 }
 
-void VulkanRenderer::createCommandPool() {
-  VkCommandPoolCreateInfo commandPoolCreateInfo{};
-  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  commandPoolCreateInfo.flags =
-      VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = mQueues.familyIndices.graphics.value();
-
-  validateVkResult(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mCommandPool));
-}
-
-void VulkanRenderer::createCommandBuffers() {
-  mCommandBuffers.resize(mSwapchain.framebuffers.size());
-
-  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  commandBufferAllocateInfo.commandPool = mCommandPool;
-  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandBufferCount = static_cast<uint32_t>(mCommandBuffers.size());
-
-  validateVkResult(
-      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, mCommandBuffers.data()));
-}
-
-void VulkanRenderer::createSyncObjects() {
-  VkSemaphoreCreateInfo semaphoreCreateInfo{};
-  semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-  VkFenceCreateInfo fenceCreateInfo{};
-  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-  fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-  for (unsigned int i = 0; i < mMaxFramesInFlight; i++) {
-    validateVkResult(
-        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mImageAvailableSemaphores[i]));
-    validateVkResult(
-        vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &mRenderFinishedSemaphores[i]));
-    validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &mInFlightFences[i]));
+void VulkanRenderer::initialiseFrames() {
+  for (VulkanFrame &frame : mFrames) {
+    frame.initialise(mDevice, mQueues);
   }
-
-  mImagesInFlight.resize(mSwapchain.frameBufferImages.size(), mInFlightFences[0]);
+  mState.currentFrame = &mFrames[mState.currentFrameNumber];
 }
 
 void VulkanRenderer::handleFrameBufferResize() {
@@ -291,13 +250,9 @@ void VulkanRenderer::handleFrameBufferResize() {
     mState.doNotRender = false;
 
     validateVkResult(vkDeviceWaitIdle(mDevice));
-    vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()),
-                         mCommandBuffers.data());
 
     mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, mWindow, mSurface,
                                        mQueues.familyIndices, mRenderPass);
-
-    createCommandBuffers();
   } else {
     mState.doNotRender = true;
   }
@@ -312,7 +267,7 @@ bool VulkanRenderer::acquireNextFrame() {
     }
   }
 
-  if (VkResult fenceStatus = vkGetFenceStatus(mDevice, mInFlightFences[mState.currentFrame]);
+  if (VkResult fenceStatus = vkGetFenceStatus(mDevice, mState.currentFrame->renderFinishedFence);
       fenceStatus == VK_NOT_READY) {
     // fence is not ready
     return false;
@@ -323,7 +278,7 @@ bool VulkanRenderer::acquireNextFrame() {
   // do no try to acquire another image if we already have a valid one
   if (!mState.acquiredImageStillValid) {
     if (VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, 0,
-                                                mImageAvailableSemaphores[mState.currentFrame],
+                                                mState.currentFrame->imageAvailableSemaphore,
                                                 VK_NULL_HANDLE, &mState.imageIndex);
         result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
       handleFrameBufferResize();
@@ -339,15 +294,6 @@ bool VulkanRenderer::acquireNextFrame() {
     }
   }
 
-  if (VkResult fenceStatus = vkGetFenceStatus(mDevice, mImagesInFlight[mState.imageIndex]);
-      fenceStatus == VK_NOT_READY) {
-    return false;
-  } else {
-    validateVkResult(fenceStatus);
-  }
-
-  mImagesInFlight[mState.imageIndex] = mInFlightFences[mState.currentFrame];
-
   return true;
 }
 
@@ -356,7 +302,7 @@ void VulkanRenderer::startDraw() {
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-  validateVkResult(vkBeginCommandBuffer(mCommandBuffers[mState.imageIndex], &beginInfo));
+  validateVkResult(vkBeginCommandBuffer(mState.currentFrame->commandBuffer, &beginInfo));
 
   std::array<VkViewport, 1> viewport{};
   viewport[0].x = 0.0f;
@@ -371,9 +317,9 @@ void VulkanRenderer::startDraw() {
   scissors[0].extent = mSwapchain.frameBufferImages[0].extent;
 
   // dynamic states
-  vkCmdSetViewport(mCommandBuffers[mState.imageIndex], 0, static_cast<uint32_t>(viewport.size()),
+  vkCmdSetViewport(mState.currentFrame->commandBuffer, 0, static_cast<uint32_t>(viewport.size()),
                    viewport.data());
-  vkCmdSetScissor(mCommandBuffers[mState.imageIndex], 0, static_cast<uint32_t>(scissors.size()),
+  vkCmdSetScissor(mState.currentFrame->commandBuffer, 0, static_cast<uint32_t>(scissors.size()),
                   scissors.data());
 
   VkRect2D renderArea;
@@ -392,16 +338,16 @@ void VulkanRenderer::startDraw() {
   renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassBeginInfo.pClearValues = clearValues.data();
 
-  vkCmdBeginRenderPass(mCommandBuffers[mState.imageIndex], &renderPassBeginInfo,
+  vkCmdBeginRenderPass(mState.currentFrame->commandBuffer, &renderPassBeginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 
-  glm::mat4 cameraView =
-      mCamera.getViewMatrix(static_cast<float>(mSwapchain.frameBufferImages[0].extent.width) /
-                            mSwapchain.frameBufferImages[0].extent.height);
-  vkCmdPushConstants(mCommandBuffers[mState.imageIndex], mPipeline.pipelineLayout,
+  float const aspectRatio = static_cast<float>(mSwapchain.frameBufferImages[0].extent.width) /
+                            static_cast<float>(mSwapchain.frameBufferImages[0].extent.height);
+  glm::mat4 cameraView = mCamera.getViewMatrix(aspectRatio);
+  vkCmdPushConstants(mState.currentFrame->commandBuffer, mPipeline.pipelineLayout,
                      VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof cameraView, &cameraView);
 
-  vkCmdBindPipeline(mCommandBuffers[mState.imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+  vkCmdBindPipeline(mState.currentFrame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     mPipeline.pipeline);
 }
 
@@ -410,20 +356,20 @@ void VulkanRenderer::drawMesh(Mesh &mesh) {
     mesh.setVulkanBuffer(mMemoryManager.buildMeshBuffer(mesh));
   }
 
-  vkCmdBindIndexBuffer(mCommandBuffers[mState.imageIndex], mesh.getVulkanBuffer()->buffer, 0,
+  vkCmdBindIndexBuffer(mState.currentFrame->commandBuffer, mesh.getVulkanBuffer()->buffer, 0,
                        VK_INDEX_TYPE_UINT32);
 
   std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
-  vkCmdBindVertexBuffers(mCommandBuffers[mState.imageIndex], 0, 1, &mesh.getVulkanBuffer()->buffer,
+  vkCmdBindVertexBuffers(mState.currentFrame->commandBuffer, 0, 1, &mesh.getVulkanBuffer()->buffer,
                          vertexBufferOffset.data());
 
-  vkCmdDrawIndexed(mCommandBuffers[mState.imageIndex],
+  vkCmdDrawIndexed(mState.currentFrame->commandBuffer,
                    static_cast<uint32_t>(mesh.getIndices().size()), 1, 0, 0, 0);
 }
 
 void VulkanRenderer::endDraw() {
-  vkCmdEndRenderPass(mCommandBuffers[mState.imageIndex]);
-  validateVkResult(vkEndCommandBuffer(mCommandBuffers[mState.imageIndex]));
+  vkCmdEndRenderPass(mState.currentFrame->commandBuffer);
+  validateVkResult(vkEndCommandBuffer(mState.currentFrame->commandBuffer));
 }
 
 void VulkanRenderer::present() {
@@ -434,29 +380,29 @@ void VulkanRenderer::present() {
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.pWaitDstStageMask = &waitStage;
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &mImageAvailableSemaphores[mState.currentFrame];
+  submitInfo.pWaitSemaphores = &mState.currentFrame->imageAvailableSemaphore;
   submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &mRenderFinishedSemaphores[mState.currentFrame];
+  submitInfo.pSignalSemaphores = &mState.currentFrame->renderFinishedSemaphore;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &mCommandBuffers[mState.imageIndex];
+  submitInfo.pCommandBuffers = &mState.currentFrame->commandBuffer;
 
-  validateVkResult(vkResetFences(mDevice, 1, &mInFlightFences[mState.currentFrame]));
+  validateVkResult(vkResetFences(mDevice, 1, &mState.currentFrame->renderFinishedFence));
   validateVkResult(
-      vkQueueSubmit(mQueues.graphics, 1, &submitInfo, mInFlightFences[mState.currentFrame]));
+      vkQueueSubmit(mQueues.graphics, 1, &submitInfo, mState.currentFrame->renderFinishedFence));
 
   std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.swapchain};
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &mRenderFinishedSemaphores[mState.currentFrame];
+  presentInfo.pWaitSemaphores = &mState.currentFrame->renderFinishedSemaphore;
   presentInfo.swapchainCount = static_cast<uint32_t>(presentSwapchain.size());
   presentInfo.pSwapchains = presentSwapchain.data();
   presentInfo.pImageIndices = &mState.imageIndex;
 
   validateVkResult(vkQueuePresentKHR(mQueues.present, &presentInfo));
 
-  mState.currentFrame = (mState.currentFrame + 1) % mMaxFramesInFlight;
+  mState.currentFrame = &mFrames[++mState.currentFrameNumber %= mMaxFramesInFlight];
 
   // allows us to start preparing for the next frame
   mState.acquiredImageStillValid = false;

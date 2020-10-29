@@ -8,6 +8,7 @@
 #include "graphics/Mesh.hpp"
 #include "graphics/RenderWindow.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
+#include "graphics/vulkan/VulkanFrame.hpp"
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 #include "graphics/vulkan/VulkanPipeline.hpp"
 #include "graphics/vulkan/VulkanQueues.hpp"
@@ -18,8 +19,9 @@ enum struct QueueFamily;
 
 struct VulkanRenderer {
 private:
-  struct VulkanRendererState {
-    unsigned int currentFrame = 0;
+  struct {
+    VulkanFrame *currentFrame{};
+    unsigned int currentFrameNumber = 0;
     unsigned int imageIndex = 0;
     bool acquiredImageStillValid = false;
     bool doNotRender = false;
@@ -42,19 +44,13 @@ private:
 
   VulkanMemoryManager mMemoryManager;
 
+  VkRenderPass mRenderPass{};
   VulkanSwapchain mSwapchain;
 
   VulkanPipeline mPipeline{};
-  VkRenderPass mRenderPass{};
-
-  VkCommandPool mCommandPool{};
-  std::vector<VkCommandBuffer> mCommandBuffers;
 
   static constexpr unsigned int mMaxFramesInFlight = 2;
-  std::array<VkSemaphore, mMaxFramesInFlight> mImageAvailableSemaphores{};
-  std::array<VkSemaphore, mMaxFramesInFlight> mRenderFinishedSemaphores{};
-  std::array<VkFence, mMaxFramesInFlight> mInFlightFences{};
-  std::vector<VkFence> mImagesInFlight;
+  std::array<VulkanFrame, mMaxFramesInFlight> mFrames;
 
   void createVulkanInstance();
   void selectPhysicalDevice();
@@ -64,9 +60,7 @@ private:
   physicalDeviceSupportsRequiredExtensions(VkPhysicalDevice const &physicalDevice);
   void createVulkanDevice();
   void createRenderPass();
-  void createCommandPool();
-  void createCommandBuffers();
-  void createSyncObjects();
+  void initialiseFrames();
   void handleFrameBufferResize();
 
 public:
