@@ -3,10 +3,8 @@ This is a game engine / renderer I work on during my free time (and when I feel 
 
 right now, it's only a very simple Vulkan-based renderer, but I plan on slowly adding new features
 
-__Note that this project is currently on hold while I am learning Rust__
-
 # Setup
-This has been tested on Fedora 33 but should also work on other systems with CMake
+This has been tested with gcc on Fedora 33 and mingw on Windows 10 but should also work on other systems with CMake
 
 ### Compiling
 You will need:
@@ -14,8 +12,9 @@ You will need:
 - [x] A C++17 capable compiler
 - [x] SDL2 development libraries
 - [x] Vulkan development libraries
+- [x] OpenGL development libraries
+= [x] GLEW development libraries
 - [x] glm development libraries
-- [x] libconfig development libraries
 
 ### Running
 To test this, just run the example1 target in CMake
@@ -23,7 +22,6 @@ To test this, just run the example1 target in CMake
 Since this is development software, you may need some manual file copying in order to run the program correctly.
 
 These files must be in your current directory:
-- settings.cfg
 - shaders/frag.spv
 - shaders/vert.spv
 
