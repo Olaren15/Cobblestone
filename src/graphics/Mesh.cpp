@@ -31,5 +31,6 @@ std::vector<Vertex> Mesh::getVertices() const { return mVertices; }
 std::optional<VulkanBuffer> Mesh::getVulkanBuffer() const { return mVulkanBuffer; }
 size_t Mesh::getIndicesSize() const { return sizeof(mIndices[0]) * mIndices.size(); }
 size_t Mesh::getVerticesSize() const { return sizeof(mVertices[0]) * mVertices.size(); }
+size_t Mesh::getRequiredBufferSize() const { return getIndicesSize() + getVerticesSize(); }
 
 } // namespace flex

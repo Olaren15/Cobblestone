@@ -25,7 +25,9 @@ public:
   [[nodiscard]] std::vector<uint32_t> getIndices() const;
   [[nodiscard]] std::vector<Vertex> getVertices() const;
   [[nodiscard]] std::optional<VulkanBuffer> getVulkanBuffer() const;
+
   [[nodiscard]] size_t getIndicesSize() const;
   [[nodiscard]] size_t getVerticesSize() const;
+  [[nodiscard]] size_t getRequiredBufferSize() const;
 };
 } // namespace flex

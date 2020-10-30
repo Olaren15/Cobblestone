@@ -10,6 +10,7 @@ struct VulkanMemoryManager;
 struct VulkanBuffer {
   VmaAllocation allocation{};
   VkBuffer buffer{};
+  VkDeviceSize size{};
   VulkanMemoryManager &memoryManager;
 
   VulkanBuffer() = delete;

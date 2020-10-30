@@ -19,6 +19,7 @@ ADD_LIBRARY(
 		src/graphics/openGL/OpenGLRenderer.cpp
 		src/graphics/vulkan/vk_mem_alloc.cpp
 		src/graphics/vulkan/VulkanBuffer.cpp
+		src/graphics/vulkan/VulkanCommandBufferRecorder.cpp
 		src/graphics/vulkan/VulkanFrame.cpp
 		src/graphics/vulkan/VulkanHelpers.cpp
 		src/graphics/vulkan/VulkanImage.cpp

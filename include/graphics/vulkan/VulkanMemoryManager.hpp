@@ -20,19 +20,9 @@ private:
   VkCommandPool mTransferCommandPool{};
   VkCommandBuffer mTransferCommandBuffer{};
 
-  VkBufferCreateInfo buildTransferBufferCreateInfo(VkDeviceSize const &bufferSize);
+  VulkanBuffer createStagingBuffer(VkDeviceSize const &bufferSize);
 
-  void beginTransferCommandBuffer() const;
-  void endTransferCommandBuffer() const;
-
-  void createStagingBuffer(VulkanBuffer &stagingBuffer, VkDeviceSize const &bufferSize);
-
-  void copyBufferToBuffer(VulkanBuffer &srcBuffer, VulkanBuffer &dstBuffer,
-                          VkDeviceSize const &bufferSize, VkDeviceSize srcOffset,
-                          VkDeviceSize dstOffset) const;
-
-  void transferBufferOwnership(VkBuffer const &buffer, uint32_t srcQueueFamilyIndex,
-                               uint32_t dstQueueFamilyIndex) const;
+  void destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence);
 
 public:
   VulkanMemoryManager() = default;
@@ -42,11 +32,8 @@ public:
   void destroy() const;
   void destroyBuffer(VulkanBuffer const &buffer) const;
 
-  VulkanBuffer buildMeshBuffer(Mesh const &mesh);
+  VulkanBuffer createMeshBuffer(Mesh const &mesh);
   void updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &mesh);
-
-  void copyDataToBuffer(void const *srcData, VulkanBuffer &dstBuffer, VkDeviceSize const &dataSize,
-                        VkDeviceSize const &srcOffset, VkDeviceSize const &dstOffset) const;
 
   VulkanImage createImage(VkExtent2D const &extent, VkFormat const &format,
                           VkImageTiling const &tiling, VkImageUsageFlags const &usage,

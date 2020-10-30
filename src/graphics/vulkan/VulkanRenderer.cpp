@@ -377,7 +377,7 @@ void VulkanRenderer::loadScene(Scene &scene) {
 
   for (Mesh &mesh : mState.currentScene->meshes) {
     if (!mesh.getVulkanBuffer().has_value()) {
-      mesh.setVulkanBuffer(mMemoryManager.buildMeshBuffer(mesh));
+      mesh.setVulkanBuffer(mMemoryManager.createMeshBuffer(mesh));
     }
   }
 }
