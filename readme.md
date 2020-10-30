@@ -13,7 +13,7 @@ You will need:
 - [x] SDL2 development libraries
 - [x] Vulkan development libraries
 - [x] OpenGL development libraries
-= [x] GLEW development libraries
+- [x] GLEW development libraries
 - [x] glm development libraries
 
 ### Running
