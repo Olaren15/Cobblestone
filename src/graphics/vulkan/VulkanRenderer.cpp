@@ -301,15 +301,15 @@ void VulkanRenderer::startDraw() {
 
 void VulkanRenderer::drawMesh(Mesh &mesh) const {
 
-  vkCmdBindIndexBuffer(mState.currentFrame->commandBuffer, mesh.getVulkanBuffer()->buffer, 0,
+  vkCmdBindIndexBuffer(mState.currentFrame->commandBuffer, mesh.vulkanBuffer->buffer, 0,
                        VK_INDEX_TYPE_UINT32);
 
   std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
-  vkCmdBindVertexBuffers(mState.currentFrame->commandBuffer, 0, 1, &mesh.getVulkanBuffer()->buffer,
+  vkCmdBindVertexBuffers(mState.currentFrame->commandBuffer, 0, 1, &mesh.vulkanBuffer->buffer,
                          vertexBufferOffset.data());
 
-  vkCmdDrawIndexed(mState.currentFrame->commandBuffer,
-                   static_cast<uint32_t>(mesh.getIndices().size()), 1, 0, 0, 0);
+  vkCmdDrawIndexed(mState.currentFrame->commandBuffer, static_cast<uint32_t>(mesh.indices.size()),
+                   1, 0, 0, 0);
 }
 
 void VulkanRenderer::endDraw() const {
@@ -376,8 +376,8 @@ void VulkanRenderer::loadScene(Scene &scene) {
   mState.currentScene = &scene;
 
   for (Mesh &mesh : mState.currentScene->meshes) {
-    if (!mesh.getVulkanBuffer().has_value()) {
-      mesh.setVulkanBuffer(mMemoryManager.createMeshBuffer(mesh));
+    if (!mesh.vulkanBuffer.has_value()) {
+      mesh.vulkanBuffer = mMemoryManager.createMeshBuffer(mesh);
     }
   }
 }
@@ -390,8 +390,7 @@ void VulkanRenderer::unloadScene() {
   vkDeviceWaitIdle(mDevice);
 
   for (Mesh &mesh : mState.currentScene->meshes) {
-    // TODO: should probably review the way the mesh buffers are handled
-    mesh.getVulkanBuffer()->memoryManager.destroyBuffer(mesh.getVulkanBuffer().value());
+    mesh.vulkanBuffer->memoryManager.destroyBuffer(mesh.vulkanBuffer.value());
   }
 }
 

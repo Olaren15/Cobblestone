@@ -106,8 +106,8 @@ void VulkanMemoryManager::updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &
 
   void *mappedMemory;
   vmaMapMemory(mAllocator, stagingBuffer.allocation, &mappedMemory);
-  std::memcpy(mappedMemory, mesh.getIndices().data(), mesh.getIndicesSize());
-  std::memcpy(static_cast<char *>(mappedMemory) + mesh.getIndicesSize(), mesh.getVertices().data(),
+  std::memcpy(mappedMemory, mesh.indices.data(), mesh.getIndicesSize());
+  std::memcpy(static_cast<char *>(mappedMemory) + mesh.getIndicesSize(), mesh.vertices.data(),
               mesh.getVerticesSize());
   vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
 

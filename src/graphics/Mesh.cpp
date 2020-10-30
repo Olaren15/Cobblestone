@@ -4,33 +4,12 @@
 
 namespace flex {
 Mesh::Mesh(std::vector<uint32_t> const &indices, std::vector<Vertex> const &vertices) {
-  mIndices = indices;
-  mVertices = vertices;
+  this->indices = indices;
+  this->vertices = vertices;
 }
 
-void Mesh::updateBufferData() {
-  if (mVulkanBuffer.has_value()) {
-    mVulkanBuffer->memoryManager.updateMeshBuffer(mVulkanBuffer.value(), *this);
-  }
-}
-
-void Mesh::setIndices(std::vector<uint32_t> const &indices) {
-  mIndices = indices;
-  updateBufferData();
-}
-
-void Mesh::setVertices(std::vector<Vertex> const &vertices) {
-  mVertices = vertices;
-  updateBufferData();
-}
-
-void Mesh::setVulkanBuffer(VulkanBuffer buffer) { mVulkanBuffer = buffer; }
-
-std::vector<uint32_t> Mesh::getIndices() const { return mIndices; }
-std::vector<Vertex> Mesh::getVertices() const { return mVertices; }
-std::optional<VulkanBuffer> Mesh::getVulkanBuffer() const { return mVulkanBuffer; }
-size_t Mesh::getIndicesSize() const { return sizeof(mIndices[0]) * mIndices.size(); }
-size_t Mesh::getVerticesSize() const { return sizeof(mVertices[0]) * mVertices.size(); }
+size_t Mesh::getIndicesSize() const { return sizeof(indices[0]) * indices.size(); }
+size_t Mesh::getVerticesSize() const { return sizeof(vertices[0]) * vertices.size(); }
 size_t Mesh::getRequiredBufferSize() const { return getIndicesSize() + getVerticesSize(); }
 
 } // namespace flex
