@@ -10,23 +10,22 @@ VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
   presentModes = swapchainSupportDetails.presentModes;
 }
 
-flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
-    VkPhysicalDevice const &physicalDevice, VkSurfaceKHR const &surface) {
-  validateVkResult(
-      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities));
+flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(VulkanGPU const &gpu) {
+  validateVkResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu.physicalDevice, gpu.renderSurface,
+                                                             &capabilities));
 
   uint32_t vectorLength;
-  validateVkResult(
-      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, nullptr));
+  validateVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.physicalDevice, gpu.renderSurface,
+                                                        &vectorLength, nullptr));
   formats.resize(vectorLength);
-  validateVkResult(
-      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, formats.data()));
+  validateVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.physicalDevice, gpu.renderSurface,
+                                                        &vectorLength, formats.data()));
 
-  validateVkResult(
-      vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength, nullptr));
+  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.physicalDevice, gpu.renderSurface,
+                                                             &vectorLength, nullptr));
   presentModes.resize(vectorLength);
-  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength,
-                                                             presentModes.data()));
+  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.physicalDevice, gpu.renderSurface,
+                                                             &vectorLength, presentModes.data()));
 }
 
 bool VulkanSwapchainSupportDetails::isUsable() const {

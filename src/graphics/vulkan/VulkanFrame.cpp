@@ -1,15 +1,15 @@
 #include "graphics/vulkan/VulkanFrame.hpp"
 
 namespace flex {
-void VulkanFrame::initialise(VkDevice const &device, VulkanQueues const &queues) {
+void VulkanFrame::initialise(VulkanGPU const &gpu) {
   // command pool
   VkCommandPoolCreateInfo commandPoolCreateInfo{};
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   commandPoolCreateInfo.flags =
       VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = queues.familyIndices.graphics.value();
+  commandPoolCreateInfo.queueFamilyIndex = gpu.queueFamilyIndices.graphics.value();
 
-  validateVkResult(vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool));
+  validateVkResult(vkCreateCommandPool(gpu.device, &commandPoolCreateInfo, nullptr, &commandPool));
 
   // command buffers
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
@@ -18,28 +18,29 @@ void VulkanFrame::initialise(VkDevice const &device, VulkanQueues const &queues)
   commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   commandBufferAllocateInfo.commandBufferCount = 1;
 
-  validateVkResult(vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer));
+  validateVkResult(
+      vkAllocateCommandBuffers(gpu.device, &commandBufferAllocateInfo, &commandBuffer));
 
   // sync objects
   VkSemaphoreCreateInfo semaphoreCreateInfo{};
   semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
   validateVkResult(
-      vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphore));
+      vkCreateSemaphore(gpu.device, &semaphoreCreateInfo, nullptr, &imageAvailableSemaphore));
   validateVkResult(
-      vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphore));
+      vkCreateSemaphore(gpu.device, &semaphoreCreateInfo, nullptr, &renderFinishedSemaphore));
 
   VkFenceCreateInfo fenceCreateInfo{};
   fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-  validateVkResult(vkCreateFence(device, &fenceCreateInfo, nullptr, &renderFinishedFence));
+  validateVkResult(vkCreateFence(gpu.device, &fenceCreateInfo, nullptr, &renderFinishedFence));
 }
 
-void VulkanFrame::destroy(const VkDevice &device) {
-  vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
-  vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-  vkDestroyFence(device, renderFinishedFence, nullptr);
-  vkDestroyCommandPool(device, commandPool, nullptr);
+void VulkanFrame::destroy(VulkanGPU const &gpu) const {
+  vkDestroySemaphore(gpu.device, imageAvailableSemaphore, nullptr);
+  vkDestroySemaphore(gpu.device, renderFinishedSemaphore, nullptr);
+  vkDestroyFence(gpu.device, renderFinishedFence, nullptr);
+  vkDestroyCommandPool(gpu.device, commandPool, nullptr);
 }
 } // namespace flex

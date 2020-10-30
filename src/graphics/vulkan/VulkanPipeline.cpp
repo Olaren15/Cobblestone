@@ -7,7 +7,7 @@
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
-VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
+VkShaderModule VulkanPipeline::createShaderModule(VulkanGPU const &gpu,
                                                   std::filesystem::path const &shaderPath) {
   std::ifstream shaderFile{shaderPath.string(), std::ios::ate | std::ios::binary};
 
@@ -28,14 +28,15 @@ VkShaderModule VulkanPipeline::createShaderModule(VkDevice const &device,
   shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t *>(buffer.data());
 
   VkShaderModule shaderModule{};
-  validateVkResult(vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &shaderModule));
+  validateVkResult(
+      vkCreateShaderModule(gpu.device, &shaderModuleCreateInfo, nullptr, &shaderModule));
 
   return shaderModule;
 }
 
-void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &renderPass) {
-  mVertShaderModule = createShaderModule(device, std::filesystem::path{"shaders/vert.spv"});
-  mFragShaderModule = createShaderModule(device, std::filesystem::path{"shaders/frag.spv"});
+void VulkanPipeline::createPipeline(VulkanGPU const &gpu, VkRenderPass const &renderPass) {
+  mVertShaderModule = createShaderModule(gpu, std::filesystem::path{"shaders/vert.spv"});
+  mFragShaderModule = createShaderModule(gpu, std::filesystem::path{"shaders/frag.spv"});
 
   std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
   shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -137,7 +138,7 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
   pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
 
-  vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+  vkCreatePipelineLayout(gpu.device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
   pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -157,13 +158,13 @@ void VulkanPipeline::createPipeline(VkDevice const &device, VkRenderPass const &
   pipelineCreateInfo.basePipelineIndex = -1;
 
   validateVkResult(
-      vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline));
+      vkCreateGraphicsPipelines(gpu.device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-void VulkanPipeline::destroy(VkDevice const &device) const {
-  vkDestroyPipeline(device, pipeline, nullptr);
-  vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-  vkDestroyShaderModule(device, mFragShaderModule, nullptr);
-  vkDestroyShaderModule(device, mVertShaderModule, nullptr);
+void VulkanPipeline::destroy(VulkanGPU const &gpu) const {
+  vkDestroyPipeline(gpu.device, pipeline, nullptr);
+  vkDestroyPipelineLayout(gpu.device, pipelineLayout, nullptr);
+  vkDestroyShaderModule(gpu.device, mFragShaderModule, nullptr);
+  vkDestroyShaderModule(gpu.device, mVertShaderModule, nullptr);
 }
 } // namespace flex

@@ -4,13 +4,13 @@
 
 namespace flex {
 
-VkFormat VulkanImage::findSupportedFormat(VkPhysicalDevice const &physicalDevice,
+VkFormat VulkanImage::findSupportedFormat(VulkanGPU const &gpu,
                                           std::vector<VkFormat> const &formatChoices,
                                           VkImageTiling const &requestedTiling,
                                           VkFormatFeatureFlags const &requestedFeatures) {
   for (VkFormat format : formatChoices) {
     VkFormatProperties properties{};
-    vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &properties);
+    vkGetPhysicalDeviceFormatProperties(gpu.physicalDevice, format, &properties);
 
     switch (requestedTiling) {
     case VK_IMAGE_TILING_OPTIMAL:

@@ -4,31 +4,26 @@
 
 #include "graphics/Mesh.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
+#include "graphics/vulkan/VulkanGPU.hpp"
 #include "graphics/vulkan/VulkanImage.hpp"
-#include "graphics/vulkan/VulkanQueues.hpp"
 
 namespace flex {
 struct VulkanMemoryManager {
 private:
-  VkPhysicalDevice mPhysicalDevice{};
-  VkDevice mDevice{};
-
+  VulkanGPU mGPU{};
   VmaAllocator mAllocator{};
-  VkQueue mTransferQueue{};
-  VulkanQueueFamilyIndices mQueueFamilyIndices;
 
   VkCommandPool mTransferCommandPool{};
   VkCommandBuffer mTransferCommandBuffer{};
 
   VulkanBuffer createStagingBuffer(VkDeviceSize const &bufferSize);
 
-  void destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence);
+  void destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence) const;
 
 public:
   VulkanMemoryManager() = default;
 
-  void initialize(VkInstance const &instance, VkPhysicalDevice const &physicalDevice,
-                  VkDevice const &device, VulkanQueues const &queues);
+  void initialize(VulkanGPU const &gpu);
   void destroy() const;
   void destroyBuffer(VulkanBuffer const &buffer) const;
 
@@ -38,7 +33,7 @@ public:
   VulkanImage createImage(VkExtent2D const &extent, VkFormat const &format,
                           VkImageTiling const &tiling, VkImageUsageFlags const &usage,
                           VkImageAspectFlags const &imageAspect);
-  void createImageView(VulkanImage &image, VkImageAspectFlags const &imageAspect);
+  void createImageView(VulkanImage &image, VkImageAspectFlags const &imageAspect) const;
   void destroyImage(VulkanImage &image);
 };
 } // namespace flex

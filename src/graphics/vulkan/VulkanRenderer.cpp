@@ -11,121 +11,34 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window)
         "Vulkan render API"};
   }
 
-  createVulkanInstance();
-  mSurface = window.getDrawableVulkanSurface(mInstance);
-  selectPhysicalDevice();
-  mQueues.buildQueueFamilyIndices(mPhysicalDevice, mSurface);
-  createVulkanDevice();
-  mQueues.retrieveQueues(mDevice);
-  mMemoryManager.initialize(mInstance, mPhysicalDevice, mDevice, mQueues);
+  mGPU.initialize(window);
+  mMemoryManager.initialize(mGPU);
   createRenderPass();
-  mSwapchain.createSwapchain(mPhysicalDevice, mDevice, window, mSurface, mRenderPass,
-                             mQueues.familyIndices, mMemoryManager);
-  mPipeline.createPipeline(mDevice, mRenderPass);
-  initialiseFrames();
+  mSwapchain.createSwapchain(mGPU, window, mRenderPass, mMemoryManager);
+  mPipeline.createPipeline(mGPU, mRenderPass);
+  for (VulkanFrame &frame : mFrames) {
+    frame.initialise(mGPU);
+  }
+  mState.currentFrame = &mFrames[mState.currentFrameNumber];
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  vkDeviceWaitIdle(mDevice);
+  mGPU.waitIdle();
 
   for (VulkanFrame &frame : mFrames) {
-    frame.destroy(mDevice);
+    frame.destroy(mGPU);
   }
 
-  mPipeline.destroy(mDevice);
-  mSwapchain.destroy(mDevice);
-  vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+  mPipeline.destroy(mGPU);
+  mSwapchain.destroy(mGPU);
+  vkDestroyRenderPass(mGPU.device, mRenderPass, nullptr);
   mMemoryManager.destroy();
-  vkDestroyDevice(mDevice, nullptr);
-  vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
-  vkDestroyInstance(mInstance, nullptr);
-}
-
-void VulkanRenderer::createVulkanInstance() {
-  std::string const title = mWindow.getTitle();
-
-  VkApplicationInfo appInfo{};
-  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = title.c_str();
-  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.pEngineName = "Flex Engine";
-  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-  appInfo.apiVersion = VK_API_VERSION_1_0;
-
-  std::vector<char const *> enabledExtensions = mWindow.getRequiredVulkanExtensions();
-  std::vector<char const *> enabledLayers{};
-
-#ifndef NDEBUG
-  enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-  VkInstanceCreateInfo instanceCreateInfo{};
-  instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-  instanceCreateInfo.pApplicationInfo = &appInfo;
-  instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(enabledExtensions.size());
-  instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
-  instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(enabledLayers.size());
-  instanceCreateInfo.ppEnabledLayerNames = enabledLayers.data();
-
-  validateVkResult(vkCreateInstance(&instanceCreateInfo, nullptr, &mInstance));
-}
-
-void VulkanRenderer::selectPhysicalDevice() {
-  uint32_t physicalDeviceCount;
-  vkEnumeratePhysicalDevices(mInstance, &physicalDeviceCount, nullptr);
-  std::vector<VkPhysicalDevice> availablePhysicalDevices{physicalDeviceCount};
-  vkEnumeratePhysicalDevices(mInstance, &physicalDeviceCount, availablePhysicalDevices.data());
-
-  std::multimap<int, VkPhysicalDevice> rankedPhysicalDevices = {};
-
-  for (VkPhysicalDevice const &physicalDevice : availablePhysicalDevices) {
-    unsigned int deviceScore =
-        ratePhysicalDevice(physicalDevice, mSurface, mRequiredDeviceExtensionsNames);
-    rankedPhysicalDevices.insert(std::make_pair(deviceScore, physicalDevice));
-  }
-
-  if (rankedPhysicalDevices.rbegin()->first > 0) {
-    mPhysicalDevice = rankedPhysicalDevices.rbegin()->second;
-  } else {
-    throw std::runtime_error("No suitable device supporting vulkan found");
-  }
-}
-
-void VulkanRenderer::createVulkanDevice() {
-  float queuePriority = 1.0f;
-  std::set<uint32_t> uniqueQueueFamilyIndices = mQueues.familyIndices.getUniqueIndices();
-
-  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos{};
-  queueCreateInfos.reserve(uniqueQueueFamilyIndices.size());
-
-  for (uint32_t const &queueFamilyIndex : uniqueQueueFamilyIndices) {
-    VkDeviceQueueCreateInfo deviceQueueCreateInfo{};
-    deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    deviceQueueCreateInfo.queueFamilyIndex = queueFamilyIndex;
-    deviceQueueCreateInfo.queueCount = 1;
-    deviceQueueCreateInfo.pQueuePriorities = &queuePriority;
-
-    queueCreateInfos.push_back(deviceQueueCreateInfo);
-  }
-
-  VkPhysicalDeviceFeatures enabledDeviceFeatures{};
-
-  VkDeviceCreateInfo deviceCreateInfo{};
-  deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-  deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-  deviceCreateInfo.enabledExtensionCount =
-      static_cast<uint32_t>(mRequiredDeviceExtensionsNames.size());
-  deviceCreateInfo.ppEnabledExtensionNames = mRequiredDeviceExtensionsNames.data();
-  deviceCreateInfo.pEnabledFeatures = &enabledDeviceFeatures;
-
-  validateVkResult(vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, nullptr, &mDevice));
+  mGPU.destroy();
 }
 
 void VulkanRenderer::createRenderPass() {
 
-  VulkanSwapchainSupportDetails const swapchainSupportDetails =
-      VulkanSwapchainSupportDetails{mPhysicalDevice, mSurface};
+  VulkanSwapchainSupportDetails const swapchainSupportDetails = VulkanSwapchainSupportDetails{mGPU};
 
   VkAttachmentDescription colorAttachment{};
   colorAttachment.format =
@@ -143,7 +56,7 @@ void VulkanRenderer::createRenderPass() {
   colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = VulkanSwapchain::getSupportedDepthBufferFormat(mPhysicalDevice);
+  depthAttachment.format = VulkanSwapchain::getSupportedDepthBufferFormat(mGPU);
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -180,24 +93,15 @@ void VulkanRenderer::createRenderPass() {
   renderPassCreateInfo.dependencyCount = 1;
   renderPassCreateInfo.pDependencies = &subpassDependency;
 
-  validateVkResult(vkCreateRenderPass(mDevice, &renderPassCreateInfo, nullptr, &mRenderPass));
-}
-
-void VulkanRenderer::initialiseFrames() {
-  for (VulkanFrame &frame : mFrames) {
-    frame.initialise(mDevice, mQueues);
-  }
-  mState.currentFrame = &mFrames[mState.currentFrameNumber];
+  validateVkResult(vkCreateRenderPass(mGPU.device, &renderPassCreateInfo, nullptr, &mRenderPass));
 }
 
 void VulkanRenderer::handleFrameBufferResize() {
   if (mWindow.hasFocus()) {
     mState.doNotRender = false;
 
-    validateVkResult(vkDeviceWaitIdle(mDevice));
-
-    mSwapchain.handleFrameBufferResize(mPhysicalDevice, mDevice, mWindow, mSurface,
-                                       mQueues.familyIndices, mRenderPass);
+    mGPU.waitIdle();
+    mSwapchain.handleFrameBufferResize(mGPU, mWindow, mRenderPass);
   } else {
     mState.doNotRender = true;
   }
@@ -212,7 +116,8 @@ bool VulkanRenderer::acquireNextFrame() {
     }
   }
 
-  if (VkResult fenceStatus = vkGetFenceStatus(mDevice, mState.currentFrame->renderFinishedFence);
+  if (VkResult fenceStatus =
+          vkGetFenceStatus(mGPU.device, mState.currentFrame->renderFinishedFence);
       fenceStatus == VK_NOT_READY) {
     // fence is not ready
     return false;
@@ -222,7 +127,7 @@ bool VulkanRenderer::acquireNextFrame() {
 
   // do no try to acquire another image if we already have a valid one
   if (!mState.acquiredImageStillValid) {
-    if (VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain.swapchain, 0,
+    if (VkResult result = vkAcquireNextImageKHR(mGPU.device, mSwapchain.swapchain, 0,
                                                 mState.currentFrame->imageAvailableSemaphore,
                                                 VK_NULL_HANDLE, &mState.imageIndex);
         result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
@@ -328,21 +233,19 @@ void VulkanRenderer::present() {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &mState.currentFrame->commandBuffer;
 
-  validateVkResult(vkResetFences(mDevice, 1, &mState.currentFrame->renderFinishedFence));
+  validateVkResult(vkResetFences(mGPU.device, 1, &mState.currentFrame->renderFinishedFence));
   validateVkResult(
-      vkQueueSubmit(mQueues.graphics, 1, &submitInfo, mState.currentFrame->renderFinishedFence));
-
-  std::array<VkSwapchainKHR, 1> presentSwapchain{mSwapchain.swapchain};
+      vkQueueSubmit(mGPU.graphicsQueue, 1, &submitInfo, mState.currentFrame->renderFinishedFence));
 
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = &mState.currentFrame->renderFinishedSemaphore;
-  presentInfo.swapchainCount = static_cast<uint32_t>(presentSwapchain.size());
-  presentInfo.pSwapchains = presentSwapchain.data();
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &mSwapchain.swapchain;
   presentInfo.pImageIndices = &mState.imageIndex;
 
-  validateVkResult(vkQueuePresentKHR(mQueues.present, &presentInfo));
+  validateVkResult(vkQueuePresentKHR(mGPU.presentQueue, &presentInfo));
 
   mState.currentFrame = &mFrames[++mState.currentFrameNumber %= mMaxFramesInFlight];
 
@@ -384,7 +287,7 @@ void VulkanRenderer::unloadScene() {
     return;
   }
 
-  vkDeviceWaitIdle(mDevice);
+  mGPU.waitIdle();
 
   for (Mesh &mesh : mState.currentScene->meshes) {
     mesh.vulkanBuffer->memoryManager.destroyBuffer(mesh.vulkanBuffer.value());

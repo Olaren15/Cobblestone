@@ -21,12 +21,12 @@ ADD_LIBRARY(
 		src/graphics/vulkan/VulkanBuffer.cpp
 		src/graphics/vulkan/VulkanCommandBufferRecorder.cpp
 		src/graphics/vulkan/VulkanFrame.cpp
+		src/graphics/vulkan/VulkanGPU.cpp
 		src/graphics/vulkan/VulkanHelpers.cpp
 		src/graphics/vulkan/VulkanImage.cpp
 		src/graphics/vulkan/VulkanMemoryManager.cpp
 		src/graphics/vulkan/VulkanPipeline.cpp
 		src/graphics/vulkan/VulkanQueueFamilyIndices.cpp
-		src/graphics/vulkan/VulkanQueues.cpp
 		src/graphics/vulkan/VulkanRenderer.cpp
 		src/graphics/vulkan/VulkanSwapchain.cpp
 		src/graphics/vulkan/VulkanSwapchainSupportDetails.cpp

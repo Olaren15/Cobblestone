@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.h>
 
 namespace flex {
+struct VulkanGPU;
 struct VulkanQueueFamilyIndices {
   std::optional<uint32_t> graphics;
   std::optional<uint32_t> transfer;
@@ -13,8 +14,7 @@ struct VulkanQueueFamilyIndices {
 
   VulkanQueueFamilyIndices() = default;
   VulkanQueueFamilyIndices(VulkanQueueFamilyIndices const &queueFamilyIndices);
-  explicit VulkanQueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
-                                    VkSurfaceKHR const &surface);
+  explicit VulkanQueueFamilyIndices(VulkanGPU const &gpu);
   ~VulkanQueueFamilyIndices() = default;
 
   [[nodiscard]] bool isComplete() const;

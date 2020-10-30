@@ -1,6 +1,5 @@
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 
-#include <cstring>
 #include <thread>
 
 #include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
@@ -16,7 +15,7 @@ VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &buffer
   bufferCreateInfo.size = bufferSize;
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   bufferCreateInfo.queueFamilyIndexCount = 1;
-  bufferCreateInfo.pQueueFamilyIndices = &mQueueFamilyIndices.transfer.value();
+  bufferCreateInfo.pQueueFamilyIndices = &mGPU.queueFamilyIndices.transfer.value();
   bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
   VmaAllocationCreateInfo allocationCreateInfo{};
@@ -29,24 +28,19 @@ VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &buffer
   return stagingBuffer;
 }
 
-void VulkanMemoryManager::destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence) {
-  vkWaitForFences(mDevice, 1, &fence, VK_TRUE, UINT64_MAX);
-  vkDestroyFence(mDevice, fence, nullptr);
+void VulkanMemoryManager::destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence) const {
+  vkWaitForFences(mGPU.device, 1, &fence, VK_TRUE, UINT64_MAX);
+  vkDestroyFence(mGPU.device, fence, nullptr);
   destroyBuffer(buffer);
 }
 
-void VulkanMemoryManager::initialize(VkInstance const &instance,
-                                     VkPhysicalDevice const &physicalDevice, VkDevice const &device,
-                                     VulkanQueues const &queues) {
-  mPhysicalDevice = physicalDevice;
-  mDevice = device;
-  mTransferQueue = queues.transfer;
-  mQueueFamilyIndices = queues.familyIndices;
+void VulkanMemoryManager::initialize(VulkanGPU const &gpu) {
+  mGPU = gpu;
 
   VmaAllocatorCreateInfo allocatorCreateInfo{};
-  allocatorCreateInfo.instance = instance;
-  allocatorCreateInfo.physicalDevice = physicalDevice;
-  allocatorCreateInfo.device = device;
+  allocatorCreateInfo.instance = mGPU.instance;
+  allocatorCreateInfo.physicalDevice = mGPU.physicalDevice;
+  allocatorCreateInfo.device = mGPU.device;
 
   validateVkResult(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
 
@@ -54,10 +48,10 @@ void VulkanMemoryManager::initialize(VkInstance const &instance,
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   commandPoolCreateInfo.flags =
       VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = queues.familyIndices.transfer.value();
+  commandPoolCreateInfo.queueFamilyIndex = mGPU.queueFamilyIndices.transfer.value();
 
   validateVkResult(
-      vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
+      vkCreateCommandPool(mGPU.device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
   commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -66,11 +60,11 @@ void VulkanMemoryManager::initialize(VkInstance const &instance,
   commandBufferAllocateInfo.commandBufferCount = 1;
 
   validateVkResult(
-      vkAllocateCommandBuffers(mDevice, &commandBufferAllocateInfo, &mTransferCommandBuffer));
+      vkAllocateCommandBuffers(mGPU.device, &commandBufferAllocateInfo, &mTransferCommandBuffer));
 }
 
 void VulkanMemoryManager::destroy() const {
-  vkDestroyCommandPool(mDevice, mTransferCommandPool, nullptr);
+  vkDestroyCommandPool(mGPU.device, mTransferCommandPool, nullptr);
   vmaDestroyAllocator(mAllocator);
 }
 
@@ -85,7 +79,7 @@ VulkanBuffer VulkanMemoryManager::createMeshBuffer(Mesh const &mesh) {
   bufferCreateInfo.size = mesh.getRequiredBufferSize();
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   bufferCreateInfo.queueFamilyIndexCount = 1;
-  bufferCreateInfo.pQueueFamilyIndices = &mQueueFamilyIndices.transfer.value();
+  bufferCreateInfo.pQueueFamilyIndices = &mGPU.queueFamilyIndices.transfer.value();
   bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                            VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
@@ -107,22 +101,22 @@ void VulkanMemoryManager::updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &
 
   void *mappedMemory;
   vmaMapMemory(mAllocator, stagingBuffer.allocation, &mappedMemory);
-  std::memcpy(mappedMemory, mesh.indices.data(), mesh.getIndicesSize());
-  std::memcpy(static_cast<char *>(mappedMemory) + mesh.getIndicesSize(), mesh.vertices.data(),
-              mesh.getVerticesSize());
+  memcpy(mappedMemory, mesh.indices.data(), mesh.getIndicesSize());
+  memcpy(static_cast<char *>(mappedMemory) + mesh.getIndicesSize(), mesh.vertices.data(),
+         mesh.getVerticesSize());
   vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
 
   VkFenceCreateInfo fenceCreateInfo{};
   fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
   VkFence bufferCopiedFence{};
-  validateVkResult(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &bufferCopiedFence));
+  validateVkResult(vkCreateFence(mGPU.device, &fenceCreateInfo, nullptr, &bufferCopiedFence));
 
   VulkanCommandBufferRecorder recorder{mTransferCommandBuffer};
   recorder.beginOneTime()
       .copyBuffer(stagingBuffer, meshBuffer)
-      .addStagingBufferMemoryBarrier(meshBuffer, mQueueFamilyIndices)
+      .addStagingBufferMemoryBarrier(meshBuffer, mGPU.queueFamilyIndices)
       .end()
-      .submitWithFence(mTransferQueue, bufferCopiedFence);
+      .submitWithFence(mGPU.transferQueue, bufferCopiedFence);
 
   // wait until the transfer is complete before deleting the staging buffer
   std::thread thread{&VulkanMemoryManager::destroyBufferOnFenceTrigger, this, stagingBuffer,
@@ -166,12 +160,12 @@ VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &extent, VkFormat 
 }
 
 void VulkanMemoryManager::destroyImage(VulkanImage &image) {
-  vkDestroyImageView(mDevice, image.imageView, nullptr);
+  vkDestroyImageView(mGPU.device, image.imageView, nullptr);
   vmaDestroyImage(mAllocator, image.image, image.allocation);
 }
 
 void VulkanMemoryManager::createImageView(VulkanImage &image,
-                                          VkImageAspectFlags const &imageAspect) {
+                                          VkImageAspectFlags const &imageAspect) const {
   VkImageSubresourceRange subresourceRange{};
   subresourceRange.aspectMask = imageAspect;
   subresourceRange.baseMipLevel = 0;
@@ -193,7 +187,7 @@ void VulkanMemoryManager::createImageView(VulkanImage &image,
   imageViewCreateInfo.components = componentMapping;
   imageViewCreateInfo.subresourceRange = subresourceRange;
 
-  validateVkResult(vkCreateImageView(mDevice, &imageViewCreateInfo, nullptr, &image.imageView));
+  validateVkResult(vkCreateImageView(mGPU.device, &imageViewCreateInfo, nullptr, &image.imageView));
 }
 
 } // namespace flex

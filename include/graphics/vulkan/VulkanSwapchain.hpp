@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "graphics/RenderWindow.hpp"
+#include "graphics/vulkan/VulkanGPU.hpp"
 #include "graphics/vulkan/VulkanImage.hpp"
 #include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
 #include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
@@ -31,19 +32,13 @@ public:
 
   [[nodiscard]] static VkSurfaceFormatKHR
   getSupportedSwapchainSurfaceFormat(VulkanSwapchainSupportDetails const &swapchainSupportDetails);
-  [[nodiscard]] static VkFormat
-  getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice);
+  [[nodiscard]] static VkFormat getSupportedDepthBufferFormat(VulkanGPU const &gpu);
 
-  void createSwapchain(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
-                       RenderWindow const &window, VkSurfaceKHR const &surface,
-                       VkRenderPass const &renderPass,
-                       VulkanQueueFamilyIndices const &queueFamilyIndices,
-                       VulkanMemoryManager &memoryManager);
+  void createSwapchain(VulkanGPU const &gpu, RenderWindow const &window,
+                       VkRenderPass const &renderPass, VulkanMemoryManager &memoryManager);
 
-  void handleFrameBufferResize(VkPhysicalDevice const &physicalDevice, VkDevice const &device,
-                               RenderWindow const &window, VkSurfaceKHR const &surface,
-                               VulkanQueueFamilyIndices const &queueFamilyIndices,
+  void handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow const &window,
                                VkRenderPass const &renderPass);
-  void destroy(VkDevice const &device);
+  void destroy(VulkanGPU const &gpu);
 };
 } // namespace flex

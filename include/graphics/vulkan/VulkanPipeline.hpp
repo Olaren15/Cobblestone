@@ -4,13 +4,15 @@
 
 #include <vulkan/vulkan.h>
 
+#include "graphics/vulkan/VulkanGPU.hpp"
+
 namespace flex {
 struct VulkanPipeline {
 private:
   VkShaderModule mVertShaderModule;
   VkShaderModule mFragShaderModule;
 
-  [[nodiscard]] static VkShaderModule createShaderModule(VkDevice const &device,
+  [[nodiscard]] static VkShaderModule createShaderModule(VulkanGPU const &gpu,
                                                          std::filesystem::path const &shaderPath);
 
 public:
@@ -20,7 +22,7 @@ public:
   VulkanPipeline() = default;
   VulkanPipeline(VulkanPipeline const &pipeline) = delete;
 
-  void createPipeline(VkDevice const &device, VkRenderPass const &renderPass);
-  void destroy(VkDevice const &device) const;
+  void createPipeline(VulkanGPU const &gpu, VkRenderPass const &renderPass);
+  void destroy(VulkanGPU const &gpu) const;
 };
 } // namespace flex

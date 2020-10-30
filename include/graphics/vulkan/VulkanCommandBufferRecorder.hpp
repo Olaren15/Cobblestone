@@ -22,6 +22,6 @@ public:
 
   VulkanCommandBufferRecorder &end();
   void submit(VkQueue const &submitQueue);
-  void submitWithFence(VkQueue const &submitQueue, VkFence const& fence);
+  void submitWithFence(VkQueue const &submitQueue, VkFence const &fence);
 };
 } // namespace flex

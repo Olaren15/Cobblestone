@@ -2,7 +2,7 @@
 
 #include "vulkan/vulkan.h"
 
-#include "graphics/vulkan/VulkanQueues.hpp"
+#include "graphics/vulkan/VulkanGPU.hpp"
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
@@ -15,7 +15,7 @@ public:
   VkCommandPool commandPool{};
   VkCommandBuffer commandBuffer{};
 
-  void initialise(VkDevice const& device, VulkanQueues const& queues);
-  void destroy(VkDevice const &device);
+  void initialise(VulkanGPU const &gpu);
+  void destroy(VulkanGPU const &gpu) const;
 };
 } // namespace flex

@@ -63,21 +63,19 @@ VkSurfaceFormatKHR VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
   return swapchainSupportDetails.formats.front();
 }
 
-VkFormat VulkanSwapchain::getSupportedDepthBufferFormat(VkPhysicalDevice const &physicalDevice) {
+VkFormat VulkanSwapchain::getSupportedDepthBufferFormat(VulkanGPU const &gpu) {
   std::vector<VkFormat> const preferredFormats{
       VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT};
 
-  return VulkanImage::findSupportedFormat(physicalDevice, preferredFormats, VK_IMAGE_TILING_OPTIMAL,
+  return VulkanImage::findSupportedFormat(gpu, preferredFormats, VK_IMAGE_TILING_OPTIMAL,
                                           VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
-                                      VkDevice const &device, RenderWindow const &window,
-                                      VkSurfaceKHR const &surface, VkRenderPass const &renderPass,
-                                      VulkanQueueFamilyIndices const &queueFamilyIndices,
+void VulkanSwapchain::createSwapchain(VulkanGPU const &gpu, RenderWindow const &window,
+                                      VkRenderPass const &renderPass,
                                       VulkanMemoryManager &memoryManager) {
   mMemoryManager = memoryManager;
-  swapchainSupportDetails = VulkanSwapchainSupportDetails{physicalDevice, surface};
+  swapchainSupportDetails = VulkanSwapchainSupportDetails{gpu};
 
   VkSurfaceFormatKHR const surfaceFormat =
       getSupportedSwapchainSurfaceFormat(swapchainSupportDetails);
@@ -95,14 +93,14 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
                      swapchainSupportDetails.capabilities.maxImageCount)
           : swapchainSupportDetails.capabilities.minImageCount + 1;
 
-  std::set<uint32_t> uniqueQueueFamilyIndices{queueFamilyIndices.graphics.value(),
-                                              queueFamilyIndices.present.value()};
+  std::set<uint32_t> uniqueQueueFamilyIndices{gpu.queueFamilyIndices.graphics.value(),
+                                              gpu.queueFamilyIndices.present.value()};
   std::vector<uint32_t> queueFamiliesIndices{uniqueQueueFamilyIndices.begin(),
                                              uniqueQueueFamilyIndices.end()};
 
   VkSwapchainCreateInfoKHR swapchainCreateInfo{};
   swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  swapchainCreateInfo.surface = surface;
+  swapchainCreateInfo.surface = gpu.renderSurface;
   swapchainCreateInfo.minImageCount = minimumImageCount;
   swapchainCreateInfo.imageFormat = surfaceFormat.format;
   swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -121,13 +119,13 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
   swapchainCreateInfo.clipped = VK_TRUE;
   swapchainCreateInfo.oldSwapchain = swapchain;
 
-  validateVkResult(vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapchain));
+  validateVkResult(vkCreateSwapchainKHR(gpu.device, &swapchainCreateInfo, nullptr, &swapchain));
 
   uint32_t swapchainImageCount;
-  validateVkResult(vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, nullptr));
+  validateVkResult(vkGetSwapchainImagesKHR(gpu.device, swapchain, &swapchainImageCount, nullptr));
   std::vector<VkImage> swapChainImages{swapchainImageCount};
   validateVkResult(
-      vkGetSwapchainImagesKHR(device, swapchain, &swapchainImageCount, swapChainImages.data()));
+      vkGetSwapchainImagesKHR(gpu.device, swapchain, &swapchainImageCount, swapChainImages.data()));
 
   frameBufferImages.resize(swapChainImages.size());
   for (size_t i = 0; i < swapChainImages.size(); i++) {
@@ -138,9 +136,8 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
   }
 
   depthBufferImage = memoryManager.createImage(
-      frameBufferImages[0].extent, getSupportedDepthBufferFormat(physicalDevice),
-      VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-      VK_IMAGE_ASPECT_DEPTH_BIT);
+      frameBufferImages[0].extent, getSupportedDepthBufferFormat(gpu), VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
 
   framebuffers.resize(frameBufferImages.size());
 
@@ -158,43 +155,39 @@ void VulkanSwapchain::createSwapchain(VkPhysicalDevice const &physicalDevice,
     framebufferCreateInfo.layers = 1;
 
     validateVkResult(
-        vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]));
+        vkCreateFramebuffer(gpu.device, &framebufferCreateInfo, nullptr, &framebuffers[i]));
   }
 }
 
-void VulkanSwapchain::handleFrameBufferResize(VkPhysicalDevice const &physicalDevice,
-                                              VkDevice const &device, RenderWindow const &window,
-                                              VkSurfaceKHR const &surface,
-                                              VulkanQueueFamilyIndices const &queueFamilyIndices,
+void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow const &window,
                                               VkRenderPass const &renderPass) {
 
   for (VkFramebuffer &framebuffer : framebuffers) {
-    vkDestroyFramebuffer(device, framebuffer, nullptr);
+    vkDestroyFramebuffer(gpu.device, framebuffer, nullptr);
   }
 
   for (VulkanImage image : frameBufferImages) {
-    vkDestroyImageView(device, image.imageView, nullptr);
+    vkDestroyImageView(gpu.device, image.imageView, nullptr);
   }
   mMemoryManager.destroyImage(depthBufferImage);
 
   VkSwapchainKHR oldSwapchain = swapchain;
-  createSwapchain(physicalDevice, device, window, surface, renderPass, queueFamilyIndices,
-                  mMemoryManager);
+  createSwapchain(gpu, window, renderPass, mMemoryManager);
 
-  vkDestroySwapchainKHR(device, oldSwapchain, nullptr);
+  vkDestroySwapchainKHR(gpu.device, oldSwapchain, nullptr);
 }
 
-void VulkanSwapchain::destroy(VkDevice const &device) {
+void VulkanSwapchain::destroy(VulkanGPU const &gpu) {
   for (VkFramebuffer const &framebuffer : framebuffers) {
-    vkDestroyFramebuffer(device, framebuffer, nullptr);
+    vkDestroyFramebuffer(gpu.device, framebuffer, nullptr);
   }
 
   for (VulkanImage image : frameBufferImages) {
-    vkDestroyImageView(device, image.imageView, nullptr);
+    vkDestroyImageView(gpu.device, image.imageView, nullptr);
   }
   mMemoryManager.destroyImage(depthBufferImage);
 
-  vkDestroySwapchainKHR(device, swapchain, nullptr);
+  vkDestroySwapchainKHR(gpu.device, swapchain, nullptr);
 }
 
 } // namespace flex

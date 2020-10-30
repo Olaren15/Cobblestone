@@ -87,6 +87,9 @@ void validateVkResult(VkResult const &result) {
 unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
                                 VkSurfaceKHR const &vulkanSurface,
                                 std::vector<char const *> const &requiredExtensions) {
+  VulkanGPU gpu{};
+  gpu.physicalDevice = physicalDevice;
+  gpu.renderSurface = vulkanSurface;
 
   unsigned int score = 1u;
 
@@ -97,8 +100,7 @@ unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
     score += 1000u;
   }
 
-  if (VulkanQueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
-      !queueFamilyIndices.isComplete()) {
+  if (VulkanQueueFamilyIndices const queueFamilyIndices{gpu}; !queueFamilyIndices.isComplete()) {
     return 0u;
   }
 
@@ -106,7 +108,7 @@ unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
     return 0u;
   }
 
-  if (VulkanSwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
+  if (VulkanSwapchainSupportDetails const swapchainSupportDetails{gpu};
       !swapchainSupportDetails.isUsable()) {
     return 0u;
   }

@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "graphics/vulkan/VulkanGPU.hpp"
+
 namespace flex {
 
 VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(
@@ -11,12 +13,11 @@ VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(
   present = queueFamilyIndices.present;
 }
 
-VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
-                                                   VkSurfaceKHR const &surface) {
+VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(VulkanGPU const &gpu) {
   uint32_t propertiesCount;
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount, nullptr);
+  vkGetPhysicalDeviceQueueFamilyProperties(gpu.physicalDevice, &propertiesCount, nullptr);
   std::vector<VkQueueFamilyProperties> queueFamilyProperties{propertiesCount};
-  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount,
+  vkGetPhysicalDeviceQueueFamilyProperties(gpu.physicalDevice, &propertiesCount,
                                            queueFamilyProperties.data());
 
   uint32_t i = 0;
@@ -34,7 +35,8 @@ VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(VkPhysicalDevice const &physi
     }
 
     VkBool32 surfaceSupported;
-    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &surfaceSupported);
+    vkGetPhysicalDeviceSurfaceSupportKHR(gpu.physicalDevice, i, gpu.renderSurface,
+                                         &surfaceSupported);
     if (surfaceSupported == VK_TRUE && !present.has_value()) {
       present = i;
     }

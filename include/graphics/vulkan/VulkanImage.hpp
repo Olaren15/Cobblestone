@@ -4,6 +4,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "graphics/vulkan/VulkanGPU.hpp"
 #include "graphics/vulkan/vk_mem_alloc.h"
 
 namespace flex {
@@ -18,7 +19,7 @@ public:
   VkFormat format{};
   VkExtent2D extent{};
 
-  static VkFormat findSupportedFormat(VkPhysicalDevice const &physicalDevice,
+  static VkFormat findSupportedFormat(VulkanGPU const &gpu,
                                       std::vector<VkFormat> const &formatChoices,
                                       VkImageTiling const &requestedTiling,
                                       VkFormatFeatureFlags const &requestedFeatures);

@@ -10,9 +10,9 @@
 #include "graphics/RenderWindow.hpp"
 #include "graphics/vulkan/VulkanBuffer.hpp"
 #include "graphics/vulkan/VulkanFrame.hpp"
+#include "graphics/vulkan/VulkanGPU.hpp"
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
 #include "graphics/vulkan/VulkanPipeline.hpp"
-#include "graphics/vulkan/VulkanQueues.hpp"
 #include "graphics/vulkan/VulkanSwapchain.hpp"
 
 namespace flex {
@@ -20,12 +20,6 @@ enum struct QueueFamily;
 
 struct VulkanRenderer {
 private:
-  // constants
-  std::vector<const char *> mRequiredDeviceExtensionsNames{
-      VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-  };
-  static constexpr unsigned int mMaxFramesInFlight = 2;
-
   struct {
     Scene *currentScene = nullptr;
     VulkanFrame *currentFrame = nullptr;
@@ -36,14 +30,7 @@ private:
   } mState;
 
   RenderWindow const &mWindow;
-
-  VkInstance mInstance{};
-  VkSurfaceKHR mSurface;
-
-  VkPhysicalDevice mPhysicalDevice{};
-  VkDevice mDevice{};
-
-  VulkanQueues mQueues;
+  VulkanGPU mGPU{};
 
   VulkanMemoryManager mMemoryManager;
 
@@ -52,13 +39,10 @@ private:
 
   VulkanPipeline mPipeline{};
 
+  static constexpr unsigned int mMaxFramesInFlight = 2;
   std::array<VulkanFrame, mMaxFramesInFlight> mFrames;
 
-  void createVulkanInstance();
-  void selectPhysicalDevice();
-  void createVulkanDevice();
   void createRenderPass();
-  void initialiseFrames();
   void handleFrameBufferResize();
 
   bool acquireNextFrame();
