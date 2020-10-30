@@ -5,7 +5,7 @@ VkVertexInputBindingDescription Vertex::getVulkanBindingDescription() {
   VkVertexInputBindingDescription bindingDescription;
 
   bindingDescription.binding = 0;
-  bindingDescription.stride = sizeof(Vertex);
+  bindingDescription.stride = static_cast<uint32_t>(sizeof(Vertex));
   bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
   return bindingDescription;

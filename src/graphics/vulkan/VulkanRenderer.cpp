@@ -1,9 +1,6 @@
 ﻿#include "graphics/vulkan/VulkanRenderer.hpp"
 
-#include <cstdint>
 #include <map>
-#include <set>
-#include <vector>
 
 namespace flex {
 VulkanRenderer::VulkanRenderer(RenderWindow const &window)
