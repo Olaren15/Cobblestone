@@ -31,6 +31,7 @@ VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &buffer
 
 void VulkanMemoryManager::destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence) {
   vkWaitForFences(mDevice, 1, &fence, VK_TRUE, UINT64_MAX);
+  vkDestroyFence(mDevice, fence, nullptr);
   destroyBuffer(buffer);
 }
 
