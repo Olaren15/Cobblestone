@@ -34,11 +34,15 @@ public:
   getSupportedSwapchainSurfaceFormat(VulkanSwapchainSupportDetails const &swapchainSupportDetails);
   [[nodiscard]] static VkFormat getSupportedDepthBufferFormat(VulkanGPU const &gpu);
 
-  void createSwapchain(VulkanGPU const &gpu, RenderWindow const &window,
-                       VkRenderPass const &renderPass, VulkanMemoryManager &memoryManager);
+  void initialise(VulkanGPU const &gpu, RenderWindow const &window, VkRenderPass const &renderPass,
+                  VulkanMemoryManager &memoryManager);
 
   void handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow const &window,
                                VkRenderPass const &renderPass);
+
+  [[nodiscard]] float getAspectRatio() const;
+  [[nodiscard]] bool canBeResized(VulkanGPU const &gpu, RenderWindow const &window) const;
+
   void destroy(VulkanGPU const &gpu);
 };
 } // namespace flex

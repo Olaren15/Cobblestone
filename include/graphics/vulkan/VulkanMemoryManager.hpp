@@ -23,7 +23,7 @@ private:
 public:
   VulkanMemoryManager() = default;
 
-  void initialize(VulkanGPU const &gpu);
+  void initialise(VulkanGPU const &gpu);
   void destroy() const;
   void destroyBuffer(VulkanBuffer const &buffer) const;
 

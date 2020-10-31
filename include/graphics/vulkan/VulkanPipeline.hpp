@@ -22,7 +22,7 @@ public:
   VulkanPipeline() = default;
   VulkanPipeline(VulkanPipeline const &pipeline) = delete;
 
-  void createPipeline(VulkanGPU const &gpu, VkRenderPass const &renderPass);
+  void initialise(VulkanGPU const &gpu, VkRenderPass const &renderPass);
   void destroy(VulkanGPU const &gpu) const;
 };
 } // namespace flex

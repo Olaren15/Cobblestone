@@ -1,5 +1,7 @@
 #include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
 
+#include <array>
+
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
@@ -48,6 +50,81 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::addStagingBufferMemory
   vkCmdPipelineBarrier(mCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
                        VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 1, &bufferMemoryBarrier,
                        0, nullptr);
+  return *this;
+}
+
+VulkanCommandBufferRecorder &
+VulkanCommandBufferRecorder::setViewPort(VkExtent2D const &viewportExtent) {
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = static_cast<float>(viewportExtent.width);
+  viewport.height = static_cast<float>(viewportExtent.height);
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+
+  vkCmdSetViewport(mCommandBuffer, 0, 1, &viewport);
+
+  return *this;
+}
+
+VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::setScissor(VkRect2D const &scissorRect) {
+  vkCmdSetScissor(mCommandBuffer, 0, 1, &scissorRect);
+  return *this;
+}
+
+VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginRenderPass(
+    VkRenderPass const &renderPass, VkFramebuffer const &framebuffer, VkRect2D const &renderArea) {
+  std::array<VkClearValue, 2> clearValues{};
+  clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+  clearValues[1].depthStencil = {1.0f, 0};
+
+  VkRenderPassBeginInfo renderPassBeginInfo{};
+  renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  renderPassBeginInfo.renderPass = renderPass;
+  renderPassBeginInfo.framebuffer = framebuffer;
+  renderPassBeginInfo.renderArea = renderArea;
+  renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+  renderPassBeginInfo.pClearValues = clearValues.data();
+
+  vkCmdBeginRenderPass(mCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  return *this;
+}
+
+VulkanCommandBufferRecorder &
+VulkanCommandBufferRecorder::pushConstants(void const *data, VkDeviceSize const &dataSize,
+                                           VkPipelineLayout const &layout,
+                                           VkShaderStageFlags const &shaderStage) {
+  vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, dataSize, data);
+
+  return *this;
+}
+
+VulkanCommandBufferRecorder &
+VulkanCommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
+                                          const VkPipelineBindPoint &bindPoint) {
+
+  vkCmdBindPipeline(mCommandBuffer, bindPoint, pipeline);
+  return *this;
+}
+
+VulkanCommandBufferRecorder &
+VulkanCommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
+  for (Mesh const &mesh : meshes) {
+    vkCmdBindIndexBuffer(mCommandBuffer, mesh.vulkanBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+
+    std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
+    vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.vulkanBuffer->buffer,
+                           vertexBufferOffset.data());
+
+    vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+  }
+  return *this;
+}
+
+VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::endRenderPass() {
+  vkCmdEndRenderPass(mCommandBuffer);
   return *this;
 }
 

@@ -25,8 +25,7 @@ private:
     VulkanFrame *currentFrame = nullptr;
     unsigned int currentFrameNumber = 0;
     unsigned int imageIndex = 0;
-    bool acquiredImageStillValid = false;
-    bool doNotRender = false;
+    bool shouldRender = true;
   } mState;
 
   RenderWindow const &mWindow;
@@ -43,12 +42,8 @@ private:
   std::array<VulkanFrame, mMaxFramesInFlight> mFrames;
 
   void createRenderPass();
-  void handleFrameBufferResize();
 
   bool acquireNextFrame();
-  void startDraw();
-  void drawMesh(Mesh &mesh) const;
-  void endDraw() const;
   void present();
 
 public:

@@ -71,9 +71,9 @@ VkFormat VulkanSwapchain::getSupportedDepthBufferFormat(VulkanGPU const &gpu) {
                                           VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-void VulkanSwapchain::createSwapchain(VulkanGPU const &gpu, RenderWindow const &window,
-                                      VkRenderPass const &renderPass,
-                                      VulkanMemoryManager &memoryManager) {
+void VulkanSwapchain::initialise(VulkanGPU const &gpu, RenderWindow const &window,
+                                 VkRenderPass const &renderPass,
+                                 VulkanMemoryManager &memoryManager) {
   mMemoryManager = memoryManager;
   swapchainSupportDetails = VulkanSwapchainSupportDetails{gpu};
 
@@ -161,6 +161,7 @@ void VulkanSwapchain::createSwapchain(VulkanGPU const &gpu, RenderWindow const &
 
 void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow const &window,
                                               VkRenderPass const &renderPass) {
+  gpu.waitIdle();
 
   for (VkFramebuffer &framebuffer : framebuffers) {
     vkDestroyFramebuffer(gpu.device, framebuffer, nullptr);
@@ -172,9 +173,22 @@ void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow
   mMemoryManager.destroyImage(depthBufferImage);
 
   VkSwapchainKHR oldSwapchain = swapchain;
-  createSwapchain(gpu, window, renderPass, mMemoryManager);
+  initialise(gpu, window, renderPass, mMemoryManager);
 
   vkDestroySwapchainKHR(gpu.device, oldSwapchain, nullptr);
+}
+
+float VulkanSwapchain::getAspectRatio() const {
+  return static_cast<float>(frameBufferImages[0].extent.width) /
+         static_cast<float>(frameBufferImages[0].extent.height);
+}
+
+bool VulkanSwapchain::canBeResized(VulkanGPU const &gpu, RenderWindow const &window) const {
+
+  VulkanSwapchainSupportDetails supportDetails = VulkanSwapchainSupportDetails{gpu};
+  VkExtent2D extent = getSwapchainExtent(supportDetails.capabilities, window);
+
+  return extent.height != 0 && extent.width != 0;
 }
 
 void VulkanSwapchain::destroy(VulkanGPU const &gpu) {

@@ -1,6 +1,7 @@
 ﻿#include "graphics/RenderWindow.hpp"
 
 #include <stdexcept>
+#include <utility>
 
 #include <SDL2/SDL_vulkan.h>
 
@@ -9,20 +10,14 @@
 namespace flex {
 RenderWindow::RenderWindow() {
   initSDL();
-  createSDLWindow();
+  createSDLWindow(800, 700, false);
 }
 
-RenderWindow::RenderWindow(std::string const &title, unsigned int const &width,
-                           unsigned int const &height, bool const &fullscreen,
-                           RenderAPI renderApi) {
+RenderWindow::RenderWindow(std::string title, int const &width, int const &height,
+                           bool const &fullscreen, RenderAPI renderApi)
+    : mTitle(std::move(title)), mRenderAPI(renderApi) {
   initSDL();
-
-  mWidth = width;
-  mHeight = height;
-  mFullScreen = fullscreen;
-  mTitle = title;
-  mRenderAPI = renderApi;
-  createSDLWindow();
+  createSDLWindow(width, height, fullscreen);
 }
 
 RenderWindow::~RenderWindow() {
@@ -40,10 +35,10 @@ void RenderWindow::initSDL() {
   }
 }
 
-void RenderWindow::createSDLWindow() {
+void RenderWindow::createSDLWindow(int const &width, int const &height, bool const &fullScreen) {
   uint32_t windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
 
-  if (mFullScreen) {
+  if (fullScreen) {
     windowFlags |= SDL_WINDOW_FULLSCREEN;
   }
 
@@ -61,7 +56,7 @@ void RenderWindow::createSDLWindow() {
   }
 
   mSDLWindow = SDL_CreateWindow(mTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                                static_cast<int>(mWidth), static_cast<int>(mHeight), windowFlags);
+                                width, height, windowFlags);
 
   if (mSDLWindow == nullptr) {
     throw std::runtime_error("Failed to create SDL window");
@@ -116,8 +111,6 @@ bool RenderWindow::shouldExit() const { return mShouldExit; }
 std::string RenderWindow::getTitle() const { return mTitle; }
 
 RenderAPI RenderWindow::getRenderAPI() const { return mRenderAPI; }
-
-bool RenderWindow::hasFocus() const { return mHasFocus; }
 
 std::vector<char const *> RenderWindow::getRequiredVulkanExtensions() const {
   if (mRenderAPI != RenderAPI::Vulkan)

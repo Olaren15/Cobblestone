@@ -34,7 +34,7 @@ void VulkanMemoryManager::destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFen
   destroyBuffer(buffer);
 }
 
-void VulkanMemoryManager::initialize(VulkanGPU const &gpu) {
+void VulkanMemoryManager::initialise(VulkanGPU const &gpu) {
   mGPU = gpu;
 
   VmaAllocatorCreateInfo allocatorCreateInfo{};

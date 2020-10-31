@@ -30,8 +30,8 @@ public:
   VkQueue transferQueue{};
   VkQueue presentQueue{};
 
-  void initialize(RenderWindow const &renderWindow);
-  void waitIdle();
+  void initialise(RenderWindow const &renderWindow);
+  void waitIdle() const;
   void destroy() const;
 };
 } // namespace flex

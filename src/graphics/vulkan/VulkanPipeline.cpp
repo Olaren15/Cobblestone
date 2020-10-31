@@ -34,7 +34,7 @@ VkShaderModule VulkanPipeline::createShaderModule(VulkanGPU const &gpu,
   return shaderModule;
 }
 
-void VulkanPipeline::createPipeline(VulkanGPU const &gpu, VkRenderPass const &renderPass) {
+void VulkanPipeline::initialise(VulkanGPU const &gpu, VkRenderPass const &renderPass) {
   mVertShaderModule = createShaderModule(gpu, std::filesystem::path{"shaders/vert.spv"});
   mFragShaderModule = createShaderModule(gpu, std::filesystem::path{"shaders/frag.spv"});
 

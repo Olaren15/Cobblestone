@@ -92,7 +92,7 @@ void VulkanGPU::retrieveQueues() {
   vkGetDeviceQueue(device, queueFamilyIndices.present.value(), 0, &presentQueue);
 }
 
-void VulkanGPU::initialize(RenderWindow const &renderWindow) {
+void VulkanGPU::initialise(RenderWindow const &renderWindow) {
   createInstance(renderWindow);
   renderSurface = renderWindow.getDrawableVulkanSurface(instance);
   selectPhysicalDevice();
@@ -101,7 +101,7 @@ void VulkanGPU::initialize(RenderWindow const &renderWindow) {
   retrieveQueues();
 }
 
-void VulkanGPU::waitIdle() { validateVkResult(vkDeviceWaitIdle(device)); }
+void VulkanGPU::waitIdle() const { validateVkResult(vkDeviceWaitIdle(device)); }
 
 void VulkanGPU::destroy() const {
   vkDestroyDevice(device, nullptr);
