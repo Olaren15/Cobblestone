@@ -102,7 +102,7 @@ bool VulkanRenderer::acquireNextFrame() {
   validateVkResult(vkWaitForFences(mGPU.device, 1, &mState.currentFrame->renderFinishedFence,
                                    VK_TRUE, UINT64_MAX));
 
-  if (VkResult result = vkAcquireNextImageKHR(mGPU.device, mSwapchain.swapchain, 0,
+  if (VkResult result = vkAcquireNextImageKHR(mGPU.device, mSwapchain.swapchain, UINT64_MAX,
                                               mState.currentFrame->imageAvailableSemaphore,
                                               VK_NULL_HANDLE, &mState.imageIndex);
       result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
