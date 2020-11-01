@@ -5,14 +5,7 @@
 #include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(RenderWindow const &window)
-    : mWindow(window), mSwapchain(mMemoryManager) {
-  if (window.getRenderAPI() != RenderAPI::Vulkan) {
-    throw InvalidRenderAPIException{
-        "Can't create vulkan renderer if window is not initialized with the "
-        "Vulkan render API"};
-  }
-
+VulkanRenderer::VulkanRenderer(RenderWindow const &window) : mWindow(window) {
   mGPU.initialise(window);
   mMemoryManager.initialise(mGPU);
   createRenderPass();
@@ -187,8 +180,8 @@ void VulkanRenderer::loadScene(Scene &scene) {
   mState.currentScene = &scene;
 
   for (Mesh &mesh : mState.currentScene->meshes) {
-    if (!mesh.vulkanBuffer.has_value()) {
-      mesh.vulkanBuffer = mMemoryManager.createMeshBuffer(mesh);
+    if (!mesh.buffer.isValid) {
+      mMemoryManager.generateMeshBuffer(mesh);
     }
   }
 }
@@ -201,7 +194,9 @@ void VulkanRenderer::unloadScene() {
   mGPU.waitIdle();
 
   for (Mesh &mesh : mState.currentScene->meshes) {
-    mesh.vulkanBuffer->memoryManager.destroyBuffer(mesh.vulkanBuffer.value());
+    if (mesh.buffer.isValid) {
+      mesh.buffer.memoryManager->destroyBuffer(mesh.buffer);
+    }
   }
 }
 

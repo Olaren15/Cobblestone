@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <vector>
 
 #include "graphics/Vertex.hpp"
@@ -12,7 +11,7 @@ struct Mesh {
 
   std::vector<uint32_t> indices;
   std::vector<Vertex> vertices;
-  std::optional<VulkanBuffer> vulkanBuffer;
+  VulkanBuffer buffer;
 
   [[nodiscard]] size_t getIndicesSize() const;
   [[nodiscard]] size_t getVerticesSize() const;

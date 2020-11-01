@@ -13,7 +13,7 @@
 namespace flex {
 struct VulkanSwapchain {
 private:
-  VulkanMemoryManager &mMemoryManager;
+  VulkanMemoryManager *mMemoryManager{};
 
   [[nodiscard]] static VkPresentModeKHR
   getSupportedSwapchainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes);
@@ -23,11 +23,11 @@ private:
 public:
   VulkanSwapchainSupportDetails swapchainSupportDetails{};
   VkSwapchainKHR swapchain{};
-  std::vector<VulkanImage> frameBufferImages;
-  VulkanImage depthBufferImage;
-  std::vector<VkFramebuffer> framebuffers;
+  std::vector<VulkanImage> frameBufferImages{};
+  VulkanImage depthBufferImage{};
+  std::vector<VkFramebuffer> framebuffers{};
 
-  explicit VulkanSwapchain(VulkanMemoryManager &memoryManager);
+  VulkanSwapchain() = default;
   VulkanSwapchain(VulkanSwapchain const &swapchain) = delete;
 
   [[nodiscard]] static VkSurfaceFormatKHR

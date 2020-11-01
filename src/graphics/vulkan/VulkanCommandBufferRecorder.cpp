@@ -1,6 +1,7 @@
 #include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
 
 #include <array>
+#include <stdexcept>
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
@@ -27,6 +28,10 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginOneTime() {
 
 VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::copyBuffer(VulkanBuffer const &src,
                                                                      VulkanBuffer const &dst) {
+  if (!src.isValid || !dst.isValid) {
+    throw std::runtime_error("Cannot copy data to/from an uninitialized buffer");
+  }
+
   VkBufferCopy copyRegion{};
   // handle the possibility that one buffer is smaller than the other
   copyRegion.size = std::min(src.size, dst.size);
@@ -112,11 +117,14 @@ VulkanCommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
 VulkanCommandBufferRecorder &
 VulkanCommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
   for (Mesh const &mesh : meshes) {
-    vkCmdBindIndexBuffer(mCommandBuffer, mesh.vulkanBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
+    if (!mesh.buffer.isValid) {
+      throw std::runtime_error("Cannot draw without allocated vram");
+    }
+
+    vkCmdBindIndexBuffer(mCommandBuffer, mesh.buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
 
     std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
-    vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.vulkanBuffer->buffer,
-                           vertexBufferOffset.data());
+    vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.buffer.buffer, vertexBufferOffset.data());
 
     vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
   }

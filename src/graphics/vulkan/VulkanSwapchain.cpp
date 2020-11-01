@@ -8,9 +8,6 @@
 
 namespace flex {
 
-VulkanSwapchain::VulkanSwapchain(VulkanMemoryManager &memoryManager)
-    : mMemoryManager(memoryManager) {}
-
 VkPresentModeKHR VulkanSwapchain::getSupportedSwapchainPresentMode(
     std::vector<VkPresentModeKHR> const &availablePresentModes) {
 
@@ -74,7 +71,7 @@ VkFormat VulkanSwapchain::getSupportedDepthBufferFormat(VulkanGPU const &gpu) {
 void VulkanSwapchain::initialise(VulkanGPU const &gpu, RenderWindow const &window,
                                  VkRenderPass const &renderPass,
                                  VulkanMemoryManager &memoryManager) {
-  mMemoryManager = memoryManager;
+  mMemoryManager = &memoryManager;
   swapchainSupportDetails = VulkanSwapchainSupportDetails{gpu};
 
   VkSurfaceFormatKHR const surfaceFormat =
@@ -132,7 +129,7 @@ void VulkanSwapchain::initialise(VulkanGPU const &gpu, RenderWindow const &windo
     frameBufferImages[i].image = swapChainImages[i];
     frameBufferImages[i].format = format;
     frameBufferImages[i].extent = extent;
-    mMemoryManager.createImageView(frameBufferImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
+    mMemoryManager->createImageView(frameBufferImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
   }
 
   depthBufferImage = memoryManager.createImage(
@@ -161,6 +158,9 @@ void VulkanSwapchain::initialise(VulkanGPU const &gpu, RenderWindow const &windo
 
 void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow const &window,
                                               VkRenderPass const &renderPass) {
+  if (mMemoryManager == nullptr) {
+    throw std::runtime_error("swapchain needs to be initialised first!");
+  }
   gpu.waitIdle();
 
   for (VkFramebuffer &framebuffer : framebuffers) {
@@ -170,10 +170,10 @@ void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow
   for (VulkanImage image : frameBufferImages) {
     vkDestroyImageView(gpu.device, image.imageView, nullptr);
   }
-  mMemoryManager.destroyImage(depthBufferImage);
+  mMemoryManager->destroyImage(depthBufferImage);
 
   VkSwapchainKHR oldSwapchain = swapchain;
-  initialise(gpu, window, renderPass, mMemoryManager);
+  initialise(gpu, window, renderPass, *mMemoryManager);
 
   vkDestroySwapchainKHR(gpu.device, oldSwapchain, nullptr);
 }
@@ -192,6 +192,10 @@ bool VulkanSwapchain::canBeResized(VulkanGPU const &gpu, RenderWindow const &win
 }
 
 void VulkanSwapchain::destroy(VulkanGPU const &gpu) {
+  if (mMemoryManager == nullptr) {
+    return;
+  }
+
   for (VkFramebuffer const &framebuffer : framebuffers) {
     vkDestroyFramebuffer(gpu.device, framebuffer, nullptr);
   }
@@ -199,7 +203,7 @@ void VulkanSwapchain::destroy(VulkanGPU const &gpu) {
   for (VulkanImage image : frameBufferImages) {
     vkDestroyImageView(gpu.device, image.imageView, nullptr);
   }
-  mMemoryManager.destroyImage(depthBufferImage);
+  mMemoryManager->destroyImage(depthBufferImage);
 
   vkDestroySwapchainKHR(gpu.device, swapchain, nullptr);
 }

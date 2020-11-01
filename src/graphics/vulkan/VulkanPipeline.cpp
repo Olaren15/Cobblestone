@@ -35,6 +35,19 @@ VkShaderModule VulkanPipeline::createShaderModule(VulkanGPU const &gpu,
 }
 
 void VulkanPipeline::initialise(VulkanGPU const &gpu, VkRenderPass const &renderPass) {
+
+  VkPushConstantRange pushConstantRange;
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(glm::mat4);
+
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+  pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+  pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+
+  vkCreatePipelineLayout(gpu.device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+
   mVertShaderModule = createShaderModule(gpu, std::filesystem::path{"shaders/vert.spv"});
   mFragShaderModule = createShaderModule(gpu, std::filesystem::path{"shaders/frag.spv"});
 
@@ -127,18 +140,6 @@ void VulkanPipeline::initialise(VulkanGPU const &gpu, VkRenderPass const &render
   depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
   depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
   depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
-
-  VkPushConstantRange pushConstantRange;
-  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  pushConstantRange.offset = 0;
-  pushConstantRange.size = sizeof(glm::mat4);
-
-  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-  pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-  pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-
-  vkCreatePipelineLayout(gpu.device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
   pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

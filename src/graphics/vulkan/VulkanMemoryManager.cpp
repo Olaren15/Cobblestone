@@ -7,8 +7,18 @@
 
 namespace flex {
 
+void VulkanMemoryManager::allocateBuffer(VkBufferCreateInfo const &bufferInfo,
+                                         VmaAllocationCreateInfo const &allocInfo,
+                                         VulkanBuffer &buffer) {
+
+  validateVkResult(vmaCreateBuffer(mAllocator, &bufferInfo, &allocInfo, &buffer.buffer,
+                                   &buffer.allocation, nullptr));
+  buffer.size = bufferInfo.size;
+  buffer.memoryManager = this;
+  buffer.isValid = true;
+}
+
 VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &bufferSize) {
-  VulkanBuffer stagingBuffer{*this};
 
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -21,10 +31,8 @@ VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &buffer
   VmaAllocationCreateInfo allocationCreateInfo{};
   allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-  validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
-                                   &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
-  stagingBuffer.size = bufferCreateInfo.size;
-
+  VulkanBuffer stagingBuffer{};
+  allocateBuffer(bufferCreateInfo, allocationCreateInfo, stagingBuffer);
   return stagingBuffer;
 }
 
@@ -68,11 +76,12 @@ void VulkanMemoryManager::destroy() const {
   vmaDestroyAllocator(mAllocator);
 }
 
-void VulkanMemoryManager::destroyBuffer(VulkanBuffer const &buffer) const {
+void VulkanMemoryManager::destroyBuffer(VulkanBuffer &buffer) const {
   vmaDestroyBuffer(mAllocator, buffer.buffer, buffer.allocation);
+  buffer.isValid = false;
 }
 
-VulkanBuffer VulkanMemoryManager::createMeshBuffer(Mesh const &mesh) {
+void VulkanMemoryManager::generateMeshBuffer(Mesh &mesh) {
 
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -86,17 +95,12 @@ VulkanBuffer VulkanMemoryManager::createMeshBuffer(Mesh const &mesh) {
   VmaAllocationCreateInfo allocationCreateInfo{};
   allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-  VulkanBuffer meshBuffer{*this};
-  validateVkResult(vmaCreateBuffer(mAllocator, &bufferCreateInfo, &allocationCreateInfo,
-                                   &meshBuffer.buffer, &meshBuffer.allocation, nullptr));
-  meshBuffer.size = bufferCreateInfo.size;
+  allocateBuffer(bufferCreateInfo, allocationCreateInfo, mesh.buffer);
 
-  updateMeshBuffer(meshBuffer, mesh);
-
-  return meshBuffer;
+  updateMeshBuffer(mesh);
 }
 
-void VulkanMemoryManager::updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &mesh) {
+void VulkanMemoryManager::updateMeshBuffer(Mesh &mesh) {
   VulkanBuffer stagingBuffer = createStagingBuffer(mesh.getRequiredBufferSize());
 
   void *mappedMemory;
@@ -113,8 +117,8 @@ void VulkanMemoryManager::updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &
 
   VulkanCommandBufferRecorder recorder{mTransferCommandBuffer};
   recorder.beginOneTime()
-      .copyBuffer(stagingBuffer, meshBuffer)
-      .addStagingBufferMemoryBarrier(meshBuffer, mGPU.queueFamilyIndices)
+      .copyBuffer(stagingBuffer, mesh.buffer)
+      .addStagingBufferMemoryBarrier(mesh.buffer, mGPU.queueFamilyIndices)
       .end()
       .submitWithFence(mGPU.transferQueue, bufferCopiedFence);
 

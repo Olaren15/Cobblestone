@@ -1,13 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
 SET(CMAKE_CXX_STANDARD 17)
-SET(OpenGL_GL_PREFERENCE GLVND)
 
 PROJECT(flex-engine VERSION 1 LANGUAGES CXX)
 
 FIND_PACKAGE(SDL2 REQUIRED)
 FIND_PACKAGE(Vulkan REQUIRED)
-FIND_PACKAGE(OpenGL REQUIRED)
-FIND_PACKAGE(GLEW REQUIRED)
 FIND_PACKAGE(glm REQUIRED)
 
 ADD_LIBRARY(
@@ -16,7 +13,6 @@ ADD_LIBRARY(
 		src/core/Scene.cpp
 		src/core/Time.cpp
 		src/core/Vector2.cpp
-		src/graphics/openGL/OpenGLRenderer.cpp
 		src/graphics/vulkan/vk_mem_alloc.cpp
 		src/graphics/vulkan/VulkanBuffer.cpp
 		src/graphics/vulkan/VulkanCommandBufferRecorder.cpp
@@ -40,8 +36,6 @@ TARGET_LINK_LIBRARIES(
 		flex-engine PRIVATE
 		SDL2::SDL2
 		Vulkan::Vulkan
-		OpenGL::GL
-		GLEW::GLEW
 		glm
 		pthread
 )

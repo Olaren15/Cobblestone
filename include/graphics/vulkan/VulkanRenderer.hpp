@@ -29,13 +29,13 @@ private:
   } mState;
 
   RenderWindow const &mWindow;
-  VulkanGPU mGPU{};
 
+  VulkanGPU mGPU{};
   VulkanMemoryManager mMemoryManager;
 
-  VkRenderPass mRenderPass{};
-  VulkanSwapchain mSwapchain;
+  VulkanSwapchain mSwapchain{};
 
+  VkRenderPass mRenderPass{};
   VulkanPipeline mPipeline{};
 
   static constexpr unsigned int mMaxFramesInFlight = 2;

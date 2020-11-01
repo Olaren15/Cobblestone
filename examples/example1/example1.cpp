@@ -1,7 +1,7 @@
 ﻿#include <FlexEngine.hpp>
 
-int flexMain() {
-  flex::RenderWindow window{"example1", 1280, 720, false, flex::RenderAPI::Vulkan};
+int main() {
+  flex::RenderWindow window{1280, 720, false};
   flex::VulkanRenderer vulkanRenderer{window};
 
   flex::Scene scene;

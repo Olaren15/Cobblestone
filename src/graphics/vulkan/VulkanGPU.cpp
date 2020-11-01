@@ -10,7 +10,7 @@ namespace flex {
 void VulkanGPU::createInstance(RenderWindow const &renderWindow) {
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = renderWindow.getTitle().c_str();
+  appInfo.pApplicationName = "Flex Engine";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   appInfo.pEngineName = "Flex Engine";
   appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);

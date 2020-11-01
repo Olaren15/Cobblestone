@@ -8,13 +8,10 @@ namespace flex {
 struct VulkanMemoryManager;
 
 struct VulkanBuffer {
+  bool isValid = false;
   VmaAllocation allocation{};
   VkBuffer buffer{};
   VkDeviceSize size{};
-  VulkanMemoryManager &memoryManager;
-
-  VulkanBuffer() = delete;
-  explicit VulkanBuffer(VulkanMemoryManager &manager);
-  VulkanBuffer &operator=(VulkanBuffer other);
+  VulkanMemoryManager *memoryManager{};
 };
 } // namespace flex

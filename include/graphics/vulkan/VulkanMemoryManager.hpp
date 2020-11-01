@@ -16,6 +16,8 @@ private:
   VkCommandPool mTransferCommandPool{};
   VkCommandBuffer mTransferCommandBuffer{};
 
+  void allocateBuffer(VkBufferCreateInfo const &bufferInfo,
+                      VmaAllocationCreateInfo const &allocInfo, VulkanBuffer &buffer);
   VulkanBuffer createStagingBuffer(VkDeviceSize const &bufferSize);
 
   void destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence) const;
@@ -25,10 +27,10 @@ public:
 
   void initialise(VulkanGPU const &gpu);
   void destroy() const;
-  void destroyBuffer(VulkanBuffer const &buffer) const;
+  void destroyBuffer(VulkanBuffer &buffer) const;
 
-  VulkanBuffer createMeshBuffer(Mesh const &mesh);
-  void updateMeshBuffer(VulkanBuffer meshBuffer, Mesh const &mesh);
+  void generateMeshBuffer(Mesh &mesh);
+  void updateMeshBuffer(Mesh &mesh);
 
   VulkanImage createImage(VkExtent2D const &extent, VkFormat const &format,
                           VkImageTiling const &tiling, VkImageUsageFlags const &usage,
