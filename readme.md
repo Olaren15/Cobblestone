@@ -12,8 +12,6 @@ You will need:
 - [x] A C++17 capable compiler
 - [x] SDL2 development libraries
 - [x] Vulkan development libraries
-- [x] OpenGL development libraries
-- [x] GLEW development libraries
 - [x] glm development libraries
 
 ### Running
