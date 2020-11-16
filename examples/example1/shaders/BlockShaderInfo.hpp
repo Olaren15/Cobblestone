@@ -2,7 +2,7 @@
 
 #include <FlexEngine.hpp>
 
-struct BlockShaderInfo : public flex::VulkanShaderInformation {
+struct BlockShaderInfo : public flex::ShaderInformation {
 public:
   [[nodiscard]] uint32_t getShaderId() const override;
 

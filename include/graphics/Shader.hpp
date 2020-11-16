@@ -4,11 +4,11 @@
 
 #include <vulkan/vulkan.h>
 
+#include "ShaderInformation.hpp"
 #include "graphics/vulkan/VulkanGPU.hpp"
-#include "graphics/vulkan/VulkanShaderInformation.hpp"
 
 namespace flex {
-struct VulkanShader {
+struct Shader {
 private:
   VkShaderModule mVertShaderModule;
   VkShaderModule mFragShaderModule;
@@ -20,9 +20,9 @@ public:
   VkPipeline pipeline{};
   uint32_t shaderId;
 
-  VulkanShader() = delete;
-  VulkanShader(VulkanGPU const &gpu, VkRenderPass const &renderPass,
-               VkPipelineLayout const &pipelineLayout, VulkanShaderInformation &shaderInfo);
+  Shader() = delete;
+  Shader(VulkanGPU const &gpu, VkRenderPass const &renderPass,
+               VkPipelineLayout const &pipelineLayout, ShaderInformation &shaderInfo);
 
   void destroy(VulkanGPU const &gpu);
 };

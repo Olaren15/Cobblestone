@@ -6,7 +6,7 @@
 #include <vulkan/vulkan.h>
 
 namespace flex {
-struct VulkanShaderInformation {
+struct ShaderInformation {
 protected:
   // pipeline layout
   std::vector<VkDescriptorSetLayout> mDescriptorSetsLayouts;

@@ -5,7 +5,7 @@
 #include "shaders/BlockShaderInfo.hpp"
 
 void setupScene(flex::VulkanRenderer &vulkanRenderer, flex::Scene &scene) {
-  std::vector<flex::VulkanShaderInformation *> shadersInfo{};
+  std::vector<flex::ShaderInformation *> shadersInfo{};
 
   BlockShaderInfo blockShaderInfo{};
   shadersInfo.push_back(&blockShaderInfo);

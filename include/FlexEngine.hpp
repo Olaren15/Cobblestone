@@ -9,5 +9,5 @@
 #include "graphics/Camera.hpp"
 #include "graphics/Mesh.hpp"
 #include "graphics/RenderWindow.hpp"
+#include "graphics/ShaderInformation.hpp"
 #include "graphics/vulkan/VulkanRenderer.hpp"
-#include "graphics/vulkan/VulkanShaderInformation.hpp"

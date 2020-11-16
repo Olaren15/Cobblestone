@@ -1,13 +1,12 @@
-#include "graphics/vulkan/VulkanShader.hpp"
+#include "graphics/Shader.hpp"
 
 #include <fstream>
 
 #include "graphics/vulkan/VulkanHelpers.hpp"
 
 namespace flex {
-VulkanShader::VulkanShader(flex::VulkanGPU const &gpu, VkRenderPass const &renderPass,
-                           VkPipelineLayout const &pipelineLayout,
-                           VulkanShaderInformation &shaderInfo) {
+Shader::Shader(flex::VulkanGPU const &gpu, VkRenderPass const &renderPass,
+                           VkPipelineLayout const &pipelineLayout, ShaderInformation &shaderInfo) {
   shaderId = shaderInfo.getShaderId();
 
   mVertShaderModule = createShaderModule(gpu, shaderInfo.getVertSpirVPath());
@@ -68,7 +67,7 @@ VulkanShader::VulkanShader(flex::VulkanGPU const &gpu, VkRenderPass const &rende
       vkCreateGraphicsPipelines(gpu.device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-VkShaderModule VulkanShader::createShaderModule(VulkanGPU const &gpu,
+VkShaderModule Shader::createShaderModule(VulkanGPU const &gpu,
                                                 std::filesystem::path const &path) {
   std::ifstream shaderFile{path.string(), std::ios::ate | std::ios::binary};
 
@@ -95,7 +94,7 @@ VkShaderModule VulkanShader::createShaderModule(VulkanGPU const &gpu,
   return shaderModule;
 }
 
-void VulkanShader::destroy(flex::VulkanGPU const &gpu) {
+void Shader::destroy(flex::VulkanGPU const &gpu) {
   vkDestroyPipeline(gpu.device, pipeline, nullptr);
   vkDestroyShaderModule(gpu.device, mFragShaderModule, nullptr);
   vkDestroyShaderModule(gpu.device, mVertShaderModule, nullptr);

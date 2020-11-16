@@ -57,7 +57,7 @@ public:
 
   void drawScene();
 
-  void loadScene(Scene &scene, std::vector<VulkanShaderInformation *> &shadersInfo);
+  void loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo);
   void unloadScene();
 };
 } // namespace flex

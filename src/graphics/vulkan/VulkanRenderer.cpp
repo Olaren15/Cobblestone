@@ -179,7 +179,7 @@ void VulkanRenderer::drawScene() {
       .beginRenderPass(mRenderPass, mSwapchain.framebuffers[mState.imageIndex], renderArea)
       .pushConstants(&cameraView, sizeof(glm::mat4), mPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT);
 
-  for (VulkanShader &shader : mState.currentScene->shaders) {
+  for (Shader &shader : mState.currentScene->shaders) {
     recorder.bindPipeline(shader.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
 
     for (Mesh &mesh : mState.currentScene->meshes) {
@@ -194,7 +194,7 @@ void VulkanRenderer::drawScene() {
   present();
 }
 
-void VulkanRenderer::loadScene(Scene &scene, std::vector<VulkanShaderInformation *> &shadersInfo) {
+void VulkanRenderer::loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo) {
   if (mState.currentScene != nullptr) {
     unloadScene();
   }
@@ -207,8 +207,8 @@ void VulkanRenderer::loadScene(Scene &scene, std::vector<VulkanShaderInformation
     }
   }
 
-  for (VulkanShaderInformation *shaderInfo : shadersInfo) {
-    VulkanShader shader{mGPU, mRenderPass, mPipelineLayout, *shaderInfo};
+  for (ShaderInformation *shaderInfo : shadersInfo) {
+    Shader shader{mGPU, mRenderPass, mPipelineLayout, *shaderInfo};
     mState.currentScene->shaders.push_back(shader);
   }
 }
@@ -226,7 +226,7 @@ void VulkanRenderer::unloadScene() {
     }
   }
 
-  for (VulkanShader &shader : mState.currentScene->shaders) {
+  for (Shader &shader : mState.currentScene->shaders) {
     shader.destroy(mGPU);
   }
 }

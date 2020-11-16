@@ -23,8 +23,8 @@ ADD_LIBRARY(
 		src/graphics/vulkan/VulkanMemoryManager.cpp
 		src/graphics/vulkan/VulkanQueueFamilyIndices.cpp
 		src/graphics/vulkan/VulkanRenderer.cpp
-		src/graphics/vulkan/VulkanShader.cpp
-		src/graphics/vulkan/VulkanShaderInformation.cpp
+		src/graphics/Shader.cpp
+		src/graphics/ShaderInformation.cpp
 		src/graphics/vulkan/VulkanSwapchain.cpp
 		src/graphics/vulkan/VulkanSwapchainSupportDetails.cpp
 		src/graphics/Camera.cpp

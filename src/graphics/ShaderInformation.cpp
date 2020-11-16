@@ -1,10 +1,10 @@
-#include "graphics/vulkan/VulkanShaderInformation.hpp"
+#include "graphics/ShaderInformation.hpp"
 
 #include <graphics/Vertex.hpp>
 
 namespace flex {
 
-VkPipelineVertexInputStateCreateInfo VulkanShaderInformation::getVertexInputStateCreateInfo() {
+VkPipelineVertexInputStateCreateInfo ShaderInformation::getVertexInputStateCreateInfo() {
   mVertexInputBindingDescriptions.push_back(Vertex::getVulkanBindingDescription());
   for (VkVertexInputAttributeDescription &attributeDescription :
        Vertex::getVulkanAttributeDescriptions()) {
@@ -24,8 +24,7 @@ VkPipelineVertexInputStateCreateInfo VulkanShaderInformation::getVertexInputStat
   return vertexInputStateCreateInfo;
 }
 
-VkPipelineInputAssemblyStateCreateInfo
-VulkanShaderInformation::getInputAssemblyStateCreateInfo() const {
+VkPipelineInputAssemblyStateCreateInfo ShaderInformation::getInputAssemblyStateCreateInfo() const {
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
   inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
   inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -34,7 +33,7 @@ VulkanShaderInformation::getInputAssemblyStateCreateInfo() const {
   return inputAssemblyStateCreateInfo;
 }
 
-VkPipelineViewportStateCreateInfo VulkanShaderInformation::getViewportStateCreateInfo() {
+VkPipelineViewportStateCreateInfo ShaderInformation::getViewportStateCreateInfo() {
   VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
   viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
   viewportStateCreateInfo.viewportCount = 1;
@@ -45,8 +44,7 @@ VkPipelineViewportStateCreateInfo VulkanShaderInformation::getViewportStateCreat
   return viewportStateCreateInfo;
 }
 
-VkPipelineRasterizationStateCreateInfo
-VulkanShaderInformation::getRasterizationStateCreateInfo() const {
+VkPipelineRasterizationStateCreateInfo ShaderInformation::getRasterizationStateCreateInfo() const {
   VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{};
   rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
@@ -61,7 +59,7 @@ VulkanShaderInformation::getRasterizationStateCreateInfo() const {
 
   return rasterizationStateCreateInfo;
 }
-VkPipelineColorBlendStateCreateInfo VulkanShaderInformation::getColorBlendStateCreateInfo() {
+VkPipelineColorBlendStateCreateInfo ShaderInformation::getColorBlendStateCreateInfo() {
 
   VkPipelineColorBlendAttachmentState colorBlendAttachmentState{};
   colorBlendAttachmentState.blendEnable = VK_FALSE;
@@ -86,7 +84,7 @@ VkPipelineColorBlendStateCreateInfo VulkanShaderInformation::getColorBlendStateC
   return colorBlendStateCreateInfo;
 }
 
-VkPipelineDynamicStateCreateInfo VulkanShaderInformation::getDynamicStateCreateInfo() {
+VkPipelineDynamicStateCreateInfo ShaderInformation::getDynamicStateCreateInfo() {
   mDynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
   VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
@@ -96,8 +94,7 @@ VkPipelineDynamicStateCreateInfo VulkanShaderInformation::getDynamicStateCreateI
 
   return dynamicStateCreateInfo;
 }
-VkPipelineMultisampleStateCreateInfo
-VulkanShaderInformation::getMultiSampleStateCreateInfo() const {
+VkPipelineMultisampleStateCreateInfo ShaderInformation::getMultiSampleStateCreateInfo() const {
   VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{};
   multiSampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
   multiSampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -110,8 +107,7 @@ VulkanShaderInformation::getMultiSampleStateCreateInfo() const {
   return multiSampleStateCreateInfo;
 }
 
-VkPipelineDepthStencilStateCreateInfo
-VulkanShaderInformation::getDepthStencilStateCreateInfo() const {
+VkPipelineDepthStencilStateCreateInfo ShaderInformation::getDepthStencilStateCreateInfo() const {
   VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
   depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
   depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
