@@ -1,4 +1,9 @@
 #!/bin/bash
 
-glslc shader.vert -o vert.spv
-glslc shader.frag -o frag.spv
+for vert in ./*.vert; do
+  glslc $vert -o $vert + '.spv'
+done
+
+for frag in ./*.vert; do
+  glslc $frag -o $frag + '.spv'
+done

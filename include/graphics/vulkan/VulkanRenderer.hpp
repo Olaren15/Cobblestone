@@ -12,7 +12,6 @@
 #include "graphics/vulkan/VulkanFrame.hpp"
 #include "graphics/vulkan/VulkanGPU.hpp"
 #include "graphics/vulkan/VulkanMemoryManager.hpp"
-#include "graphics/vulkan/VulkanPipeline.hpp"
 #include "graphics/vulkan/VulkanSwapchain.hpp"
 
 namespace flex {
@@ -36,12 +35,13 @@ private:
   VulkanSwapchain mSwapchain{};
 
   VkRenderPass mRenderPass{};
-  VulkanPipeline mPipeline{};
+  VkPipelineLayout mPipelineLayout{};
 
   static constexpr unsigned int mMaxFramesInFlight = 2;
   std::array<VulkanFrame, mMaxFramesInFlight> mFrames;
 
   void createRenderPass();
+  void createPipelineLayout();
 
   bool acquireNextFrame();
   void present();
@@ -57,7 +57,7 @@ public:
 
   void drawScene();
 
-  void loadScene(Scene &scene);
+  void loadScene(Scene &scene, std::vector<VulkanShaderInformation *> &shadersInfo);
   void unloadScene();
 };
 } // namespace flex

@@ -12,6 +12,7 @@ struct Mesh {
   std::vector<uint32_t> indices;
   std::vector<Vertex> vertices;
   VulkanBuffer buffer;
+  uint32_t shaderId = UINT32_MAX;
 
   [[nodiscard]] size_t getIndicesSize() const;
   [[nodiscard]] size_t getVerticesSize() const;

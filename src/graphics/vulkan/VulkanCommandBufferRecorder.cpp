@@ -114,6 +114,20 @@ VulkanCommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
   return *this;
 }
 
+VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::drawMesh(Mesh const &mesh) {
+  if (!mesh.buffer.isValid) {
+    throw std::runtime_error("Cannot draw without allocated vram");
+  }
+
+  vkCmdBindIndexBuffer(mCommandBuffer, mesh.buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+  std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
+  vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.buffer.buffer, vertexBufferOffset.data());
+
+  vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+  return *this;
+}
+
 VulkanCommandBufferRecorder &
 VulkanCommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
   for (Mesh const &mesh : meshes) {

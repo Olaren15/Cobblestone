@@ -34,6 +34,7 @@ public:
                                              VkShaderStageFlags const &shaderStage);
   VulkanCommandBufferRecorder &bindPipeline(VkPipeline const &pipeline,
                                             VkPipelineBindPoint const &bindPoint);
+  VulkanCommandBufferRecorder &drawMesh(Mesh const &mesh);
   VulkanCommandBufferRecorder &drawMeshes(std::vector<Mesh> const &meshes);
   VulkanCommandBufferRecorder &endRenderPass();
 

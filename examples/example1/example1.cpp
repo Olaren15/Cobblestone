@@ -1,10 +1,15 @@
-﻿#include <FlexEngine.hpp>
+﻿#include <vector>
 
-int main() {
-  flex::RenderWindow window{1280, 720, false};
-  flex::VulkanRenderer vulkanRenderer{window};
+#include <FlexEngine.hpp>
 
-  flex::Scene scene;
+#include "shaders/BlockShaderInfo.hpp"
+
+void setupScene(flex::VulkanRenderer &vulkanRenderer, flex::Scene &scene) {
+  std::vector<flex::VulkanShaderInformation *> shadersInfo{};
+
+  BlockShaderInfo blockShaderInfo{};
+  shadersInfo.push_back(&blockShaderInfo);
+
   flex::Mesh cube{{
                       0, 1, 2, 2, 3, 0, // front
                       4, 5, 1, 1, 0, 4, // top
@@ -23,9 +28,19 @@ int main() {
                       {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},   // 6
                       {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  // 7
                   }};
+  cube.shaderId = blockShaderInfo.getShaderId();
   scene.meshes.push_back(cube);
 
-  vulkanRenderer.loadScene(scene);
+  vulkanRenderer.loadScene(scene, shadersInfo);
+}
+
+int main() {
+
+  flex::RenderWindow window{1280, 720, false};
+  flex::VulkanRenderer vulkanRenderer{window};
+
+  flex::Scene scene;
+  setupScene(vulkanRenderer, scene);
 
   while (!window.shouldExit()) {
     flex::Time::tick();

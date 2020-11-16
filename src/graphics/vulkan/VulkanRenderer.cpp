@@ -9,8 +9,8 @@ VulkanRenderer::VulkanRenderer(RenderWindow const &window) : mWindow(window) {
   mGPU.initialise(window);
   mMemoryManager.initialise(mGPU);
   createRenderPass();
+  createPipelineLayout();
   mSwapchain.initialise(mGPU, window, mRenderPass, mMemoryManager);
-  mPipeline.initialise(mGPU, mRenderPass);
   for (VulkanFrame &frame : mFrames) {
     frame.initialise(mGPU);
   }
@@ -24,8 +24,8 @@ VulkanRenderer::~VulkanRenderer() {
     frame.destroy(mGPU);
   }
 
-  mPipeline.destroy(mGPU);
   mSwapchain.destroy(mGPU);
+  vkDestroyPipelineLayout(mGPU.device, mPipelineLayout, nullptr);
   vkDestroyRenderPass(mGPU.device, mRenderPass, nullptr);
   mMemoryManager.destroy();
   mGPU.destroy();
@@ -89,6 +89,21 @@ void VulkanRenderer::createRenderPass() {
   renderPassCreateInfo.pDependencies = &subpassDependency;
 
   validateVkResult(vkCreateRenderPass(mGPU.device, &renderPassCreateInfo, nullptr, &mRenderPass));
+}
+
+void VulkanRenderer::createPipelineLayout() {
+  VkPushConstantRange pushConstantRange;
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(glm::mat4);
+
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+  pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+  pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+
+  validateVkResult(
+      vkCreatePipelineLayout(mGPU.device, &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));
 }
 
 bool VulkanRenderer::acquireNextFrame() {
@@ -162,17 +177,24 @@ void VulkanRenderer::drawScene() {
       .setViewPort(renderArea.extent)
       .setScissor(renderArea)
       .beginRenderPass(mRenderPass, mSwapchain.framebuffers[mState.imageIndex], renderArea)
-      .pushConstants(&cameraView, sizeof(glm::mat4), mPipeline.pipelineLayout,
-                     VK_SHADER_STAGE_VERTEX_BIT)
-      .bindPipeline(mPipeline.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS)
-      .drawMeshes(mState.currentScene->meshes)
-      .endRenderPass()
-      .end();
+      .pushConstants(&cameraView, sizeof(glm::mat4), mPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT);
+
+  for (VulkanShader &shader : mState.currentScene->shaders) {
+    recorder.bindPipeline(shader.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
+
+    for (Mesh &mesh : mState.currentScene->meshes) {
+      if (mesh.shaderId == shader.shaderId) {
+        recorder.drawMesh(mesh);
+      }
+    }
+  }
+
+  recorder.endRenderPass().end();
 
   present();
 }
 
-void VulkanRenderer::loadScene(Scene &scene) {
+void VulkanRenderer::loadScene(Scene &scene, std::vector<VulkanShaderInformation *> &shadersInfo) {
   if (mState.currentScene != nullptr) {
     unloadScene();
   }
@@ -183,6 +205,11 @@ void VulkanRenderer::loadScene(Scene &scene) {
     if (!mesh.buffer.isValid) {
       mMemoryManager.generateMeshBuffer(mesh);
     }
+  }
+
+  for (VulkanShaderInformation *shaderInfo : shadersInfo) {
+    VulkanShader shader{mGPU, mRenderPass, mPipelineLayout, *shaderInfo};
+    mState.currentScene->shaders.push_back(shader);
   }
 }
 
@@ -197,6 +224,10 @@ void VulkanRenderer::unloadScene() {
     if (mesh.buffer.isValid) {
       mesh.buffer.memoryManager->destroyBuffer(mesh.buffer);
     }
+  }
+
+  for (VulkanShader &shader : mState.currentScene->shaders) {
+    shader.destroy(mGPU);
   }
 }
 
