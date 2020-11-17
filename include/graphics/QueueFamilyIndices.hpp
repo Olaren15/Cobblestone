@@ -7,15 +7,15 @@
 
 namespace flex {
 struct GPU;
-struct QueueFamiliIndices {
+struct QueueFamilyIndices {
   std::optional<uint32_t> graphics;
   std::optional<uint32_t> transfer;
   std::optional<uint32_t> present;
 
-  QueueFamiliIndices() = default;
-  QueueFamiliIndices(QueueFamiliIndices const &queueFamilyIndices);
-  explicit QueueFamiliIndices(GPU const &gpu);
-  ~QueueFamiliIndices() = default;
+  QueueFamilyIndices() = default;
+  QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndices);
+  explicit QueueFamilyIndices(GPU const &gpu);
+  ~QueueFamilyIndices() = default;
 
   [[nodiscard]] bool isComplete() const;
   [[nodiscard]] bool hasUniqueTransferQueue() const;

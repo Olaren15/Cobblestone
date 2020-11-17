@@ -21,7 +21,7 @@ ADD_LIBRARY(
 		src/graphics/VulkanHelpers.cpp
 		src/graphics/Image.cpp
 		src/graphics/MemoryManager.cpp
-		src/graphics/QueueFamiliIndices.cpp
+		src/graphics/QueueFamilyIndices.cpp
 		src/graphics/RendererEngine.cpp
 		src/graphics/Shader.cpp
 		src/graphics/ShaderInformation.cpp

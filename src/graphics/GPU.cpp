@@ -96,7 +96,7 @@ void GPU::initialise(RenderWindow const &renderWindow) {
   createInstance(renderWindow);
   renderSurface = renderWindow.getDrawableVulkanSurface(instance);
   selectPhysicalDevice();
-  queueFamilyIndices = QueueFamiliIndices{*this};
+  queueFamilyIndices = QueueFamilyIndices{*this};
   createDevice();
   retrieveQueues();
 }

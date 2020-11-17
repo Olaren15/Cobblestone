@@ -42,7 +42,7 @@ CommandBufferRecorder &CommandBufferRecorder::copyBuffer(Buffer const &src,
 
 CommandBufferRecorder &CommandBufferRecorder::addStagingBufferMemoryBarrier(
     Buffer const &buffer,
-                                                     QueueFamiliIndices const &queueFamilyIndices) {
+                                                     QueueFamilyIndices const &queueFamilyIndices) {
 
   VkBufferMemoryBarrier bufferMemoryBarrier{};
   bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;

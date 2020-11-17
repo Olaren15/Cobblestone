@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Buffer.hpp"
-#include "QueueFamiliIndices.hpp"
+#include "QueueFamilyIndices.hpp"
 #include "graphics/Mesh.hpp"
 
 namespace flex {
@@ -21,7 +21,7 @@ public:
 
   CommandBufferRecorder &copyBuffer(Buffer const &src, Buffer const &dst);
   CommandBufferRecorder &
-  addStagingBufferMemoryBarrier(Buffer const &buffer, QueueFamiliIndices const &queueFamilyIndices);
+  addStagingBufferMemoryBarrier(Buffer const &buffer, QueueFamilyIndices const &queueFamilyIndices);
 
   CommandBufferRecorder &setViewPort(VkExtent2D const &viewportExtent);
   CommandBufferRecorder &setScissor(VkRect2D const &scissorRect);

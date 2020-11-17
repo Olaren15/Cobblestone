@@ -6,7 +6,7 @@
 
 #include "GPU.hpp"
 #include "Image.hpp"
-#include "QueueFamiliIndices.hpp"
+#include "QueueFamilyIndices.hpp"
 #include "SwapchainSupportDetails.hpp"
 #include "graphics/RenderWindow.hpp"
 

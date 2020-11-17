@@ -2,7 +2,7 @@
 
 #include "vulkan/vulkan.h"
 
-#include "QueueFamiliIndices.hpp"
+#include "QueueFamilyIndices.hpp"
 #include "graphics/RenderWindow.hpp"
 
 namespace flex {
@@ -25,7 +25,7 @@ public:
   VkPhysicalDevice physicalDevice{};
   VkDevice device{};
 
-  QueueFamiliIndices queueFamilyIndices;
+  QueueFamilyIndices queueFamilyIndices;
   VkQueue graphicsQueue{};
   VkQueue transferQueue{};
   VkQueue presentQueue{};

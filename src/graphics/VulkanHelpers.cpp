@@ -3,7 +3,7 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "graphics/QueueFamiliIndices.hpp"
+#include "graphics/QueueFamilyIndices.hpp"
 #include "graphics/SwapchainSupportDetails.hpp"
 
 namespace flex {
@@ -100,7 +100,7 @@ unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
     score += 1000u;
   }
 
-  if (QueueFamiliIndices const queueFamilyIndices{gpu}; !queueFamilyIndices.isComplete()) {
+  if (QueueFamilyIndices const queueFamilyIndices{gpu}; !queueFamilyIndices.isComplete()) {
     return 0u;
   }
 
