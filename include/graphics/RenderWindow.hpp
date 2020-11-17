@@ -12,7 +12,7 @@ namespace flex {
 struct RenderWindow {
 private:
   SDL_Window *mSDLWindow{};
-  bool mShouldExit = false;
+  bool mIsOpen = true;
 
   static void initSDL();
   void createSDLWindow(int const &width, int const &height, bool const &fullScreen);
@@ -28,7 +28,7 @@ public:
 
   void update();
 
-  [[nodiscard]] bool shouldExit() const;
+  [[nodiscard]] bool isOpen() const;
 
   [[nodiscard]] std::vector<char const *> getRequiredVulkanExtensions() const;
   [[nodiscard]] VkSurfaceKHR getDrawableVulkanSurface(VkInstance const &vulkanInstance) const;

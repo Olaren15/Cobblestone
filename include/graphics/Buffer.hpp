@@ -2,16 +2,16 @@
 
 #include <vulkan/vulkan.h>
 
-#include "graphics/vulkan/vk_mem_alloc.h"
+#include "vk_mem_alloc.h"
 
 namespace flex {
-struct VulkanMemoryManager;
+struct MemoryManager;
 
-struct VulkanBuffer {
+struct Buffer {
   bool isValid = false;
   VmaAllocation allocation{};
   VkBuffer buffer{};
   VkDeviceSize size{};
-  VulkanMemoryManager *memoryManager{};
+  MemoryManager *memoryManager{};
 };
 } // namespace flex

@@ -1,15 +1,15 @@
-#include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
+#include "graphics/CommandBufferRecorder.hpp"
 
 #include <array>
 #include <stdexcept>
 
-#include "graphics/vulkan/VulkanHelpers.hpp"
+#include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
-VulkanCommandBufferRecorder::VulkanCommandBufferRecorder(VkCommandBuffer &commandBuffer)
+CommandBufferRecorder::CommandBufferRecorder(VkCommandBuffer &commandBuffer)
     : mCommandBuffer(commandBuffer) {}
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::begin() {
+CommandBufferRecorder &CommandBufferRecorder::begin() {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -17,7 +17,7 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::begin() {
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginOneTime() {
+CommandBufferRecorder &CommandBufferRecorder::beginOneTime() {
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -26,8 +26,8 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginOneTime() {
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::copyBuffer(VulkanBuffer const &src,
-                                                                     VulkanBuffer const &dst) {
+CommandBufferRecorder &CommandBufferRecorder::copyBuffer(Buffer const &src,
+                                                                     Buffer const &dst) {
   if (!src.isValid || !dst.isValid) {
     throw std::runtime_error("Cannot copy data to/from an uninitialized buffer");
   }
@@ -40,8 +40,9 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::copyBuffer(VulkanBuffe
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::addStagingBufferMemoryBarrier(
-    VulkanBuffer const &buffer, VulkanQueueFamilyIndices const &queueFamilyIndices) {
+CommandBufferRecorder &CommandBufferRecorder::addStagingBufferMemoryBarrier(
+    Buffer const &buffer,
+                                                     QueueFamiliIndices const &queueFamilyIndices) {
 
   VkBufferMemoryBarrier bufferMemoryBarrier{};
   bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -58,8 +59,7 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::addStagingBufferMemory
   return *this;
 }
 
-VulkanCommandBufferRecorder &
-VulkanCommandBufferRecorder::setViewPort(VkExtent2D const &viewportExtent) {
+CommandBufferRecorder &CommandBufferRecorder::setViewPort(VkExtent2D const &viewportExtent) {
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
@@ -73,12 +73,12 @@ VulkanCommandBufferRecorder::setViewPort(VkExtent2D const &viewportExtent) {
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::setScissor(VkRect2D const &scissorRect) {
+CommandBufferRecorder &CommandBufferRecorder::setScissor(VkRect2D const &scissorRect) {
   vkCmdSetScissor(mCommandBuffer, 0, 1, &scissorRect);
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginRenderPass(
+CommandBufferRecorder &CommandBufferRecorder::beginRenderPass(
     VkRenderPass const &renderPass, VkFramebuffer const &framebuffer, VkRect2D const &renderArea) {
   std::array<VkClearValue, 2> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -97,16 +97,14 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginRenderPass(
   return *this;
 }
 
-VulkanCommandBufferRecorder &
-VulkanCommandBufferRecorder::pushCameraView(const glm::mat4 &view, const VkPipelineLayout &layout) {
+CommandBufferRecorder &CommandBufferRecorder::pushCameraView(const glm::mat4 &view, const VkPipelineLayout &layout) {
   vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
                      &view);
 
   return *this;
 }
 
-VulkanCommandBufferRecorder &
-VulkanCommandBufferRecorder::pushModelPosition(const glm::mat4 &position,
+CommandBufferRecorder &CommandBufferRecorder::pushModelPosition(const glm::mat4 &position,
                                                const VkPipelineLayout &layout) {
   vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4),
                      sizeof(glm::mat4), &position);
@@ -114,15 +112,14 @@ VulkanCommandBufferRecorder::pushModelPosition(const glm::mat4 &position,
   return *this;
 }
 
-VulkanCommandBufferRecorder &
-VulkanCommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
+CommandBufferRecorder &CommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
                                           const VkPipelineBindPoint &bindPoint) {
 
   vkCmdBindPipeline(mCommandBuffer, bindPoint, pipeline);
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::drawMesh(Mesh const &mesh) {
+CommandBufferRecorder &CommandBufferRecorder::drawMesh(Mesh const &mesh) {
   if (!mesh.buffer.isValid) {
     throw std::runtime_error("Cannot draw without allocated vram");
   }
@@ -136,8 +133,7 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::drawMesh(Mesh const &m
   return *this;
 }
 
-VulkanCommandBufferRecorder &
-VulkanCommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
+CommandBufferRecorder &CommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
   for (Mesh const &mesh : meshes) {
     if (!mesh.buffer.isValid) {
       throw std::runtime_error("Cannot draw without allocated vram");
@@ -153,17 +149,17 @@ VulkanCommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::endRenderPass() {
+CommandBufferRecorder &CommandBufferRecorder::endRenderPass() {
   vkCmdEndRenderPass(mCommandBuffer);
   return *this;
 }
 
-VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::end() {
+CommandBufferRecorder &CommandBufferRecorder::end() {
   validateVkResult(vkEndCommandBuffer(mCommandBuffer));
   return *this;
 }
 
-void VulkanCommandBufferRecorder::submit(VkQueue const &submitQueue) {
+void CommandBufferRecorder::submit(VkQueue const &submitQueue) {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
@@ -172,7 +168,7 @@ void VulkanCommandBufferRecorder::submit(VkQueue const &submitQueue) {
   vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
 }
 
-void VulkanCommandBufferRecorder::submitWithFence(VkQueue const &submitQueue,
+void CommandBufferRecorder::submitWithFence(VkQueue const &submitQueue,
                                                   VkFence const &fence) {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

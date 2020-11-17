@@ -1,14 +1,14 @@
-﻿#include "graphics/vulkan/VulkanSwapchain.hpp"
+﻿#include "graphics/Swapchain.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 
-#include "graphics/vulkan/VulkanHelpers.hpp"
-#include "graphics/vulkan/VulkanMemoryManager.hpp"
+#include "graphics/MemoryManager.hpp"
+#include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
 
-VkPresentModeKHR VulkanSwapchain::getSupportedSwapchainPresentMode(
+VkPresentModeKHR Swapchain::getSupportedSwapchainPresentMode(
     std::vector<VkPresentModeKHR> const &availablePresentModes) {
 
   const std::set<VkPresentModeKHR> rankedModes{VK_PRESENT_MODE_MAILBOX_KHR,
@@ -25,7 +25,7 @@ VkPresentModeKHR VulkanSwapchain::getSupportedSwapchainPresentMode(
   return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D VulkanSwapchain::getSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
+VkExtent2D Swapchain::getSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
                                                RenderWindow const &window) {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
@@ -44,8 +44,8 @@ VkExtent2D VulkanSwapchain::getSwapchainExtent(VkSurfaceCapabilitiesKHR const &c
   return VkExtent2D{actualWidth, actualHeight};
 }
 
-VkSurfaceFormatKHR VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
-    VulkanSwapchainSupportDetails const &swapchainSupportDetails) {
+VkSurfaceFormatKHR Swapchain::getSupportedSwapchainSurfaceFormat(
+    SwapchainSupportDetails const &swapchainSupportDetails) {
   if (swapchainSupportDetails.formats.empty()) {
     throw std::runtime_error("Cannot choose a format from an empty array");
   }
@@ -60,19 +60,18 @@ VkSurfaceFormatKHR VulkanSwapchain::getSupportedSwapchainSurfaceFormat(
   return swapchainSupportDetails.formats.front();
 }
 
-VkFormat VulkanSwapchain::getSupportedDepthBufferFormat(VulkanGPU const &gpu) {
+VkFormat Swapchain::getSupportedDepthBufferFormat(GPU const &gpu) {
   std::vector<VkFormat> const preferredFormats{
       VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT};
 
-  return VulkanImage::findSupportedFormat(gpu, preferredFormats, VK_IMAGE_TILING_OPTIMAL,
+  return Image::findSupportedFormat(gpu, preferredFormats, VK_IMAGE_TILING_OPTIMAL,
                                           VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-void VulkanSwapchain::initialise(VulkanGPU const &gpu, RenderWindow const &window,
-                                 VkRenderPass const &renderPass,
-                                 VulkanMemoryManager &memoryManager) {
+void Swapchain::initialise(GPU const &gpu, RenderWindow const &window,
+                                 VkRenderPass const &renderPass, MemoryManager &memoryManager) {
   mMemoryManager = &memoryManager;
-  swapchainSupportDetails = VulkanSwapchainSupportDetails{gpu};
+  swapchainSupportDetails = SwapchainSupportDetails{gpu};
 
   VkSurfaceFormatKHR const surfaceFormat =
       getSupportedSwapchainSurfaceFormat(swapchainSupportDetails);
@@ -156,7 +155,7 @@ void VulkanSwapchain::initialise(VulkanGPU const &gpu, RenderWindow const &windo
   }
 }
 
-void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow const &window,
+void Swapchain::handleFrameBufferResize(GPU const &gpu, RenderWindow const &window,
                                               VkRenderPass const &renderPass) {
   if (mMemoryManager == nullptr) {
     throw std::runtime_error("swapchain needs to be initialised first!");
@@ -167,7 +166,7 @@ void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow
     vkDestroyFramebuffer(gpu.device, framebuffer, nullptr);
   }
 
-  for (VulkanImage image : frameBufferImages) {
+  for (Image image : frameBufferImages) {
     vkDestroyImageView(gpu.device, image.imageView, nullptr);
   }
   mMemoryManager->destroyImage(depthBufferImage);
@@ -178,20 +177,20 @@ void VulkanSwapchain::handleFrameBufferResize(VulkanGPU const &gpu, RenderWindow
   vkDestroySwapchainKHR(gpu.device, oldSwapchain, nullptr);
 }
 
-float VulkanSwapchain::getAspectRatio() const {
+float Swapchain::getAspectRatio() const {
   return static_cast<float>(frameBufferImages[0].extent.width) /
          static_cast<float>(frameBufferImages[0].extent.height);
 }
 
-bool VulkanSwapchain::canBeResized(VulkanGPU const &gpu, RenderWindow const &window) const {
+bool Swapchain::canBeResized(GPU const &gpu, RenderWindow const &window) const {
 
-  VulkanSwapchainSupportDetails supportDetails = VulkanSwapchainSupportDetails{gpu};
+  SwapchainSupportDetails supportDetails = SwapchainSupportDetails{gpu};
   VkExtent2D extent = getSwapchainExtent(supportDetails.capabilities, window);
 
   return extent.height != 0 && extent.width != 0;
 }
 
-void VulkanSwapchain::destroy(VulkanGPU const &gpu) {
+void Swapchain::destroy(GPU const &gpu) {
   if (mMemoryManager == nullptr) {
     return;
   }
@@ -200,7 +199,7 @@ void VulkanSwapchain::destroy(VulkanGPU const &gpu) {
     vkDestroyFramebuffer(gpu.device, framebuffer, nullptr);
   }
 
-  for (VulkanImage image : frameBufferImages) {
+  for (Image image : frameBufferImages) {
     vkDestroyImageView(gpu.device, image.imageView, nullptr);
   }
   mMemoryManager->destroyImage(depthBufferImage);

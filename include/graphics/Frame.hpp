@@ -2,11 +2,11 @@
 
 #include "vulkan/vulkan.h"
 
-#include "graphics/vulkan/VulkanGPU.hpp"
-#include "graphics/vulkan/VulkanHelpers.hpp"
+#include "GPU.hpp"
+#include "VulkanHelpers.hpp"
 
 namespace flex {
-struct VulkanFrame {
+struct Frame {
 public:
   VkSemaphore imageAvailableSemaphore{};
   VkSemaphore renderFinishedSemaphore{};
@@ -15,7 +15,7 @@ public:
   VkCommandPool commandPool{};
   VkCommandBuffer commandBuffer{};
 
-  void initialise(VulkanGPU const &gpu);
-  void destroy(VulkanGPU const &gpu) const;
+  void initialise(GPU const &gpu);
+  void destroy(GPU const &gpu) const;
 };
 } // namespace flex

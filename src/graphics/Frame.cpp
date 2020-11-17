@@ -1,7 +1,7 @@
-#include "graphics/vulkan/VulkanFrame.hpp"
+#include "graphics/Frame.hpp"
 
 namespace flex {
-void VulkanFrame::initialise(VulkanGPU const &gpu) {
+void Frame::initialise(GPU const &gpu) {
   // command pool
   VkCommandPoolCreateInfo commandPoolCreateInfo{};
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -37,7 +37,7 @@ void VulkanFrame::initialise(VulkanGPU const &gpu) {
   validateVkResult(vkCreateFence(gpu.device, &fenceCreateInfo, nullptr, &renderFinishedFence));
 }
 
-void VulkanFrame::destroy(VulkanGPU const &gpu) const {
+void Frame::destroy(GPU const &gpu) const {
   vkDestroySemaphore(gpu.device, imageAvailableSemaphore, nullptr);
   vkDestroySemaphore(gpu.device, renderFinishedSemaphore, nullptr);
   vkDestroyFence(gpu.device, renderFinishedFence, nullptr);

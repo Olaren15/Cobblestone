@@ -1,19 +1,18 @@
-﻿#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
+﻿#include "graphics/QueueFamiliIndices.hpp"
 
 #include <vector>
 
-#include "graphics/vulkan/VulkanGPU.hpp"
+#include "graphics/GPU.hpp"
 
 namespace flex {
 
-VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(
-    VulkanQueueFamilyIndices const &queueFamilyIndices) {
+QueueFamiliIndices::QueueFamiliIndices(QueueFamiliIndices const &queueFamilyIndices) {
   graphics = queueFamilyIndices.graphics;
   transfer = queueFamilyIndices.transfer;
   present = queueFamilyIndices.present;
 }
 
-VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(VulkanGPU const &gpu) {
+QueueFamiliIndices::QueueFamiliIndices(GPU const &gpu) {
   uint32_t propertiesCount;
   vkGetPhysicalDeviceQueueFamilyProperties(gpu.physicalDevice, &propertiesCount, nullptr);
   std::vector<VkQueueFamilyProperties> queueFamilyProperties{propertiesCount};
@@ -51,15 +50,15 @@ VulkanQueueFamilyIndices::VulkanQueueFamilyIndices(VulkanGPU const &gpu) {
   }
 }
 
-bool VulkanQueueFamilyIndices::isComplete() const {
+bool QueueFamiliIndices::isComplete() const {
   return graphics.has_value() && transfer.has_value() && present.has_value();
 }
 
-bool VulkanQueueFamilyIndices::hasUniqueTransferQueue() const {
+bool QueueFamiliIndices::hasUniqueTransferQueue() const {
   return graphics.value() != transfer.value();
 }
 
-std::set<uint32_t> VulkanQueueFamilyIndices::getUniqueIndices() const {
+std::set<uint32_t> QueueFamiliIndices::getUniqueIndices() const {
   return std::set<uint32_t>{graphics.value(), transfer.value(), present.value()};
 }
 

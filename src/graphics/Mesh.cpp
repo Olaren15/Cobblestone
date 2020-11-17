@@ -1,6 +1,6 @@
 #include "graphics/Mesh.hpp"
 
-#include <graphics/vulkan/VulkanMemoryManager.hpp>
+#include <graphics/MemoryManager.hpp>
 
 namespace flex {
 Mesh::Mesh(std::vector<uint32_t> const &indices, std::vector<Vertex> const &vertices) {

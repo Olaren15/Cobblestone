@@ -1,10 +1,10 @@
-#include "graphics/vulkan/VulkanHelpers.hpp"
+#include "graphics/VulkanHelpers.hpp"
 
 #include <cstring>
 #include <stdexcept>
 
-#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
-#include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
+#include "graphics/QueueFamiliIndices.hpp"
+#include "graphics/SwapchainSupportDetails.hpp"
 
 namespace flex {
 void validateVkResult(VkResult const &result) {
@@ -87,7 +87,7 @@ void validateVkResult(VkResult const &result) {
 unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
                                 VkSurfaceKHR const &vulkanSurface,
                                 std::vector<char const *> const &requiredExtensions) {
-  VulkanGPU gpu{};
+  GPU gpu{};
   gpu.physicalDevice = physicalDevice;
   gpu.renderSurface = vulkanSurface;
 
@@ -100,7 +100,7 @@ unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
     score += 1000u;
   }
 
-  if (VulkanQueueFamilyIndices const queueFamilyIndices{gpu}; !queueFamilyIndices.isComplete()) {
+  if (QueueFamiliIndices const queueFamilyIndices{gpu}; !queueFamilyIndices.isComplete()) {
     return 0u;
   }
 
@@ -108,7 +108,7 @@ unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
     return 0u;
   }
 
-  if (VulkanSwapchainSupportDetails const swapchainSupportDetails{gpu};
+  if (SwapchainSupportDetails const swapchainSupportDetails{gpu};
       !swapchainSupportDetails.isUsable()) {
     return 0u;
   }

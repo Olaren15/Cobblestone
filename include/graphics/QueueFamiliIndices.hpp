@@ -6,16 +6,16 @@
 #include <vulkan/vulkan.h>
 
 namespace flex {
-struct VulkanGPU;
-struct VulkanQueueFamilyIndices {
+struct GPU;
+struct QueueFamiliIndices {
   std::optional<uint32_t> graphics;
   std::optional<uint32_t> transfer;
   std::optional<uint32_t> present;
 
-  VulkanQueueFamilyIndices() = default;
-  VulkanQueueFamilyIndices(VulkanQueueFamilyIndices const &queueFamilyIndices);
-  explicit VulkanQueueFamilyIndices(VulkanGPU const &gpu);
-  ~VulkanQueueFamilyIndices() = default;
+  QueueFamiliIndices() = default;
+  QueueFamiliIndices(QueueFamiliIndices const &queueFamilyIndices);
+  explicit QueueFamiliIndices(GPU const &gpu);
+  ~QueueFamiliIndices() = default;
 
   [[nodiscard]] bool isComplete() const;
   [[nodiscard]] bool hasUniqueTransferQueue() const;

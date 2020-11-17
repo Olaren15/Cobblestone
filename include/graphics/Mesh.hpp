@@ -2,8 +2,8 @@
 
 #include <vector>
 
+#include "Buffer.hpp"
 #include "graphics/Vertex.hpp"
-#include "graphics/vulkan/VulkanBuffer.hpp"
 
 namespace flex {
 struct Mesh {
@@ -11,7 +11,7 @@ struct Mesh {
 
   std::vector<uint32_t> indices;
   std::vector<Vertex> vertices;
-  VulkanBuffer buffer;
+  Buffer buffer;
   glm::mat4 position{1};
   uint32_t shaderId = UINT32_MAX;
 

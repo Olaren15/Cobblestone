@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "graphics/vulkan/VulkanGPU.hpp"
+#include "GPU.hpp"
 
 namespace flex {
 void validateVkResult(VkResult const &result);

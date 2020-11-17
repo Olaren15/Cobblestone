@@ -13,20 +13,20 @@ ADD_LIBRARY(
 		src/core/Scene.cpp
 		src/core/Time.cpp
 		src/core/Vector2.cpp
-		src/graphics/vulkan/vk_mem_alloc.cpp
-		src/graphics/vulkan/VulkanBuffer.cpp
-		src/graphics/vulkan/VulkanCommandBufferRecorder.cpp
-		src/graphics/vulkan/VulkanFrame.cpp
-		src/graphics/vulkan/VulkanGPU.cpp
-		src/graphics/vulkan/VulkanHelpers.cpp
-		src/graphics/vulkan/VulkanImage.cpp
-		src/graphics/vulkan/VulkanMemoryManager.cpp
-		src/graphics/vulkan/VulkanQueueFamilyIndices.cpp
-		src/graphics/vulkan/VulkanRenderer.cpp
+		src/graphics/vk_mem_alloc.cpp
+		src/graphics/Buffer.cpp
+		src/graphics/CommandBufferRecorder.cpp
+		src/graphics/Frame.cpp
+		src/graphics/GPU.cpp
+		src/graphics/VulkanHelpers.cpp
+		src/graphics/Image.cpp
+		src/graphics/MemoryManager.cpp
+		src/graphics/QueueFamiliIndices.cpp
+		src/graphics/RendererEngine.cpp
 		src/graphics/Shader.cpp
 		src/graphics/ShaderInformation.cpp
-		src/graphics/vulkan/VulkanSwapchain.cpp
-		src/graphics/vulkan/VulkanSwapchainSupportDetails.cpp
+		src/graphics/Swapchain.cpp
+		src/graphics/SwapchainSupportDetails.cpp
 		src/graphics/Camera.cpp
 		src/graphics/Mesh.cpp
 		src/graphics/RenderWindow.cpp

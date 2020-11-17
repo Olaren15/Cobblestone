@@ -2,13 +2,13 @@
 
 #include "vulkan/vulkan.h"
 
+#include "QueueFamiliIndices.hpp"
 #include "graphics/RenderWindow.hpp"
-#include "graphics/vulkan/VulkanQueueFamilyIndices.hpp"
 
 namespace flex {
 struct VulkanQueues;
 
-struct VulkanGPU {
+struct GPU {
 private:
   std::vector<const char *> mRequiredDeviceExtensionsNames{
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -25,7 +25,7 @@ public:
   VkPhysicalDevice physicalDevice{};
   VkDevice device{};
 
-  VulkanQueueFamilyIndices queueFamilyIndices;
+  QueueFamiliIndices queueFamilyIndices;
   VkQueue graphicsQueue{};
   VkQueue transferQueue{};
   VkQueue presentQueue{};

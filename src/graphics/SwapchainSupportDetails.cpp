@@ -1,16 +1,16 @@
-#include "graphics/vulkan/VulkanSwapchainSupportDetails.hpp"
+#include "graphics/SwapchainSupportDetails.hpp"
 
-#include "graphics/vulkan/VulkanHelpers.hpp"
+#include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
-VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(
-    VulkanSwapchainSupportDetails const &swapchainSupportDetails) {
+SwapchainSupportDetails::SwapchainSupportDetails(
+    SwapchainSupportDetails const &swapchainSupportDetails) {
   capabilities = swapchainSupportDetails.capabilities;
   formats = swapchainSupportDetails.formats;
   presentModes = swapchainSupportDetails.presentModes;
 }
 
-flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(VulkanGPU const &gpu) {
+flex::SwapchainSupportDetails::SwapchainSupportDetails(GPU const &gpu) {
   validateVkResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu.physicalDevice, gpu.renderSurface,
                                                              &capabilities));
 
@@ -28,7 +28,7 @@ flex::VulkanSwapchainSupportDetails::VulkanSwapchainSupportDetails(VulkanGPU con
                                                              &vectorLength, presentModes.data()));
 }
 
-bool VulkanSwapchainSupportDetails::isUsable() const {
+bool SwapchainSupportDetails::isUsable() const {
   return !(formats.empty() || presentModes.empty());
 }
 } // namespace flex

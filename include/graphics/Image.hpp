@@ -4,13 +4,13 @@
 
 #include <vulkan/vulkan.h>
 
-#include "graphics/vulkan/VulkanGPU.hpp"
-#include "graphics/vulkan/vk_mem_alloc.h"
+#include "GPU.hpp"
+#include "vk_mem_alloc.h"
 
 namespace flex {
-struct VulkanMemoryManager;
+struct MemoryManager;
 
-struct VulkanImage {
+struct Image {
 public:
   VmaAllocation allocation{};
   VkImage image{};
@@ -19,7 +19,7 @@ public:
   VkFormat format{};
   VkExtent2D extent{};
 
-  static VkFormat findSupportedFormat(VulkanGPU const &gpu,
+  static VkFormat findSupportedFormat(GPU const &gpu,
                                       std::vector<VkFormat> const &formatChoices,
                                       VkImageTiling const &requestedTiling,
                                       VkFormatFeatureFlags const &requestedFeatures);

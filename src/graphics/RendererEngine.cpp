@@ -1,26 +1,27 @@
-﻿#include "graphics/vulkan/VulkanRenderer.hpp"
+﻿#include "graphics/RendererEngine.hpp"
 
 #include <map>
 
-#include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
+#include "graphics/CommandBufferRecorder.hpp"
+#include "core/Time.hpp"
 
 namespace flex {
-VulkanRenderer::VulkanRenderer(RenderWindow const &window) : mWindow(window) {
-  mGPU.initialise(window);
+RendererEngine::RendererEngine() {
+  mGPU.initialise(mWindow);
   mMemoryManager.initialise(mGPU);
   createRenderPass();
   createPipelineLayout();
-  mSwapchain.initialise(mGPU, window, mRenderPass, mMemoryManager);
-  for (VulkanFrame &frame : mFrames) {
+  mSwapchain.initialise(mGPU, mWindow, mRenderPass, mMemoryManager);
+  for (Frame &frame : mFrames) {
     frame.initialise(mGPU);
   }
   mState.currentFrame = &mFrames[mState.currentFrameNumber];
 }
 
-VulkanRenderer::~VulkanRenderer() {
+RendererEngine::~RendererEngine() {
   mGPU.waitIdle();
 
-  for (VulkanFrame &frame : mFrames) {
+  for (Frame &frame : mFrames) {
     frame.destroy(mGPU);
   }
 
@@ -31,13 +32,13 @@ VulkanRenderer::~VulkanRenderer() {
   mGPU.destroy();
 }
 
-void VulkanRenderer::createRenderPass() {
+void RendererEngine::createRenderPass() {
 
-  VulkanSwapchainSupportDetails const swapchainSupportDetails = VulkanSwapchainSupportDetails{mGPU};
+  SwapchainSupportDetails const swapchainSupportDetails = SwapchainSupportDetails{mGPU};
 
   VkAttachmentDescription colorAttachment{};
   colorAttachment.format =
-      VulkanSwapchain::getSupportedSwapchainSurfaceFormat(swapchainSupportDetails).format;
+      Swapchain::getSupportedSwapchainSurfaceFormat(swapchainSupportDetails).format;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -51,7 +52,7 @@ void VulkanRenderer::createRenderPass() {
   colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = VulkanSwapchain::getSupportedDepthBufferFormat(mGPU);
+  depthAttachment.format = Swapchain::getSupportedDepthBufferFormat(mGPU);
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -91,7 +92,7 @@ void VulkanRenderer::createRenderPass() {
   validateVkResult(vkCreateRenderPass(mGPU.device, &renderPassCreateInfo, nullptr, &mRenderPass));
 }
 
-void VulkanRenderer::createPipelineLayout() {
+void RendererEngine::createPipelineLayout() {
   VkPushConstantRange pushConstantRange;
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   pushConstantRange.offset = 0;
@@ -106,7 +107,7 @@ void VulkanRenderer::createPipelineLayout() {
       vkCreatePipelineLayout(mGPU.device, &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));
 }
 
-bool VulkanRenderer::acquireNextFrame() {
+bool RendererEngine::acquireNextFrame() {
   validateVkResult(vkWaitForFences(mGPU.device, 1, &mState.currentFrame->renderFinishedFence,
                                    VK_TRUE, UINT64_MAX));
 
@@ -124,7 +125,7 @@ bool VulkanRenderer::acquireNextFrame() {
   return true;
 }
 
-void VulkanRenderer::present() {
+void RendererEngine::present() {
 
   VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
@@ -154,7 +155,7 @@ void VulkanRenderer::present() {
   mState.currentFrame = &mFrames[++mState.currentFrameNumber %= mMaxFramesInFlight];
 }
 
-void VulkanRenderer::drawScene() {
+void RendererEngine::drawScene() {
   if (mState.currentScene == nullptr) {
     return;
   }
@@ -170,7 +171,7 @@ void VulkanRenderer::drawScene() {
   renderArea.offset = {0, 0};
   renderArea.extent = mSwapchain.frameBufferImages[0].extent;
 
-  VulkanCommandBufferRecorder recorder{mState.currentFrame->commandBuffer};
+  CommandBufferRecorder recorder{mState.currentFrame->commandBuffer};
   recorder.beginOneTime()
       .setViewPort(renderArea.extent)
       .setScissor(renderArea)
@@ -195,7 +196,19 @@ void VulkanRenderer::drawScene() {
   present();
 }
 
-void VulkanRenderer::loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo) {
+void RendererEngine::update() {
+  Time::tick();
+  mWindow.update();
+  mState.currentScene->update();
+  drawScene();
+}
+
+bool RendererEngine::isRunning() {
+  return mWindow.isOpen();
+}
+
+
+void RendererEngine::loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo) {
   if (mState.currentScene != nullptr) {
     unloadScene();
   }
@@ -214,7 +227,7 @@ void VulkanRenderer::loadScene(Scene &scene, std::vector<ShaderInformation *> &s
   }
 }
 
-void VulkanRenderer::unloadScene() {
+void RendererEngine::unloadScene() {
   if (mState.currentScene == nullptr) {
     return;
   }

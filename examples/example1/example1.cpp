@@ -4,7 +4,7 @@
 
 #include "shaders/BlockShaderInfo.hpp"
 
-void setupScene(flex::VulkanRenderer &vulkanRenderer, flex::Scene &scene) {
+void setupScene(flex::RendererEngine &rendererEngine, flex::Scene &scene) {
   std::vector<flex::ShaderInformation *> shadersInfo{};
 
   BlockShaderInfo blockShaderInfo{};
@@ -31,26 +31,21 @@ void setupScene(flex::VulkanRenderer &vulkanRenderer, flex::Scene &scene) {
   cube.shaderId = blockShaderInfo.getShaderId();
   scene.meshes.push_back(cube);
 
-  vulkanRenderer.loadScene(scene, shadersInfo);
+  rendererEngine.loadScene(scene, shadersInfo);
 }
 
 int main() {
 
-  flex::RenderWindow window{1280, 720, false};
-  flex::VulkanRenderer vulkanRenderer{window};
+  flex::RendererEngine renderEngine{};
 
   flex::Scene scene;
-  setupScene(vulkanRenderer, scene);
+  setupScene(renderEngine, scene);
 
-  while (!window.shouldExit()) {
-    flex::Time::tick();
-    window.update();
-    scene.update();
-
-    vulkanRenderer.drawScene();
+  while (renderEngine.isRunning()) {
+    renderEngine.update();
   }
 
-  vulkanRenderer.unloadScene();
+  renderEngine.unloadScene();
 
   return EXIT_SUCCESS;
 }

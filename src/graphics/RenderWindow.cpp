@@ -9,7 +9,7 @@
 namespace flex {
 RenderWindow::RenderWindow() {
   initSDL();
-  createSDLWindow(800, 700, false);
+  createSDLWindow(1280, 720, false);
 }
 
 RenderWindow::RenderWindow(int const &width, int const &height, bool const &fullscreen) {
@@ -51,7 +51,7 @@ void RenderWindow::update() {
     events.push_back(event);
     switch (event.type) {
     case SDL_QUIT:
-      mShouldExit = true;
+      mIsOpen = false;
       break;
     default:
       break;
@@ -61,7 +61,7 @@ void RenderWindow::update() {
   Input.updateEvents(events);
 }
 
-bool RenderWindow::shouldExit() const { return mShouldExit; }
+bool RenderWindow::isOpen() const { return mIsOpen; }
 
 std::vector<char const *> RenderWindow::getRequiredVulkanExtensions() const {
   unsigned int count = 0;

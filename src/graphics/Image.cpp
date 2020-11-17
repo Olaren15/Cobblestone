@@ -1,10 +1,10 @@
-#include "graphics/vulkan/VulkanImage.hpp"
+#include "graphics/Image.hpp"
 
 #include <stdexcept>
 
 namespace flex {
 
-VkFormat VulkanImage::findSupportedFormat(VulkanGPU const &gpu,
+VkFormat Image::findSupportedFormat(GPU const &gpu,
                                           std::vector<VkFormat> const &formatChoices,
                                           VkImageTiling const &requestedTiling,
                                           VkFormatFeatureFlags const &requestedFeatures) {
@@ -32,7 +32,7 @@ VkFormat VulkanImage::findSupportedFormat(VulkanGPU const &gpu,
   throw std::runtime_error("Failed to find supported VkFormat");
 }
 
-bool VulkanImage::hasStencilComponent(VkFormat format) {
+bool Image::hasStencilComponent(VkFormat format) {
   switch (format) {
   case VK_FORMAT_S8_UINT:
   case VK_FORMAT_D16_UNORM_S8_UINT:

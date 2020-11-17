@@ -1,13 +1,13 @@
-#include "graphics/vulkan/VulkanGPU.hpp"
+#include "graphics/GPU.hpp"
 
 #include <map>
 #include <stdexcept>
 
-#include "graphics/vulkan/VulkanHelpers.hpp"
+#include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
 
-void VulkanGPU::createInstance(RenderWindow const &renderWindow) {
+void GPU::createInstance(RenderWindow const &renderWindow) {
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   appInfo.pApplicationName = "Flex Engine";
@@ -34,7 +34,7 @@ void VulkanGPU::createInstance(RenderWindow const &renderWindow) {
   validateVkResult(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
 }
 
-void VulkanGPU::selectPhysicalDevice() {
+void GPU::selectPhysicalDevice() {
   uint32_t physicalDeviceCount;
   vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
   std::vector<VkPhysicalDevice> availablePhysicalDevices{physicalDeviceCount};
@@ -55,7 +55,7 @@ void VulkanGPU::selectPhysicalDevice() {
   }
 }
 
-void VulkanGPU::createDevice() {
+void GPU::createDevice() {
   float queuePriority = 1.0f;
   std::set<uint32_t> uniqueQueueFamilyIndices = queueFamilyIndices.getUniqueIndices();
 
@@ -86,24 +86,24 @@ void VulkanGPU::createDevice() {
   validateVkResult(vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device));
 }
 
-void VulkanGPU::retrieveQueues() {
+void GPU::retrieveQueues() {
   vkGetDeviceQueue(device, queueFamilyIndices.graphics.value(), 0, &graphicsQueue);
   vkGetDeviceQueue(device, queueFamilyIndices.transfer.value(), 0, &transferQueue);
   vkGetDeviceQueue(device, queueFamilyIndices.present.value(), 0, &presentQueue);
 }
 
-void VulkanGPU::initialise(RenderWindow const &renderWindow) {
+void GPU::initialise(RenderWindow const &renderWindow) {
   createInstance(renderWindow);
   renderSurface = renderWindow.getDrawableVulkanSurface(instance);
   selectPhysicalDevice();
-  queueFamilyIndices = VulkanQueueFamilyIndices{*this};
+  queueFamilyIndices = QueueFamiliIndices{*this};
   createDevice();
   retrieveQueues();
 }
 
-void VulkanGPU::waitIdle() const { validateVkResult(vkDeviceWaitIdle(device)); }
+void GPU::waitIdle() const { validateVkResult(vkDeviceWaitIdle(device)); }
 
-void VulkanGPU::destroy() const {
+void GPU::destroy() const {
   vkDestroyDevice(device, nullptr);
   vkDestroySurfaceKHR(instance, renderSurface, nullptr);
   vkDestroyInstance(instance, nullptr);

@@ -1,15 +1,14 @@
-#include "graphics/vulkan/VulkanMemoryManager.hpp"
+#include "graphics/MemoryManager.hpp"
 
 #include <thread>
 
-#include "graphics/vulkan/VulkanCommandBufferRecorder.hpp"
-#include "graphics/vulkan/VulkanHelpers.hpp"
+#include "graphics/CommandBufferRecorder.hpp"
+#include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
 
-void VulkanMemoryManager::allocateBuffer(VkBufferCreateInfo const &bufferInfo,
-                                         VmaAllocationCreateInfo const &allocInfo,
-                                         VulkanBuffer &buffer) {
+void MemoryManager::allocateBuffer(VkBufferCreateInfo const &bufferInfo,
+                                         VmaAllocationCreateInfo const &allocInfo, Buffer &buffer) {
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferInfo, &allocInfo, &buffer.buffer,
                                    &buffer.allocation, nullptr));
@@ -18,7 +17,7 @@ void VulkanMemoryManager::allocateBuffer(VkBufferCreateInfo const &bufferInfo,
   buffer.isValid = true;
 }
 
-VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &bufferSize) {
+Buffer MemoryManager::createStagingBuffer(VkDeviceSize const &bufferSize) {
 
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -31,18 +30,18 @@ VulkanBuffer VulkanMemoryManager::createStagingBuffer(VkDeviceSize const &buffer
   VmaAllocationCreateInfo allocationCreateInfo{};
   allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-  VulkanBuffer stagingBuffer{};
+  Buffer stagingBuffer{};
   allocateBuffer(bufferCreateInfo, allocationCreateInfo, stagingBuffer);
   return stagingBuffer;
 }
 
-void VulkanMemoryManager::destroyBufferOnFenceTrigger(VulkanBuffer buffer, VkFence fence) const {
+void MemoryManager::destroyBufferOnFenceTrigger(Buffer buffer, VkFence fence) const {
   vkWaitForFences(mGPU.device, 1, &fence, VK_TRUE, UINT64_MAX);
   vkDestroyFence(mGPU.device, fence, nullptr);
   destroyBuffer(buffer);
 }
 
-void VulkanMemoryManager::initialise(VulkanGPU const &gpu) {
+void MemoryManager::initialise(GPU const &gpu) {
   mGPU = gpu;
 
   VmaAllocatorCreateInfo allocatorCreateInfo{};
@@ -71,17 +70,17 @@ void VulkanMemoryManager::initialise(VulkanGPU const &gpu) {
       vkAllocateCommandBuffers(mGPU.device, &commandBufferAllocateInfo, &mTransferCommandBuffer));
 }
 
-void VulkanMemoryManager::destroy() const {
+void MemoryManager::destroy() const {
   vkDestroyCommandPool(mGPU.device, mTransferCommandPool, nullptr);
   vmaDestroyAllocator(mAllocator);
 }
 
-void VulkanMemoryManager::destroyBuffer(VulkanBuffer &buffer) const {
+void MemoryManager::destroyBuffer(Buffer &buffer) const {
   vmaDestroyBuffer(mAllocator, buffer.buffer, buffer.allocation);
   buffer.isValid = false;
 }
 
-void VulkanMemoryManager::generateMeshBuffer(Mesh &mesh) {
+void MemoryManager::generateMeshBuffer(Mesh &mesh) {
 
   VkBufferCreateInfo bufferCreateInfo{};
   bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -100,8 +99,8 @@ void VulkanMemoryManager::generateMeshBuffer(Mesh &mesh) {
   updateMeshBuffer(mesh);
 }
 
-void VulkanMemoryManager::updateMeshBuffer(Mesh &mesh) {
-  VulkanBuffer stagingBuffer = createStagingBuffer(mesh.getRequiredBufferSize());
+void MemoryManager::updateMeshBuffer(Mesh &mesh) {
+  Buffer stagingBuffer = createStagingBuffer(mesh.getRequiredBufferSize());
 
   void *mappedMemory;
   vmaMapMemory(mAllocator, stagingBuffer.allocation, &mappedMemory);
@@ -115,7 +114,7 @@ void VulkanMemoryManager::updateMeshBuffer(Mesh &mesh) {
   VkFence bufferCopiedFence{};
   validateVkResult(vkCreateFence(mGPU.device, &fenceCreateInfo, nullptr, &bufferCopiedFence));
 
-  VulkanCommandBufferRecorder recorder{mTransferCommandBuffer};
+  CommandBufferRecorder recorder{mTransferCommandBuffer};
   recorder.beginOneTime()
       .copyBuffer(stagingBuffer, mesh.buffer)
       .addStagingBufferMemoryBarrier(mesh.buffer, mGPU.queueFamilyIndices)
@@ -123,16 +122,16 @@ void VulkanMemoryManager::updateMeshBuffer(Mesh &mesh) {
       .submitWithFence(mGPU.transferQueue, bufferCopiedFence);
 
   // wait until the transfer is complete before deleting the staging buffer
-  std::thread thread{&VulkanMemoryManager::destroyBufferOnFenceTrigger, this, stagingBuffer,
+  std::thread thread{&MemoryManager::destroyBufferOnFenceTrigger, this, stagingBuffer,
                      bufferCopiedFence};
   thread.detach();
 }
 
-VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &extent, VkFormat const &format,
+Image MemoryManager::createImage(VkExtent2D const &extent, VkFormat const &format,
                                              VkImageTiling const &tiling,
                                              VkImageUsageFlags const &usage,
                                              VkImageAspectFlags const &imageAspect) {
-  VulkanImage image{};
+  Image image{};
   image.format = format;
   image.extent = extent;
 
@@ -163,12 +162,12 @@ VulkanImage VulkanMemoryManager::createImage(VkExtent2D const &extent, VkFormat 
   return image;
 }
 
-void VulkanMemoryManager::destroyImage(VulkanImage &image) {
+void MemoryManager::destroyImage(Image &image) {
   vkDestroyImageView(mGPU.device, image.imageView, nullptr);
   vmaDestroyImage(mAllocator, image.image, image.allocation);
 }
 
-void VulkanMemoryManager::createImageView(VulkanImage &image,
+void MemoryManager::createImageView(Image &image,
                                           VkImageAspectFlags const &imageAspect) const {
   VkImageSubresourceRange subresourceRange{};
   subresourceRange.aspectMask = imageAspect;
