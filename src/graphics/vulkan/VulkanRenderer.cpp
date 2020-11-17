@@ -95,7 +95,7 @@ void VulkanRenderer::createPipelineLayout() {
   VkPushConstantRange pushConstantRange;
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   pushConstantRange.offset = 0;
-  pushConstantRange.size = sizeof(glm::mat4);
+  pushConstantRange.size = sizeof(glm::mat4) * 2;
 
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -170,21 +170,22 @@ void VulkanRenderer::drawScene() {
   renderArea.offset = {0, 0};
   renderArea.extent = mSwapchain.frameBufferImages[0].extent;
 
-  glm::mat4 cameraView = mState.currentScene->camera.getViewMatrix(mSwapchain.getAspectRatio());
-
   VulkanCommandBufferRecorder recorder{mState.currentFrame->commandBuffer};
   recorder.beginOneTime()
       .setViewPort(renderArea.extent)
       .setScissor(renderArea)
       .beginRenderPass(mRenderPass, mSwapchain.framebuffers[mState.imageIndex], renderArea)
-      .pushConstants(&cameraView, sizeof(glm::mat4), mPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT);
+      .pushCameraView(mState.currentScene->camera.getViewMatrix(mSwapchain.getAspectRatio()),
+                      mPipelineLayout);
 
   for (Shader &shader : mState.currentScene->shaders) {
     recorder.bindPipeline(shader.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
 
     for (Mesh &mesh : mState.currentScene->meshes) {
       if (mesh.shaderId == shader.shaderId) {
-        recorder.drawMesh(mesh);
+        recorder
+            .pushModelPosition(mesh.position, mPipelineLayout) //
+            .drawMesh(mesh);
       }
     }
   }

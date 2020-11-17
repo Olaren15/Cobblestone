@@ -98,10 +98,18 @@ VulkanCommandBufferRecorder &VulkanCommandBufferRecorder::beginRenderPass(
 }
 
 VulkanCommandBufferRecorder &
-VulkanCommandBufferRecorder::pushConstants(void const *data, VkDeviceSize const &dataSize,
-                                           VkPipelineLayout const &layout,
-                                           VkShaderStageFlags const &shaderStage) {
-  vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, dataSize, data);
+VulkanCommandBufferRecorder::pushCameraView(const glm::mat4 &view, const VkPipelineLayout &layout) {
+  vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
+                     &view);
+
+  return *this;
+}
+
+VulkanCommandBufferRecorder &
+VulkanCommandBufferRecorder::pushModelPosition(const glm::mat4 &position,
+                                               const VkPipelineLayout &layout) {
+  vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4),
+                     sizeof(glm::mat4), &position);
 
   return *this;
 }

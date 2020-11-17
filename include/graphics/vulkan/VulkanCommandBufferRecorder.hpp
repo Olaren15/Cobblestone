@@ -29,9 +29,10 @@ public:
   VulkanCommandBufferRecorder &beginRenderPass(VkRenderPass const &renderPass,
                                                VkFramebuffer const &frameBuffer,
                                                VkRect2D const &renderArea);
-  VulkanCommandBufferRecorder &pushConstants(void const *data, VkDeviceSize const &dataSize,
-                                             VkPipelineLayout const &layout,
-                                             VkShaderStageFlags const &shaderStage);
+  VulkanCommandBufferRecorder &pushCameraView(glm::mat4 const &view,
+                                              VkPipelineLayout const &layout);
+  VulkanCommandBufferRecorder &pushModelPosition(glm::mat4 const &position,
+                                                 VkPipelineLayout const &layout);
   VulkanCommandBufferRecorder &bindPipeline(VkPipeline const &pipeline,
                                             VkPipelineBindPoint const &bindPoint);
   VulkanCommandBufferRecorder &drawMesh(Mesh const &mesh);
