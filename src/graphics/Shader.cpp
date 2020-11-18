@@ -1,14 +1,29 @@
 #include "graphics/Shader.hpp"
 
-#include <fstream>
 #include <array>
+#include <fstream>
+
+#include <glm/glm.hpp>
 
 #include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
 Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass,
-                           VkPipelineLayout const &pipelineLayout, ShaderInformation &shaderInfo) {
+               ShaderInformation &shaderInfo) {
   shaderId = shaderInfo.getShaderId();
+
+  VkPushConstantRange pushConstantRange;
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(glm::mat4) * 2;
+
+  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+  pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+  pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
+
+  validateVkResult(
+      vkCreatePipelineLayout(gpu.device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 
   mVertShaderModule = createShaderModule(gpu, shaderInfo.getVertSpirVPath());
   mFragShaderModule = createShaderModule(gpu, shaderInfo.getFragSpirVPath());
@@ -68,8 +83,7 @@ Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass,
       vkCreateGraphicsPipelines(gpu.device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-VkShaderModule Shader::createShaderModule(GPU const &gpu,
-                                                std::filesystem::path const &path) {
+VkShaderModule Shader::createShaderModule(GPU const &gpu, std::filesystem::path const &path) {
   std::ifstream shaderFile{path.string(), std::ios::ate | std::ios::binary};
 
   if (!shaderFile.is_open()) {
@@ -97,6 +111,7 @@ VkShaderModule Shader::createShaderModule(GPU const &gpu,
 
 void Shader::destroy(flex::GPU const &gpu) {
   vkDestroyPipeline(gpu.device, pipeline, nullptr);
+  vkDestroyPipelineLayout(gpu.device, pipelineLayout, nullptr);
   vkDestroyShaderModule(gpu.device, mFragShaderModule, nullptr);
   vkDestroyShaderModule(gpu.device, mVertShaderModule, nullptr);
 }

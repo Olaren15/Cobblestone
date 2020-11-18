@@ -7,6 +7,8 @@
 
 namespace flex {
 struct Frame {
+  GPU const &mGPU;
+
 public:
   VkSemaphore imageAvailableSemaphore{};
   VkSemaphore renderFinishedSemaphore{};
@@ -15,7 +17,8 @@ public:
   VkCommandPool commandPool{};
   VkCommandBuffer commandBuffer{};
 
-  void initialise(GPU const &gpu);
-  void destroy(GPU const &gpu) const;
+  Frame() = delete;
+  explicit Frame(GPU const &gpu);
+  ~Frame();
 };
 } // namespace flex

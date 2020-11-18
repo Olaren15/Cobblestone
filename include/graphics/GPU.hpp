@@ -19,7 +19,17 @@ private:
   void createDevice();
   void retrieveQueues();
 
+  [[nodiscard]] static unsigned int ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
+                                                VkSurfaceKHR const &vulkanSurface,
+                                                std::vector<char const *> const &requiredExtensions);
+  [[nodiscard]] static bool physicalDeviceSupportsExtensions(VkPhysicalDevice const &physicalDevice,
+                                                      std::vector<const char *> const &extensions);
+
 public:
+  GPU() = default;
+  explicit GPU(RenderWindow const &window);
+  ~GPU();
+
   VkInstance instance{};
   VkSurfaceKHR renderSurface{};
   VkPhysicalDevice physicalDevice{};
@@ -30,8 +40,8 @@ public:
   VkQueue transferQueue{};
   VkQueue presentQueue{};
 
-  void initialise(RenderWindow const &renderWindow);
   void waitIdle() const;
-  void destroy() const;
+
+  [[nodiscard]] bool isDedicated() const;
 };
 } // namespace flex

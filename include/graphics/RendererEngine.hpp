@@ -29,19 +29,13 @@ private:
 
   RenderWindow mWindow;
 
-  GPU mGPU{};
+  GPU mGPU;
   MemoryManager mMemoryManager;
 
-  Swapchain mSwapchain{};
-
-  VkRenderPass mRenderPass{};
-  VkPipelineLayout mPipelineLayout{};
+  Swapchain mSwapchain;
 
   static constexpr unsigned int mMaxFramesInFlight = 2;
   std::array<Frame, mMaxFramesInFlight> mFrames;
-
-  void createRenderPass();
-  void createPipelineLayout();
 
   bool acquireNextFrame();
   void present();
@@ -51,7 +45,6 @@ private:
 public:
   RendererEngine();
   RendererEngine(RendererEngine const &) = delete;
-  ~RendererEngine();
 
   void operator=(RendererEngine const &) = delete;
   void operator=(RendererEngine) = delete;

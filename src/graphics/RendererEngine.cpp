@@ -1,110 +1,14 @@
 ﻿#include "graphics/RendererEngine.hpp"
 
-#include <map>
-
-#include "graphics/CommandBufferRecorder.hpp"
 #include "core/Time.hpp"
+#include "graphics/CommandBufferRecorder.hpp"
 
 namespace flex {
-RendererEngine::RendererEngine() {
-  mGPU.initialise(mWindow);
-  mMemoryManager.initialise(mGPU);
-  createRenderPass();
-  createPipelineLayout();
-  mSwapchain.initialise(mGPU, mWindow, mRenderPass, mMemoryManager);
-  for (Frame &frame : mFrames) {
-    frame.initialise(mGPU);
-  }
+RendererEngine::RendererEngine()
+    : mWindow{}, mGPU{mWindow}, mMemoryManager{mGPU},
+      mSwapchain{mGPU, mWindow, mMemoryManager}, mFrames{Frame{mGPU}, Frame{mGPU}} {
+
   mState.currentFrame = &mFrames[mState.currentFrameNumber];
-}
-
-RendererEngine::~RendererEngine() {
-  mGPU.waitIdle();
-
-  for (Frame &frame : mFrames) {
-    frame.destroy(mGPU);
-  }
-
-  mSwapchain.destroy(mGPU);
-  vkDestroyPipelineLayout(mGPU.device, mPipelineLayout, nullptr);
-  vkDestroyRenderPass(mGPU.device, mRenderPass, nullptr);
-  mMemoryManager.destroy();
-  mGPU.destroy();
-}
-
-void RendererEngine::createRenderPass() {
-
-  SwapchainSupportDetails const swapchainSupportDetails = SwapchainSupportDetails{mGPU};
-
-  VkAttachmentDescription colorAttachment{};
-  colorAttachment.format =
-      Swapchain::getSupportedSwapchainSurfaceFormat(swapchainSupportDetails).format;
-  colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-  VkAttachmentReference colorAttachmentReference;
-  colorAttachmentReference.attachment = 0;
-  colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = Swapchain::getSupportedDepthBufferFormat(mGPU);
-  depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-  VkAttachmentReference depthAttachmentReference{};
-  depthAttachmentReference.attachment = 1;
-  depthAttachmentReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-  VkSubpassDescription subpassDescription{};
-  subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpassDescription.colorAttachmentCount = 1;
-  subpassDescription.pColorAttachments = &colorAttachmentReference;
-  subpassDescription.pDepthStencilAttachment = &depthAttachmentReference;
-
-  VkSubpassDependency subpassDependency{};
-  subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  subpassDependency.dstSubpass = 0;
-  subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  subpassDependency.srcAccessMask = 0;
-  subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
-  VkRenderPassCreateInfo renderPassCreateInfo{};
-  renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  renderPassCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-  renderPassCreateInfo.pAttachments = attachments.data();
-  renderPassCreateInfo.subpassCount = 1;
-  renderPassCreateInfo.pSubpasses = &subpassDescription;
-  renderPassCreateInfo.dependencyCount = 1;
-  renderPassCreateInfo.pDependencies = &subpassDependency;
-
-  validateVkResult(vkCreateRenderPass(mGPU.device, &renderPassCreateInfo, nullptr, &mRenderPass));
-}
-
-void RendererEngine::createPipelineLayout() {
-  VkPushConstantRange pushConstantRange;
-  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  pushConstantRange.offset = 0;
-  pushConstantRange.size = sizeof(glm::mat4) * 2;
-
-  VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
-  pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-  pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-  pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantRange;
-
-  validateVkResult(
-      vkCreatePipelineLayout(mGPU.device, &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));
 }
 
 bool RendererEngine::acquireNextFrame() {
@@ -161,8 +65,8 @@ void RendererEngine::drawScene() {
   }
 
   if (!mState.shouldRender || !acquireNextFrame()) {
-    if (mSwapchain.canBeResized(mGPU, mWindow)) {
-      mSwapchain.handleFrameBufferResize(mGPU, mWindow, mRenderPass);
+    if (mSwapchain.isNotZeroPixels(mWindow)) {
+      mSwapchain.handleFrameBufferResize(mWindow);
     }
     return;
   }
@@ -175,17 +79,18 @@ void RendererEngine::drawScene() {
   recorder.beginOneTime()
       .setViewPort(renderArea.extent)
       .setScissor(renderArea)
-      .beginRenderPass(mRenderPass, mSwapchain.framebuffers[mState.imageIndex], renderArea)
-      .pushCameraView(mState.currentScene->camera.getViewMatrix(mSwapchain.getAspectRatio()),
-                      mPipelineLayout);
+      .beginRenderPass(mSwapchain.renderPass, mSwapchain.framebuffers[mState.imageIndex],
+                       renderArea);
 
   for (Shader &shader : mState.currentScene->shaders) {
-    recorder.bindPipeline(shader.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS);
+    recorder.bindPipeline(shader.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS)
+        .pushCameraView(mState.currentScene->camera.getViewMatrix(mSwapchain.getAspectRatio()),
+                        shader.pipelineLayout);
 
     for (Mesh &mesh : mState.currentScene->meshes) {
       if (mesh.shaderId == shader.shaderId) {
         recorder
-            .pushModelPosition(mesh.position, mPipelineLayout) //
+            .pushModelPosition(mesh.position, shader.pipelineLayout) //
             .drawMesh(mesh);
       }
     }
@@ -203,10 +108,7 @@ void RendererEngine::update() {
   drawScene();
 }
 
-bool RendererEngine::isRunning() {
-  return mWindow.isOpen();
-}
-
+bool RendererEngine::isRunning() { return mWindow.isOpen(); }
 
 void RendererEngine::loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo) {
   if (mState.currentScene != nullptr) {
@@ -222,7 +124,7 @@ void RendererEngine::loadScene(Scene &scene, std::vector<ShaderInformation *> &s
   }
 
   for (ShaderInformation *shaderInfo : shadersInfo) {
-    Shader shader{mGPU, mRenderPass, mPipelineLayout, *shaderInfo};
+    Shader shader{mGPU, mSwapchain.renderPass, *shaderInfo};
     mState.currentScene->shaders.push_back(shader);
   }
 }
@@ -243,6 +145,8 @@ void RendererEngine::unloadScene() {
   for (Shader &shader : mState.currentScene->shaders) {
     shader.destroy(mGPU);
   }
+
+  mState.currentScene = nullptr;
 }
 
 } // namespace flex

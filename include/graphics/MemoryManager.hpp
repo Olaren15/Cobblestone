@@ -10,7 +10,7 @@
 namespace flex {
 struct MemoryManager {
 private:
-  GPU mGPU{};
+  GPU const &mGPU;
   VmaAllocator mAllocator{};
 
   VkCommandPool mTransferCommandPool{};
@@ -23,18 +23,17 @@ private:
   void destroyBufferOnFenceTrigger(Buffer buffer, VkFence fence) const;
 
 public:
-  MemoryManager() = default;
+  MemoryManager() = delete;
+  explicit MemoryManager(GPU const &gpu);
+  ~MemoryManager();
 
-  void initialise(GPU const &gpu);
-  void destroy() const;
   void destroyBuffer(Buffer &buffer) const;
 
   void generateMeshBuffer(Mesh &mesh);
   void updateMeshBuffer(Mesh &mesh);
 
-  Image createImage(VkExtent2D const &extent, VkFormat const &format,
-                          VkImageTiling const &tiling, VkImageUsageFlags const &usage,
-                          VkImageAspectFlags const &imageAspect);
+  Image createImage(VkExtent2D const &extent, VkFormat const &format, VkImageTiling const &tiling,
+                    VkImageUsageFlags const &usage, VkImageAspectFlags const &imageAspect);
   void createImageView(Image &image, VkImageAspectFlags const &imageAspect) const;
   void destroyImage(Image &image);
 };

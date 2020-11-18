@@ -12,11 +12,12 @@ QueueFamilyIndices::QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndi
   present = queueFamilyIndices.present;
 }
 
-QueueFamilyIndices::QueueFamilyIndices(GPU const &gpu) {
+QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
+                                       VkSurfaceKHR const &surface) {
   uint32_t propertiesCount;
-  vkGetPhysicalDeviceQueueFamilyProperties(gpu.physicalDevice, &propertiesCount, nullptr);
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount, nullptr);
   std::vector<VkQueueFamilyProperties> queueFamilyProperties{propertiesCount};
-  vkGetPhysicalDeviceQueueFamilyProperties(gpu.physicalDevice, &propertiesCount,
+  vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &propertiesCount,
                                            queueFamilyProperties.data());
 
   uint32_t i = 0;
@@ -34,8 +35,7 @@ QueueFamilyIndices::QueueFamilyIndices(GPU const &gpu) {
     }
 
     VkBool32 surfaceSupported;
-    vkGetPhysicalDeviceSurfaceSupportKHR(gpu.physicalDevice, i, gpu.renderSurface,
-                                         &surfaceSupported);
+    vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &surfaceSupported);
     if (surfaceSupported == VK_TRUE && !present.has_value()) {
       present = i;
     }

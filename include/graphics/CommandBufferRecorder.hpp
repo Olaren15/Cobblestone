@@ -7,6 +7,7 @@
 #include "Buffer.hpp"
 #include "QueueFamilyIndices.hpp"
 #include "graphics/Mesh.hpp"
+#include "graphics/Swapchain.hpp"
 
 namespace flex {
 struct CommandBufferRecorder {
@@ -26,14 +27,13 @@ public:
   CommandBufferRecorder &setViewPort(VkExtent2D const &viewportExtent);
   CommandBufferRecorder &setScissor(VkRect2D const &scissorRect);
   CommandBufferRecorder &beginRenderPass(VkRenderPass const &renderPass,
-                                               VkFramebuffer const &frameBuffer,
-                                               VkRect2D const &renderArea);
-  CommandBufferRecorder &pushCameraView(glm::mat4 const &view,
-                                              VkPipelineLayout const &layout);
+                                         VkFramebuffer const &frameBuffer,
+                                         VkRect2D const &renderArea);
+  CommandBufferRecorder &pushCameraView(glm::mat4 const &view, VkPipelineLayout const &layout);
   CommandBufferRecorder &pushModelPosition(glm::mat4 const &position,
-                                                 VkPipelineLayout const &layout);
+                                           VkPipelineLayout const &layout);
   CommandBufferRecorder &bindPipeline(VkPipeline const &pipeline,
-                                            VkPipelineBindPoint const &bindPoint);
+                                      VkPipelineBindPoint const &bindPoint);
   CommandBufferRecorder &drawMesh(Mesh const &mesh);
   CommandBufferRecorder &drawMeshes(std::vector<Mesh> const &meshes);
   CommandBufferRecorder &endRenderPass();

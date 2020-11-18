@@ -7,8 +7,42 @@
 
 namespace flex {
 
+MemoryManager::MemoryManager(GPU const &gpu) : mGPU{gpu} {
+
+  VmaAllocatorCreateInfo allocatorCreateInfo{};
+  allocatorCreateInfo.instance = mGPU.instance;
+  allocatorCreateInfo.physicalDevice = mGPU.physicalDevice;
+  allocatorCreateInfo.device = mGPU.device;
+
+  validateVkResult(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
+
+  VkCommandPoolCreateInfo commandPoolCreateInfo{};
+  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  commandPoolCreateInfo.flags =
+      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+  commandPoolCreateInfo.queueFamilyIndex = mGPU.queueFamilyIndices.transfer.value();
+
+  validateVkResult(
+      vkCreateCommandPool(mGPU.device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
+
+  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
+  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  commandBufferAllocateInfo.commandPool = mTransferCommandPool;
+  commandBufferAllocateInfo.commandBufferCount = 1;
+
+  validateVkResult(
+      vkAllocateCommandBuffers(mGPU.device, &commandBufferAllocateInfo, &mTransferCommandBuffer));
+}
+
+MemoryManager::~MemoryManager() {
+  mGPU.waitIdle();
+  vkDestroyCommandPool(mGPU.device, mTransferCommandPool, nullptr);
+  vmaDestroyAllocator(mAllocator);
+}
+
 void MemoryManager::allocateBuffer(VkBufferCreateInfo const &bufferInfo,
-                                         VmaAllocationCreateInfo const &allocInfo, Buffer &buffer) {
+                                   VmaAllocationCreateInfo const &allocInfo, Buffer &buffer) {
 
   validateVkResult(vmaCreateBuffer(mAllocator, &bufferInfo, &allocInfo, &buffer.buffer,
                                    &buffer.allocation, nullptr));
@@ -39,40 +73,6 @@ void MemoryManager::destroyBufferOnFenceTrigger(Buffer buffer, VkFence fence) co
   vkWaitForFences(mGPU.device, 1, &fence, VK_TRUE, UINT64_MAX);
   vkDestroyFence(mGPU.device, fence, nullptr);
   destroyBuffer(buffer);
-}
-
-void MemoryManager::initialise(GPU const &gpu) {
-  mGPU = gpu;
-
-  VmaAllocatorCreateInfo allocatorCreateInfo{};
-  allocatorCreateInfo.instance = mGPU.instance;
-  allocatorCreateInfo.physicalDevice = mGPU.physicalDevice;
-  allocatorCreateInfo.device = mGPU.device;
-
-  validateVkResult(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
-
-  VkCommandPoolCreateInfo commandPoolCreateInfo{};
-  commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-  commandPoolCreateInfo.flags =
-      VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = mGPU.queueFamilyIndices.transfer.value();
-
-  validateVkResult(
-      vkCreateCommandPool(mGPU.device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
-
-  VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
-  commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandPool = mTransferCommandPool;
-  commandBufferAllocateInfo.commandBufferCount = 1;
-
-  validateVkResult(
-      vkAllocateCommandBuffers(mGPU.device, &commandBufferAllocateInfo, &mTransferCommandBuffer));
-}
-
-void MemoryManager::destroy() const {
-  vkDestroyCommandPool(mGPU.device, mTransferCommandPool, nullptr);
-  vmaDestroyAllocator(mAllocator);
 }
 
 void MemoryManager::destroyBuffer(Buffer &buffer) const {
@@ -128,9 +128,8 @@ void MemoryManager::updateMeshBuffer(Mesh &mesh) {
 }
 
 Image MemoryManager::createImage(VkExtent2D const &extent, VkFormat const &format,
-                                             VkImageTiling const &tiling,
-                                             VkImageUsageFlags const &usage,
-                                             VkImageAspectFlags const &imageAspect) {
+                                 VkImageTiling const &tiling, VkImageUsageFlags const &usage,
+                                 VkImageAspectFlags const &imageAspect) {
   Image image{};
   image.format = format;
   image.extent = extent;
@@ -167,8 +166,7 @@ void MemoryManager::destroyImage(Image &image) {
   vmaDestroyImage(mAllocator, image.image, image.allocation);
 }
 
-void MemoryManager::createImageView(Image &image,
-                                          VkImageAspectFlags const &imageAspect) const {
+void MemoryManager::createImageView(Image &image, VkImageAspectFlags const &imageAspect) const {
   VkImageSubresourceRange subresourceRange{};
   subresourceRange.aspectMask = imageAspect;
   subresourceRange.baseMipLevel = 0;

@@ -18,11 +18,11 @@ private:
 
 public:
   VkPipeline pipeline{};
+  VkPipelineLayout pipelineLayout{};
   uint32_t shaderId;
 
   Shader() = delete;
-  Shader(GPU const &gpu, VkRenderPass const &renderPass,
-               VkPipelineLayout const &pipelineLayout, ShaderInformation &shaderInfo);
+  Shader(GPU const &gpu, VkRenderPass const &renderPass, ShaderInformation &shaderInfo);
 
   void destroy(GPU const &gpu);
 };

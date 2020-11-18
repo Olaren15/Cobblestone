@@ -26,8 +26,7 @@ CommandBufferRecorder &CommandBufferRecorder::beginOneTime() {
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::copyBuffer(Buffer const &src,
-                                                                     Buffer const &dst) {
+CommandBufferRecorder &CommandBufferRecorder::copyBuffer(Buffer const &src, Buffer const &dst) {
   if (!src.isValid || !dst.isValid) {
     throw std::runtime_error("Cannot copy data to/from an uninitialized buffer");
   }
@@ -40,8 +39,8 @@ CommandBufferRecorder &CommandBufferRecorder::copyBuffer(Buffer const &src,
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::addStagingBufferMemoryBarrier(
-    Buffer const &buffer,
+CommandBufferRecorder &
+CommandBufferRecorder::addStagingBufferMemoryBarrier(Buffer const &buffer,
                                                      QueueFamilyIndices const &queueFamilyIndices) {
 
   VkBufferMemoryBarrier bufferMemoryBarrier{};
@@ -78,8 +77,9 @@ CommandBufferRecorder &CommandBufferRecorder::setScissor(VkRect2D const &scissor
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::beginRenderPass(
-    VkRenderPass const &renderPass, VkFramebuffer const &framebuffer, VkRect2D const &renderArea) {
+CommandBufferRecorder &CommandBufferRecorder::beginRenderPass(VkRenderPass const &renderPass,
+                                                              VkFramebuffer const &framebuffer,
+                                                              VkRect2D const &renderArea) {
   std::array<VkClearValue, 2> clearValues{};
   clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
   clearValues[1].depthStencil = {1.0f, 0};
@@ -97,7 +97,8 @@ CommandBufferRecorder &CommandBufferRecorder::beginRenderPass(
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::pushCameraView(const glm::mat4 &view, const VkPipelineLayout &layout) {
+CommandBufferRecorder &CommandBufferRecorder::pushCameraView(const glm::mat4 &view,
+                                                             const VkPipelineLayout &layout) {
   vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
                      &view);
 
@@ -105,7 +106,7 @@ CommandBufferRecorder &CommandBufferRecorder::pushCameraView(const glm::mat4 &vi
 }
 
 CommandBufferRecorder &CommandBufferRecorder::pushModelPosition(const glm::mat4 &position,
-                                               const VkPipelineLayout &layout) {
+                                                                const VkPipelineLayout &layout) {
   vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4),
                      sizeof(glm::mat4), &position);
 
@@ -113,7 +114,7 @@ CommandBufferRecorder &CommandBufferRecorder::pushModelPosition(const glm::mat4 
 }
 
 CommandBufferRecorder &CommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
-                                          const VkPipelineBindPoint &bindPoint) {
+                                                           const VkPipelineBindPoint &bindPoint) {
 
   vkCmdBindPipeline(mCommandBuffer, bindPoint, pipeline);
   return *this;
@@ -168,8 +169,7 @@ void CommandBufferRecorder::submit(VkQueue const &submitQueue) {
   vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
 }
 
-void CommandBufferRecorder::submitWithFence(VkQueue const &submitQueue,
-                                                  VkFence const &fence) {
+void CommandBufferRecorder::submitWithFence(VkQueue const &submitQueue, VkFence const &fence) {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;

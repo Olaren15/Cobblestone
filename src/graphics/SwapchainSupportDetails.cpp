@@ -10,22 +10,23 @@ SwapchainSupportDetails::SwapchainSupportDetails(
   presentModes = swapchainSupportDetails.presentModes;
 }
 
-flex::SwapchainSupportDetails::SwapchainSupportDetails(GPU const &gpu) {
-  validateVkResult(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu.physicalDevice, gpu.renderSurface,
-                                                             &capabilities));
+flex::SwapchainSupportDetails::SwapchainSupportDetails(VkPhysicalDevice const &physicalDevice,
+                                                       VkSurfaceKHR const &surface) {
+  validateVkResult(
+      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities));
 
   uint32_t vectorLength;
-  validateVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.physicalDevice, gpu.renderSurface,
-                                                        &vectorLength, nullptr));
+  validateVkResult(
+      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, nullptr));
   formats.resize(vectorLength);
-  validateVkResult(vkGetPhysicalDeviceSurfaceFormatsKHR(gpu.physicalDevice, gpu.renderSurface,
-                                                        &vectorLength, formats.data()));
+  validateVkResult(
+      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &vectorLength, formats.data()));
 
-  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.physicalDevice, gpu.renderSurface,
-                                                             &vectorLength, nullptr));
+  validateVkResult(
+      vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength, nullptr));
   presentModes.resize(vectorLength);
-  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(gpu.physicalDevice, gpu.renderSurface,
-                                                             &vectorLength, presentModes.data()));
+  validateVkResult(vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &vectorLength,
+                                                             presentModes.data()));
 }
 
 bool SwapchainSupportDetails::isUsable() const {

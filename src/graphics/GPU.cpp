@@ -3,9 +3,25 @@
 #include <map>
 #include <stdexcept>
 
+#include "graphics/SwapchainSupportDetails.hpp"
 #include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
+
+GPU::GPU(RenderWindow const &window) {
+  createInstance(window);
+  renderSurface = window.getDrawableVulkanSurface(instance);
+  selectPhysicalDevice();
+  queueFamilyIndices = QueueFamilyIndices{physicalDevice, renderSurface};
+  createDevice();
+  retrieveQueues();
+}
+
+GPU::~GPU() {
+  vkDestroyDevice(device, nullptr);
+  vkDestroySurfaceKHR(instance, renderSurface, nullptr);
+  vkDestroyInstance(instance, nullptr);
+}
 
 void GPU::createInstance(RenderWindow const &renderWindow) {
   VkApplicationInfo appInfo{};
@@ -92,21 +108,66 @@ void GPU::retrieveQueues() {
   vkGetDeviceQueue(device, queueFamilyIndices.present.value(), 0, &presentQueue);
 }
 
-void GPU::initialise(RenderWindow const &renderWindow) {
-  createInstance(renderWindow);
-  renderSurface = renderWindow.getDrawableVulkanSurface(instance);
-  selectPhysicalDevice();
-  queueFamilyIndices = QueueFamilyIndices{*this};
-  createDevice();
-  retrieveQueues();
+unsigned int GPU::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
+                                     VkSurfaceKHR const &vulkanSurface,
+                                     std::vector<char const *> const &requiredExtensions) {
+  unsigned int score = 1u;
+
+  VkPhysicalDeviceProperties physicalDeviceProperties;
+  vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+  if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+    score += 1000u;
+  }
+
+  if (QueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
+      !queueFamilyIndices.isComplete()) {
+    return 0u;
+  }
+
+  if (!physicalDeviceSupportsExtensions(physicalDevice, requiredExtensions)) {
+    return 0u;
+  }
+
+  if (SwapchainSupportDetails const swapchainSupportDetails{physicalDevice, vulkanSurface};
+      !swapchainSupportDetails.isUsable()) {
+    return 0u;
+  }
+
+  return score;
+}
+
+bool GPU::physicalDeviceSupportsExtensions(VkPhysicalDevice const &physicalDevice,
+                                           std::vector<const char *> const &extensions) {
+
+  uint32_t availableExtensionsCount;
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount, nullptr);
+  std::vector<VkExtensionProperties> availableExtensions{availableExtensionsCount};
+  vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &availableExtensionsCount,
+                                       availableExtensions.data());
+
+  for (std::string const &requiredExtensionName : extensions) {
+    bool extensionFound = false;
+    for (VkExtensionProperties const &availableExtension : availableExtensions) {
+      if (strcmp(requiredExtensionName.c_str(), availableExtension.extensionName) == 0) {
+        extensionFound = true;
+      }
+    }
+    if (!extensionFound) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 void GPU::waitIdle() const { validateVkResult(vkDeviceWaitIdle(device)); }
 
-void GPU::destroy() const {
-  vkDestroyDevice(device, nullptr);
-  vkDestroySurfaceKHR(instance, renderSurface, nullptr);
-  vkDestroyInstance(instance, nullptr);
+bool GPU::isDedicated() const {
+  VkPhysicalDeviceProperties deviceProperties{};
+  vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+
+  return deviceProperties.deviceType & VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 }
 
 } // namespace flex

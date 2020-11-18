@@ -1,7 +1,7 @@
 #include "graphics/Frame.hpp"
 
 namespace flex {
-void Frame::initialise(GPU const &gpu) {
+Frame::Frame(GPU const &gpu) : mGPU{gpu} {
   // command pool
   VkCommandPoolCreateInfo commandPoolCreateInfo{};
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -37,10 +37,11 @@ void Frame::initialise(GPU const &gpu) {
   validateVkResult(vkCreateFence(gpu.device, &fenceCreateInfo, nullptr, &renderFinishedFence));
 }
 
-void Frame::destroy(GPU const &gpu) const {
-  vkDestroySemaphore(gpu.device, imageAvailableSemaphore, nullptr);
-  vkDestroySemaphore(gpu.device, renderFinishedSemaphore, nullptr);
-  vkDestroyFence(gpu.device, renderFinishedFence, nullptr);
-  vkDestroyCommandPool(gpu.device, commandPool, nullptr);
+Frame::~Frame() {
+  mGPU.waitIdle();
+  vkDestroySemaphore(mGPU.device, imageAvailableSemaphore, nullptr);
+  vkDestroySemaphore(mGPU.device, renderFinishedSemaphore, nullptr);
+  vkDestroyFence(mGPU.device, renderFinishedFence, nullptr);
+  vkDestroyCommandPool(mGPU.device, commandPool, nullptr);
 }
 } // namespace flex

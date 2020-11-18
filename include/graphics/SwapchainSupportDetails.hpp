@@ -14,7 +14,8 @@ struct SwapchainSupportDetails {
 
   SwapchainSupportDetails() = default;
   SwapchainSupportDetails(SwapchainSupportDetails const &swapChainSupportDetails);
-  explicit SwapchainSupportDetails(GPU const &gpu);
+  explicit SwapchainSupportDetails(VkPhysicalDevice const &physicalDevice,
+                                   VkSurfaceKHR const &surface);
   ~SwapchainSupportDetails() = default;
 
   [[nodiscard]] bool isUsable() const;
