@@ -33,11 +33,17 @@ ADD_LIBRARY(
 		src/graphics/Vertex.cpp
 )
 
+IF (APPLE)
+	INCLUDE_DIRECTORIES(/usr/local/include)
+	TARGET_LINK_LIBRARIES(flex-engine PRIVATE glm::glm)
+ELSE ()
+	TARGET_LINK_LIBRARIES(flex-engine PRIVATE glm)
+ENDIF ()
+
 TARGET_LINK_LIBRARIES(
 		flex-engine PRIVATE
 		SDL2::SDL2
 		Vulkan::Vulkan
-		glm::glm
 		pthread
 )
 
@@ -46,9 +52,5 @@ TARGET_INCLUDE_DIRECTORIES(flex-engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/includ
 SET_TARGET_PROPERTIES(flex-engine PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-IF(APPLE)
-	INCLUDE_DIRECTORIES(/usr/local/include)
-ENDIF()
 
 ADD_SUBDIRECTORY(examples)
