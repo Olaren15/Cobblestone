@@ -1,6 +1,7 @@
 #include "graphics/Shader.hpp"
 
 #include <fstream>
+#include <array>
 
 #include "graphics/VulkanHelpers.hpp"
 
