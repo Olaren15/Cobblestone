@@ -89,6 +89,7 @@ void GPU::createDevice() {
   }
 
   VkPhysicalDeviceFeatures enabledDeviceFeatures{};
+  enabledDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
   VkDeviceCreateInfo deviceCreateInfo{};
   deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -115,9 +116,14 @@ unsigned int GPU::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
 
   VkPhysicalDeviceProperties physicalDeviceProperties;
   vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
   if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
     score += 1000u;
+  }
+
+  VkPhysicalDeviceFeatures physicalDeviceFeatures;
+  vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+  if (!physicalDeviceFeatures.samplerAnisotropy) {
+    return 0u;
   }
 
   if (QueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};

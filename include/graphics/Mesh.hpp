@@ -13,7 +13,6 @@ struct Mesh {
   std::vector<Vertex> vertices;
   Buffer buffer;
   glm::mat4 position{1};
-  uint32_t shaderId = UINT32_MAX;
 
   [[nodiscard]] size_t getIndicesSize() const;
   [[nodiscard]] size_t getVerticesSize() const;

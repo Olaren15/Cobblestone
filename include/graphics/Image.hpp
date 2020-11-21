@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include "GPU.hpp"
-#include "vk_mem_alloc.h"
+#include "external/vk_mem_alloc.h"
 
 namespace flex {
 struct MemoryManager;

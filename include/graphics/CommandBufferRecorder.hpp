@@ -21,8 +21,13 @@ public:
   CommandBufferRecorder &beginOneTime();
 
   CommandBufferRecorder &copyBuffer(Buffer const &src, Buffer const &dst);
-  CommandBufferRecorder &
-  addStagingBufferMemoryBarrier(Buffer const &buffer, QueueFamilyIndices const &queueFamilyIndices);
+  CommandBufferRecorder &addMeshBufferMemoryBarrier(Buffer const &buffer,
+                                                    QueueFamilyIndices const &queueFamilyIndices);
+
+  CommandBufferRecorder &transitionImageLayout(Image const &image, VkImageLayout const &oldLayout,
+                                               VkImageLayout const &newLayout,
+                                               QueueFamilyIndices const &queueFamilyIndices);
+  CommandBufferRecorder &copyBufferToImage(Buffer const &src, Image const &dst);
 
   CommandBufferRecorder &setViewPort(VkExtent2D const &viewportExtent);
   CommandBufferRecorder &setScissor(VkRect2D const &scissorRect);

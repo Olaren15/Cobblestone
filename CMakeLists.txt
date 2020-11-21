@@ -13,24 +13,27 @@ ADD_LIBRARY(
 		src/core/Scene.cpp
 		src/core/Time.cpp
 		src/core/Vector2.cpp
-		src/graphics/vk_mem_alloc.cpp
 		src/graphics/Buffer.cpp
+		src/graphics/Camera.cpp
 		src/graphics/CommandBufferRecorder.cpp
 		src/graphics/Frame.cpp
 		src/graphics/GPU.cpp
-		src/graphics/VulkanHelpers.cpp
 		src/graphics/Image.cpp
 		src/graphics/MemoryManager.cpp
+		src/graphics/Mesh.cpp
 		src/graphics/QueueFamilyIndices.cpp
 		src/graphics/RendererEngine.cpp
+		src/graphics/RenderWindow.cpp
 		src/graphics/Shader.cpp
 		src/graphics/ShaderInformation.cpp
 		src/graphics/Swapchain.cpp
 		src/graphics/SwapchainSupportDetails.cpp
-		src/graphics/Camera.cpp
-		src/graphics/Mesh.cpp
-		src/graphics/RenderWindow.cpp
+		src/graphics/Texture.cpp
 		src/graphics/Vertex.cpp
+		src/graphics/VulkanHelpers.cpp
+
+		src/external/stb_image.cpp
+		src/external/vk_mem_alloc.cpp
 )
 
 IF (APPLE)

@@ -87,12 +87,13 @@ void RendererEngine::drawScene() {
         .pushCameraView(mState.currentScene->camera.getViewMatrix(mSwapchain.getAspectRatio()),
                         shader.pipelineLayout);
 
+    vkCmdBindDescriptorSets(mState.currentFrame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            shader.pipelineLayout, 0, 1, &shader.descriptorSet, 0, nullptr);
+
     for (Mesh &mesh : mState.currentScene->meshes) {
-      if (mesh.shaderId == shader.shaderId) {
-        recorder
-            .pushModelPosition(mesh.position, shader.pipelineLayout) //
-            .drawMesh(mesh);
-      }
+      recorder
+          .pushModelPosition(mesh.position, shader.pipelineLayout) //
+          .drawMesh(mesh);
     }
   }
 
@@ -124,7 +125,7 @@ void RendererEngine::loadScene(Scene &scene, std::vector<ShaderInformation *> &s
   }
 
   for (ShaderInformation *shaderInfo : shadersInfo) {
-    Shader shader{mGPU, mSwapchain.renderPass, *shaderInfo};
+    Shader shader{mGPU, mSwapchain.renderPass, *shaderInfo, mMemoryManager};
     mState.currentScene->shaders.push_back(shader);
   }
 }

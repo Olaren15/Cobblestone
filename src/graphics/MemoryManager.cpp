@@ -2,6 +2,8 @@
 
 #include <thread>
 
+#include "external/stb_image.h"
+
 #include "graphics/CommandBufferRecorder.hpp"
 #include "graphics/VulkanHelpers.hpp"
 
@@ -117,7 +119,7 @@ void MemoryManager::updateMeshBuffer(Mesh &mesh) {
   CommandBufferRecorder recorder{mTransferCommandBuffer};
   recorder.beginOneTime()
       .copyBuffer(stagingBuffer, mesh.buffer)
-      .addStagingBufferMemoryBarrier(mesh.buffer, mGPU.queueFamilyIndices)
+      .addMeshBufferMemoryBarrier(mesh.buffer, mGPU.queueFamilyIndices)
       .end()
       .submitWithFence(mGPU.transferQueue, bufferCopiedFence);
 
@@ -125,6 +127,77 @@ void MemoryManager::updateMeshBuffer(Mesh &mesh) {
   std::thread thread{&MemoryManager::destroyBufferOnFenceTrigger, this, stagingBuffer,
                      bufferCopiedFence};
   thread.detach();
+}
+
+Texture MemoryManager::createTexture(std::filesystem::path const &texturePath) {
+  int width, height, channels;
+  stbi_uc *pixels =
+      stbi_load(texturePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+  if (pixels == nullptr) {
+    throw std::runtime_error("Failed to load image");
+  }
+
+  VkDeviceSize imageSize = width * height * channels;
+
+  Texture texture{};
+  Buffer stagingBuffer = createStagingBuffer(imageSize);
+
+  void *data;
+  vmaMapMemory(mAllocator, stagingBuffer.allocation, &data);
+  memcpy(data, pixels, static_cast<size_t>(imageSize));
+  vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
+
+  stbi_image_free(pixels);
+
+  texture.image = createImage({static_cast<uint32_t>(width), static_cast<uint32_t>(height)},
+                              VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+                              VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                              VK_IMAGE_ASPECT_COLOR_BIT);
+
+  VkFenceCreateInfo fenceCreateInfo{};
+  fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+  VkFence transferFinishedFence{};
+  validateVkResult(vkCreateFence(mGPU.device, &fenceCreateInfo, nullptr, &transferFinishedFence));
+
+  CommandBufferRecorder recorder{mTransferCommandBuffer};
+  recorder.beginOneTime()
+      .transitionImageLayout(texture.image, VK_IMAGE_LAYOUT_UNDEFINED,
+                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mGPU.queueFamilyIndices)
+      .copyBufferToImage(stagingBuffer, texture.image)
+      .transitionImageLayout(texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mGPU.queueFamilyIndices)
+      .end()
+      .submitWithFence(mGPU.transferQueue, transferFinishedFence);
+
+  destroyBufferOnFenceTrigger(stagingBuffer, transferFinishedFence);
+
+  VkSamplerCreateInfo samplerCreateInfo{};
+  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+  samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+  samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.anisotropyEnable = VK_TRUE;
+  samplerCreateInfo.maxAnisotropy = 16;
+  samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+  samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+  samplerCreateInfo.compareEnable = VK_FALSE;
+  samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  samplerCreateInfo.mipLodBias = 0.0f;
+  samplerCreateInfo.minLod = 0.0f;
+  samplerCreateInfo.maxLod = 0.0f;
+
+  validateVkResult(vkCreateSampler(mGPU.device, &samplerCreateInfo, nullptr, &texture.sampler));
+
+  return texture;
+}
+
+void MemoryManager::destroyTexture(Texture &texture) {
+  vkDestroySampler(mGPU.device, texture.sampler, nullptr);
+  destroyImage(texture.image);
 }
 
 Image MemoryManager::createImage(VkExtent2D const &extent, VkFormat const &format,
