@@ -82,18 +82,18 @@ void RendererEngine::drawScene() {
       .beginRenderPass(mSwapchain.renderPass, mSwapchain.framebuffers[mState.imageIndex],
                        renderArea);
 
-  for (Shader &shader : mState.currentScene->shaders) {
-    recorder.bindPipeline(shader.pipeline, VK_PIPELINE_BIND_POINT_GRAPHICS)
+  for (Shader const &shader : mState.currentScene->shaders) {
+    recorder
+        .bindGraphicsShader(shader) //
         .pushCameraView(mState.currentScene->camera.getViewMatrix(mSwapchain.getAspectRatio()),
-                        shader.pipelineLayout);
-
-    vkCmdBindDescriptorSets(mState.currentFrame->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            shader.pipelineLayout, 0, 1, &shader.descriptorSet, 0, nullptr);
-
-    for (Mesh &mesh : mState.currentScene->meshes) {
-      recorder
-          .pushModelPosition(mesh.position, shader.pipelineLayout) //
-          .drawMesh(mesh);
+                        shader);
+    for (Material const &material : mState.currentScene->materials) {
+      recorder.bindMaterial(shader, material);
+      for (Mesh const &mesh : mState.currentScene->meshes) {
+        recorder
+            .pushModelPosition(mesh.position, shader) //
+            .drawMesh(mesh);
+      }
     }
   }
 
@@ -111,7 +111,7 @@ void RendererEngine::update() {
 
 bool RendererEngine::isRunning() { return mWindow.isOpen(); }
 
-void RendererEngine::loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo) {
+void RendererEngine::loadScene(Scene &scene) {
   if (mState.currentScene != nullptr) {
     unloadScene();
   }
@@ -124,10 +124,9 @@ void RendererEngine::loadScene(Scene &scene, std::vector<ShaderInformation *> &s
     }
   }
 
-  for (ShaderInformation *shaderInfo : shadersInfo) {
-    Shader shader{mGPU, mSwapchain.renderPass, *shaderInfo, mMemoryManager};
-    mState.currentScene->shaders.push_back(shader);
-  }
+  mState.currentScene->shaders.emplace_back(mGPU, mSwapchain.renderPass);
+  mState.currentScene->materials.emplace_back(mGPU, mMemoryManager,
+                                              mState.currentScene->shaders.front());
 }
 
 void RendererEngine::unloadScene() {

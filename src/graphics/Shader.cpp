@@ -6,12 +6,7 @@
 #include "graphics/VulkanHelpers.hpp"
 
 namespace flex {
-Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass,
-                       ShaderInformation &shaderInfo, MemoryManager &memoryManager)
-    : mMemoryManager{memoryManager} {
-  shaderId = shaderInfo.getShaderId();
-
-  texture = mMemoryManager.createTexture("assets/grass_block_side.png");
+Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass) {
 
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
@@ -30,7 +25,6 @@ Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass,
   descriptorSetLayoutCreateInfo.bindingCount = 1;
   descriptorSetLayoutCreateInfo.pBindings = &samplerBinding;
 
-  VkDescriptorSetLayout descriptorSetLayout;
   validateVkResult(vkCreateDescriptorSetLayout(gpu.device, &descriptorSetLayoutCreateInfo, nullptr,
                                                &descriptorSetLayout));
 
@@ -53,32 +47,8 @@ Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass,
   validateVkResult(
       vkCreateDescriptorPool(gpu.device, &descriptorPoolCreateInfo, nullptr, &descriptorPool));
 
-  VkDescriptorSetAllocateInfo allocateInfo{};
-  allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocateInfo.descriptorPool = descriptorPool;
-  allocateInfo.descriptorSetCount = 1;
-  allocateInfo.pSetLayouts = &descriptorSetLayout;
-  validateVkResult(vkAllocateDescriptorSets(gpu.device, &allocateInfo, &descriptorSet));
-
-  VkDescriptorImageInfo imageInfo{};
-  imageInfo.imageView = texture.image.imageView;
-  imageInfo.sampler = texture.sampler;
-  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-  VkWriteDescriptorSet writeDescriptorSet{};
-  writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSet.dstSet = descriptorSet;
-  writeDescriptorSet.dstBinding = 1;
-  writeDescriptorSet.dstArrayElement = 0;
-  writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  writeDescriptorSet.descriptorCount = 1;
-  writeDescriptorSet.pImageInfo = &imageInfo;
-  vkUpdateDescriptorSets(gpu.device, 1, &writeDescriptorSet, 0, nullptr);
-
-  vkDestroyDescriptorSetLayout(gpu.device, descriptorSetLayout, nullptr);
-
-  VkShaderModule vertShaderModule = createShaderModule(gpu, shaderInfo.getVertSpirVPath());
-  VkShaderModule fragShaderModule = createShaderModule(gpu, shaderInfo.getFragSpirVPath());
+  VkShaderModule vertShaderModule = createShaderModule(gpu, "shaders/default.vert.spv");
+  VkShaderModule fragShaderModule = createShaderModule(gpu, "shaders/default.frag.spv");
 
   std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages{};
   shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -91,28 +61,82 @@ Shader::Shader(flex::GPU const &gpu, VkRenderPass const &renderPass,
   shaderStages[1].module = fragShaderModule;
   shaderStages[1].pName = "main";
 
-  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo =
-      shaderInfo.getVertexInputStateCreateInfo();
+  VkVertexInputBindingDescription bindingDescription = Vertex::getVulkanBindingDescription();
+  std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions =
+      Vertex::getVulkanAttributeDescriptions();
 
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo =
-      shaderInfo.getInputAssemblyStateCreateInfo();
+  VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};
+  vertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
+  vertexInputStateCreateInfo.pVertexBindingDescriptions = &bindingDescription;
+  vertexInputStateCreateInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(attributeDescriptions.size());
+  vertexInputStateCreateInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
-  VkPipelineViewportStateCreateInfo viewportStateCreateInfo =
-      shaderInfo.getViewportStateCreateInfo();
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo{};
+  inputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-  VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo =
-      shaderInfo.getRasterizationStateCreateInfo();
+  VkPipelineViewportStateCreateInfo viewportStateCreateInfo{};
+  viewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+  viewportStateCreateInfo.viewportCount = 1;
+  viewportStateCreateInfo.pViewports = nullptr; // dynamic state
+  viewportStateCreateInfo.scissorCount = 1;
+  viewportStateCreateInfo.pScissors = nullptr; // dynamic state
 
-  VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo =
-      shaderInfo.getColorBlendStateCreateInfo();
+  VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo{};
+  rasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+  rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+  rasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
+  rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+  rasterizationStateCreateInfo.depthBiasEnable = VK_FALSE;
+  rasterizationStateCreateInfo.depthBiasConstantFactor = 0.0f;
+  rasterizationStateCreateInfo.depthBiasClamp = 0.0f;
+  rasterizationStateCreateInfo.depthBiasSlopeFactor = 0.0f;
+  rasterizationStateCreateInfo.lineWidth = 1.0f;
 
-  VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = shaderInfo.getDynamicStateCreateInfo();
+  VkPipelineColorBlendAttachmentState colorBlendAttachmentState{};
+  colorBlendAttachmentState.blendEnable = VK_FALSE;
+  colorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+  colorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  colorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
-  VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo =
-      shaderInfo.getMultiSampleStateCreateInfo();
+  VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{};
+  colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+  colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+  colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+  colorBlendStateCreateInfo.attachmentCount = 1;
+  colorBlendStateCreateInfo.pAttachments = &colorBlendAttachmentState;
 
-  VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo =
-      shaderInfo.getDepthStencilStateCreateInfo();
+  std::array<VkDynamicState, 2> dynamicStates{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+  VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo{};
+  dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+  dynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+  dynamicStateCreateInfo.pDynamicStates = dynamicStates.data();
+
+  VkPipelineMultisampleStateCreateInfo multiSampleStateCreateInfo{};
+  multiSampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+  multiSampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+  multiSampleStateCreateInfo.sampleShadingEnable = VK_FALSE;
+  multiSampleStateCreateInfo.minSampleShading = 1.0f;
+  multiSampleStateCreateInfo.pSampleMask = nullptr;
+  multiSampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
+  multiSampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
+
+  VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo{};
+  depthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+  depthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+  depthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+  depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+  depthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
 
   VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
   pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -165,8 +189,8 @@ VkShaderModule Shader::createShaderModule(GPU const &gpu, std::filesystem::path 
 }
 
 void Shader::destroy(flex::GPU const &gpu) {
-  mMemoryManager.destroyTexture(texture);
   vkDestroyDescriptorPool(gpu.device, descriptorPool, nullptr);
+  vkDestroyDescriptorSetLayout(gpu.device, descriptorSetLayout, nullptr);
   vkDestroyPipeline(gpu.device, pipeline, nullptr);
   vkDestroyPipelineLayout(gpu.device, pipelineLayout, nullptr);
 }

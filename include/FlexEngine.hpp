@@ -10,4 +10,3 @@
 #include "graphics/Mesh.hpp"
 #include "graphics/RenderWindow.hpp"
 #include "graphics/RendererEngine.hpp"
-#include "graphics/ShaderInformation.hpp"

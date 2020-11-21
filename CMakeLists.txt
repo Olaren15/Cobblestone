@@ -19,13 +19,13 @@ ADD_LIBRARY(
 		src/graphics/Frame.cpp
 		src/graphics/GPU.cpp
 		src/graphics/Image.cpp
+		src/graphics/Material.cpp
 		src/graphics/MemoryManager.cpp
 		src/graphics/Mesh.cpp
 		src/graphics/QueueFamilyIndices.cpp
 		src/graphics/RendererEngine.cpp
 		src/graphics/RenderWindow.cpp
 		src/graphics/Shader.cpp
-		src/graphics/ShaderInformation.cpp
 		src/graphics/Swapchain.cpp
 		src/graphics/SwapchainSupportDetails.cpp
 		src/graphics/Texture.cpp

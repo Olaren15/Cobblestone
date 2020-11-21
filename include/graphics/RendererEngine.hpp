@@ -52,7 +52,7 @@ public:
   void update();
   [[nodiscard]] bool isRunning();
 
-  void loadScene(Scene &scene, std::vector<ShaderInformation *> &shadersInfo);
+  void loadScene(Scene &scene);
   void unloadScene();
 };
 } // namespace flex

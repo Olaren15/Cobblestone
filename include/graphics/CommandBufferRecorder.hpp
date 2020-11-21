@@ -6,7 +6,9 @@
 
 #include "Buffer.hpp"
 #include "QueueFamilyIndices.hpp"
+#include "graphics/Material.hpp"
 #include "graphics/Mesh.hpp"
+#include "graphics/Shader.hpp"
 #include "graphics/Swapchain.hpp"
 
 namespace flex {
@@ -34,12 +36,11 @@ public:
   CommandBufferRecorder &beginRenderPass(VkRenderPass const &renderPass,
                                          VkFramebuffer const &frameBuffer,
                                          VkRect2D const &renderArea);
-  CommandBufferRecorder &pushCameraView(glm::mat4 const &view, VkPipelineLayout const &layout);
-  CommandBufferRecorder &pushModelPosition(glm::mat4 const &position,
-                                           VkPipelineLayout const &layout);
-  CommandBufferRecorder &bindPipeline(VkPipeline const &pipeline,
-                                      VkPipelineBindPoint const &bindPoint);
+  CommandBufferRecorder &pushCameraView(glm::mat4 const &view, Shader const &shader);
+  CommandBufferRecorder &pushModelPosition(glm::mat4 const &position, Shader const &shader);
+  CommandBufferRecorder &bindGraphicsShader(Shader const &shader);
   CommandBufferRecorder &drawMesh(Mesh const &mesh);
+  CommandBufferRecorder &bindMaterial(Shader const &shader, Material const &material);
   CommandBufferRecorder &drawMeshes(std::vector<Mesh> const &meshes);
   CommandBufferRecorder &endRenderPass();
 

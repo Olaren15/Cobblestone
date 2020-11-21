@@ -160,26 +160,24 @@ CommandBufferRecorder &CommandBufferRecorder::beginRenderPass(VkRenderPass const
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::pushCameraView(const glm::mat4 &view,
-                                                             const VkPipelineLayout &layout) {
-  vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
-                     &view);
+CommandBufferRecorder &CommandBufferRecorder::pushCameraView(glm::mat4 const &view,
+                                                             Shader const &shader) {
+  vkCmdPushConstants(mCommandBuffer, shader.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                     sizeof(glm::mat4), &view);
 
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::pushModelPosition(const glm::mat4 &position,
-                                                                const VkPipelineLayout &layout) {
-  vkCmdPushConstants(mCommandBuffer, layout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4),
-                     sizeof(glm::mat4), &position);
+CommandBufferRecorder &CommandBufferRecorder::pushModelPosition(glm::mat4 const &position,
+                                                                Shader const &shader) {
+  vkCmdPushConstants(mCommandBuffer, shader.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
+                     sizeof(glm::mat4), sizeof(glm::mat4), &position);
 
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::bindPipeline(const VkPipeline &pipeline,
-                                                           const VkPipelineBindPoint &bindPoint) {
-
-  vkCmdBindPipeline(mCommandBuffer, bindPoint, pipeline);
+CommandBufferRecorder &CommandBufferRecorder::bindGraphicsShader(Shader const &shader) {
+  vkCmdBindPipeline(mCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader.pipeline);
   return *this;
 }
 
@@ -194,6 +192,13 @@ CommandBufferRecorder &CommandBufferRecorder::drawMesh(Mesh const &mesh) {
   vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.buffer.buffer, vertexBufferOffset.data());
 
   vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+  return *this;
+}
+
+CommandBufferRecorder &CommandBufferRecorder::bindMaterial(Shader const &shader,
+                                                           Material const &material) {
+  vkCmdBindDescriptorSets(mCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader.pipelineLayout, 0,
+                          1, &material.descriptorSet, 0, nullptr);
   return *this;
 }
 
