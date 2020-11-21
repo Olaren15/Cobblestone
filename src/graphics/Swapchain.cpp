@@ -242,6 +242,8 @@ void Swapchain::cleanSwapchain() {
 void Swapchain::handleFrameBufferResize(RenderWindow const &window) {
   cleanSwapchain();
 
+  swapchainSupportDetails = SwapchainSupportDetails{mGPU.physicalDevice, mGPU.renderSurface};
+
   VkSwapchainKHR oldSwapchain = swapchain;
   createSwapchain(window);
 
