@@ -53,7 +53,7 @@ void setupScene(cbl::gfx::RendererEngine &rendererEngine, cbl::World &scene) {
 
   scene.meshes.push_back(cube);
 
-  rendererEngine.loadScene(scene);
+  rendererEngine.loadWorld(scene);
 }
 
 int main() {
@@ -67,7 +67,7 @@ int main() {
     renderEngine.update();
   }
 
-  renderEngine.unloadScene();
+  renderEngine.unloadWorld();
 
   return EXIT_SUCCESS;
 }

@@ -124,9 +124,9 @@ void RendererEngine::update() {
 
 bool RendererEngine::isRunning() { return mWindow.isOpen(); }
 
-void RendererEngine::loadScene(World &scene) {
+void RendererEngine::loadWorld(World &scene) {
   if (mState.currentScene != nullptr) {
-    unloadScene();
+    unloadWorld();
   }
 
   mState.currentScene = &scene;
@@ -142,7 +142,7 @@ void RendererEngine::loadScene(World &scene) {
       new ChunkMaterial{mGPU, mMemoryManager, mState.currentScene->shaders[0]});
 }
 
-void RendererEngine::unloadScene() {
+void RendererEngine::unloadWorld() {
   if (mState.currentScene == nullptr) {
     return;
   }

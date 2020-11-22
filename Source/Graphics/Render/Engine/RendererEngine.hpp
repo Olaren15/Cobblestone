@@ -52,7 +52,7 @@ public:
   void update();
   [[nodiscard]] bool isRunning();
 
-  void loadScene(World &scene);
-  void unloadScene();
+  void loadWorld(World &scene);
+  void unloadWorld();
 };
 } // namespace cbl::gfx
