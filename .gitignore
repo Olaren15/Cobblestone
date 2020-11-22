@@ -984,6 +984,3 @@ dkms.conf
 
 # SPIR-V compiles shaders
 *.spv
-
-# RenderDoc capture files
-*.rdc
