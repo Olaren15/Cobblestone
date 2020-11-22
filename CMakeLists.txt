@@ -1,59 +1,60 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
 SET(CMAKE_CXX_STANDARD 17)
 
-PROJECT(flex-engine VERSION 1 LANGUAGES CXX)
+SET(PROJECT_NAME Cobblestone)
+
+PROJECT(${PROJECT_NAME} VERSION 1 LANGUAGES CXX)
 
 FIND_PACKAGE(SDL2 REQUIRED)
 FIND_PACKAGE(Vulkan REQUIRED)
 FIND_PACKAGE(glm REQUIRED)
 
-ADD_LIBRARY(
-		flex-engine STATIC
-		src/core/InputHandler.cpp
-		src/core/Scene.cpp
-		src/core/Time.cpp
-		src/core/Vector2.cpp
-		src/graphics/Buffer.cpp
-		src/graphics/Camera.cpp
-		src/graphics/CommandBufferRecorder.cpp
-		src/graphics/Frame.cpp
-		src/graphics/GPU.cpp
-		src/graphics/Image.cpp
-		src/graphics/Material.cpp
-		src/graphics/MemoryManager.cpp
-		src/graphics/Mesh.cpp
-		src/graphics/QueueFamilyIndices.cpp
-		src/graphics/RendererEngine.cpp
-		src/graphics/RenderWindow.cpp
-		src/graphics/Shader.cpp
-		src/graphics/Swapchain.cpp
-		src/graphics/SwapchainSupportDetails.cpp
-		src/graphics/Texture.cpp
-		src/graphics/Vertex.cpp
-		src/graphics/VulkanHelpers.cpp
+ADD_EXECUTABLE(
+		${PROJECT_NAME}
 
-		src/external/stb_image.cpp
-		src/external/vk_mem_alloc.cpp
+		Source/Core/Input/InputHandler.cpp
+		Source/Core/Time/Time.cpp
+		Source/Core/World/World.cpp
+
+		Source/External/stb_image/stb_image.cpp
+		Source/External/vk_mem_alloc/vk_mem_alloc.cpp
+
+		Source/Game/main.cpp
+		Source/Graphics/Camera/Camera.cpp
+
+		Source/Graphics/Vertex/Vertex.cpp
+		Source/Graphics/CommandBufferRecorder/CommandBufferRecorder.cpp
+		Source/Graphics/Frame/Frame.cpp
+		Source/Graphics/GPU/GPU.cpp
+		Source/Graphics/Materials/ChunkMaterial/ChunkMaterial.cpp
+		Source/Graphics/Materials/BaseMaterial.cpp
+		Source/Graphics/Memory/Buffer/Buffer.cpp
+		Source/Graphics/Memory/Image/Image.cpp
+		Source/Graphics/Memory/MemoryManager/MemoryManager.cpp
+		Source/Graphics/Memory/Texture/Texture.cpp
+		Source/Graphics/Mesh/Mesh.cpp
+		Source/Graphics/Render/Engine/RendererEngine.cpp
+		Source/Graphics/Render/Window/RenderWindow.cpp
+		Source/Graphics/Shaders/DefaultShader/DefaultShader.cpp
+		Source/Graphics/Shaders/BaseShader.cpp
+		Source/Graphics/Swapchain/Swapchain.cpp
+		Source/Graphics/Utils/VulkanHelpers.cpp
+
+		Source/Math/Vector/Vector2/Vector2.cpp
 )
 
 IF (APPLE)
 	INCLUDE_DIRECTORIES(/usr/local/include)
-	TARGET_LINK_LIBRARIES(flex-engine PRIVATE glm::glm)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE glm::glm)
 ELSE ()
-	TARGET_LINK_LIBRARIES(flex-engine PRIVATE glm)
+	TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE glm)
 ENDIF ()
 
 TARGET_LINK_LIBRARIES(
-		flex-engine PRIVATE
+		${PROJECT_NAME} PRIVATE
 		SDL2::SDL2
 		Vulkan::Vulkan
 		pthread
 )
 
-TARGET_INCLUDE_DIRECTORIES(flex-engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-SET_TARGET_PROPERTIES(flex-engine PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 1)
-
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-ADD_SUBDIRECTORY(examples)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source)

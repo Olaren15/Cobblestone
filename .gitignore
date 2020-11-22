@@ -905,7 +905,7 @@ FodyWeavers.xsd
 ##### Gradle
 .gradle
 **/build/
-!src/**/build/
+!Source/**/build/
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -984,3 +984,6 @@ dkms.conf
 
 # SPIR-V compiles shaders
 *.spv
+
+# RenderDoc capture files
+*.rdc
