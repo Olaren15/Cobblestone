@@ -2,9 +2,13 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define SDL_MAIN_HANDLED
 
-#include "Graphics/Render/Engine/RendererEngine.hpp"
+#include "Graphics/Engine/Engine.hpp"
 
-void setupScene(cbl::gfx::RendererEngine &rendererEngine, cbl::World &scene) {
+void setupScene(cbl::gfx::Engine &rendererEngine, cbl::World &scene) {}
+
+int main() {
+  cbl::gfx::Engine renderEngine{};
+
   cbl::gfx::Mesh cube{{
                           0,  1,  3,  3,  2,  0,  // front
                           4,  5,  7,  7,  6,  4,  // right
@@ -51,21 +55,11 @@ void setupScene(cbl::gfx::RendererEngine &rendererEngine, cbl::World &scene) {
                           {{1.0f, 0.0f, 0.0f}, {}, {1.0f, 1.0f}},   // 23
                       }};
 
-  scene.meshes.push_back(cube);
+  cbl::World world;
+  world.meshes.push_back(cube);
+  renderEngine.loadWorld(world);
 
-  rendererEngine.loadWorld(scene);
-}
-
-int main() {
-
-  cbl::gfx::RendererEngine renderEngine{};
-
-  cbl::World scene;
-  setupScene(renderEngine, scene);
-
-  while (renderEngine.isRunning()) {
-    renderEngine.update();
-  }
+  renderEngine.run();
 
   renderEngine.unloadWorld();
 

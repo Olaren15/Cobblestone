@@ -22,24 +22,24 @@ MemoryManager::MemoryManager(GPU const &gpu) : mGPU{gpu} {
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   commandPoolCreateInfo.flags =
       VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = mGPU.queueFamilyIndices.transfer.value();
+  commandPoolCreateInfo.queueFamilyIndex = mGPU.queueFamilyIndices.transfer;
 
   validateVkResult(
-      vkCreateCommandPool(mGPU.device, &commandPoolCreateInfo, nullptr, &mTransferCommandPool));
+      vkCreateCommandPool(mGPU.device, &commandPoolCreateInfo, nullptr, &mCommandPool));
 
   VkCommandBufferAllocateInfo commandBufferAllocateInfo{};
   commandBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
   commandBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  commandBufferAllocateInfo.commandPool = mTransferCommandPool;
+  commandBufferAllocateInfo.commandPool = mCommandPool;
   commandBufferAllocateInfo.commandBufferCount = 1;
 
   validateVkResult(
-      vkAllocateCommandBuffers(mGPU.device, &commandBufferAllocateInfo, &mTransferCommandBuffer));
+      vkAllocateCommandBuffers(mGPU.device, &commandBufferAllocateInfo, &mCommandBuffer));
 }
 
 MemoryManager::~MemoryManager() {
   mGPU.waitIdle();
-  vkDestroyCommandPool(mGPU.device, mTransferCommandPool, nullptr);
+  vkDestroyCommandPool(mGPU.device, mCommandPool, nullptr);
   vmaDestroyAllocator(mAllocator);
 }
 
@@ -60,7 +60,7 @@ Buffer MemoryManager::createStagingBuffer(VkDeviceSize const &bufferSize) {
   bufferCreateInfo.size = bufferSize;
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   bufferCreateInfo.queueFamilyIndexCount = 1;
-  bufferCreateInfo.pQueueFamilyIndices = &mGPU.queueFamilyIndices.transfer.value();
+  bufferCreateInfo.pQueueFamilyIndices = &mGPU.queueFamilyIndices.transfer;
   bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
   VmaAllocationCreateInfo allocationCreateInfo{};
@@ -89,7 +89,7 @@ void MemoryManager::generateMeshBuffer(Mesh &mesh) {
   bufferCreateInfo.size = mesh.getRequiredBufferSize();
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   bufferCreateInfo.queueFamilyIndexCount = 1;
-  bufferCreateInfo.pQueueFamilyIndices = &mGPU.queueFamilyIndices.transfer.value();
+  bufferCreateInfo.pQueueFamilyIndices = &mGPU.queueFamilyIndices.transfer;
   bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                            VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
@@ -116,12 +116,12 @@ void MemoryManager::updateMeshBuffer(Mesh &mesh) {
   VkFence bufferCopiedFence{};
   validateVkResult(vkCreateFence(mGPU.device, &fenceCreateInfo, nullptr, &bufferCopiedFence));
 
-  CommandBufferRecorder recorder{mTransferCommandBuffer};
+  CommandBufferRecorder recorder{mCommandBuffer};
   recorder.beginOneTime()
       .copyBuffer(stagingBuffer, mesh.buffer)
       .addMeshBufferMemoryBarrier(mesh.buffer, mGPU.queueFamilyIndices)
       .end()
-      .submitWithFence(mGPU.transferQueue, bufferCopiedFence);
+      .submit(mGPU.transferQueue, bufferCopiedFence);
 
   // wait until the transfer is complete before deleting the staging buffer
   std::thread thread{&MemoryManager::destroyBufferOnFenceTrigger, this, stagingBuffer,
@@ -160,7 +160,7 @@ Texture MemoryManager::createTexture(std::filesystem::path const &texturePath) {
   VkFence transferFinishedFence{};
   validateVkResult(vkCreateFence(mGPU.device, &fenceCreateInfo, nullptr, &transferFinishedFence));
 
-  CommandBufferRecorder recorder{mTransferCommandBuffer};
+  CommandBufferRecorder recorder{mCommandBuffer};
   recorder.beginOneTime()
       .transitionImageLayout(texture.image, VK_IMAGE_LAYOUT_UNDEFINED,
                              VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mGPU.queueFamilyIndices)
@@ -168,7 +168,7 @@ Texture MemoryManager::createTexture(std::filesystem::path const &texturePath) {
       .transitionImageLayout(texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                              VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mGPU.queueFamilyIndices)
       .end()
-      .submitWithFence(mGPU.transferQueue, transferFinishedFence);
+      .submit(mGPU.transferQueue, transferFinishedFence);
 
   destroyBufferOnFenceTrigger(stagingBuffer, transferFinishedFence);
 

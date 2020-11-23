@@ -48,8 +48,8 @@ CommandBufferRecorder::addMeshBufferMemoryBarrier(mem::Buffer const &buffer,
   bufferMemoryBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
   bufferMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
   bufferMemoryBarrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
-  bufferMemoryBarrier.srcQueueFamilyIndex = queueFamilyIndices.transfer.value();
-  bufferMemoryBarrier.dstQueueFamilyIndex = queueFamilyIndices.graphics.value();
+  bufferMemoryBarrier.srcQueueFamilyIndex = queueFamilyIndices.transfer;
+  bufferMemoryBarrier.dstQueueFamilyIndex = queueFamilyIndices.graphics;
   bufferMemoryBarrier.buffer = buffer.buffer;
   bufferMemoryBarrier.size = VK_WHOLE_SIZE;
 
@@ -67,8 +67,8 @@ CommandBufferRecorder &CommandBufferRecorder::transitionImageLayout(
   barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier.oldLayout = oldLayout;
   barrier.newLayout = newLayout;
-  barrier.srcQueueFamilyIndex = queueFamilyIndices.transfer.value();
-  barrier.dstQueueFamilyIndex = queueFamilyIndices.transfer.value();
+  barrier.srcQueueFamilyIndex = queueFamilyIndices.transfer;
+  barrier.dstQueueFamilyIndex = queueFamilyIndices.transfer;
   barrier.image = image.image;
   barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   barrier.subresourceRange.baseMipLevel = 0;
@@ -181,20 +181,6 @@ CommandBufferRecorder &CommandBufferRecorder::bindGraphicsShader(BaseShader cons
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::drawMesh(Mesh const &mesh) {
-  if (!mesh.buffer.isValid) {
-    throw std::runtime_error("Cannot draw without allocated vram");
-  }
-
-  vkCmdBindIndexBuffer(mCommandBuffer, mesh.buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-  std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
-  vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.buffer.buffer, vertexBufferOffset.data());
-
-  vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
-  return *this;
-}
-
 CommandBufferRecorder &CommandBufferRecorder::bindMaterial(BaseShader const &shader,
                                                            BaseMaterial const &material) {
   vkCmdBindDescriptorSets(mCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shader.pipelineLayout, 0,
@@ -203,19 +189,17 @@ CommandBufferRecorder &CommandBufferRecorder::bindMaterial(BaseShader const &sha
   return *this;
 }
 
-CommandBufferRecorder &CommandBufferRecorder::drawMeshes(std::vector<Mesh> const &meshes) {
-  for (Mesh const &mesh : meshes) {
-    if (!mesh.buffer.isValid) {
-      throw std::runtime_error("Cannot draw without allocated vram");
-    }
-
-    vkCmdBindIndexBuffer(mCommandBuffer, mesh.buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-    std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
-    vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.buffer.buffer, vertexBufferOffset.data());
-
-    vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+CommandBufferRecorder &CommandBufferRecorder::drawMesh(Mesh const &mesh) {
+  if (!mesh.buffer.isValid) {
+    return *this;
   }
+
+  vkCmdBindIndexBuffer(mCommandBuffer, mesh.buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+  std::array<VkDeviceSize, 1> vertexBufferOffset{mesh.getIndicesSize()};
+  vkCmdBindVertexBuffers(mCommandBuffer, 0, 1, &mesh.buffer.buffer, vertexBufferOffset.data());
+
+  vkCmdDrawIndexed(mCommandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
   return *this;
 }
 
@@ -229,16 +213,8 @@ CommandBufferRecorder &CommandBufferRecorder::end() {
   return *this;
 }
 
-void CommandBufferRecorder::submit(VkQueue const &submitQueue) {
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &mCommandBuffer;
-
-  vkQueueSubmit(submitQueue, 1, &submitInfo, VK_NULL_HANDLE);
-}
-
-void CommandBufferRecorder::submitWithFence(VkQueue const &submitQueue, VkFence const &fence) {
+void CommandBufferRecorder::submit(VkQueue const &submitQueue,
+                                   VkFence const &fence = VK_NULL_HANDLE) {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;

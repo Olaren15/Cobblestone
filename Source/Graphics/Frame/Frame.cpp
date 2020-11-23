@@ -9,7 +9,7 @@ Frame::Frame(GPU const &gpu) : mGPU{gpu} {
   commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   commandPoolCreateInfo.flags =
       VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-  commandPoolCreateInfo.queueFamilyIndex = gpu.queueFamilyIndices.graphics.value();
+  commandPoolCreateInfo.queueFamilyIndex = gpu.queueFamilyIndices.graphics;
 
   validateVkResult(vkCreateCommandPool(gpu.device, &commandPoolCreateInfo, nullptr, &commandPool));
 

@@ -11,8 +11,8 @@ struct Mesh {
 
   std::vector<uint32_t> indices;
   std::vector<Vertex> vertices;
-  mem::Buffer buffer;
   glm::mat4 position{1};
+  mem::Buffer buffer;
 
   [[nodiscard]] size_t getIndicesSize() const;
   [[nodiscard]] size_t getVerticesSize() const;

@@ -1,4 +1,4 @@
-﻿#include "RendererEngine.hpp"
+﻿#include "Engine.hpp"
 
 #include "Core/Time/Time.hpp"
 #include "Graphics/CommandBufferRecorder/CommandBufferRecorder.hpp"
@@ -7,14 +7,14 @@
 #include "Graphics/Utils/VulkanHelpers.hpp"
 
 namespace cbl::gfx {
-RendererEngine::RendererEngine()
+Engine::Engine()
     : mWindow{}, mGPU{mWindow}, mMemoryManager{mGPU},
       mSwapchain{mGPU, mWindow, mMemoryManager}, mFrames{Frame{mGPU}, Frame{mGPU}} {
 
   mState.currentFrame = &mFrames[mState.currentFrameNumber];
 }
 
-bool RendererEngine::acquireNextFrame() {
+bool Engine::acquireNextFrame() {
   validateVkResult(vkWaitForFences(mGPU.device, 1, &mState.currentFrame->renderFinishedFence,
                                    VK_TRUE, UINT64_MAX));
 
@@ -32,43 +32,13 @@ bool RendererEngine::acquireNextFrame() {
   return true;
 }
 
-void RendererEngine::present() {
-
-  VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-  VkSubmitInfo submitInfo{};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.pWaitDstStageMask = &waitStage;
-  submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &mState.currentFrame->imageAvailableSemaphore;
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &mState.currentFrame->renderFinishedSemaphore;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &mState.currentFrame->commandBuffer;
-
-  validateVkResult(
-      vkQueueSubmit(mGPU.graphicsQueue, 1, &submitInfo, mState.currentFrame->renderFinishedFence));
-
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &mState.currentFrame->renderFinishedSemaphore;
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = &mSwapchain.swapchain;
-  presentInfo.pImageIndices = &mState.imageIndex;
-
-  validateVkResult(vkQueuePresentKHR(mGPU.presentQueue, &presentInfo));
-
-  mState.currentFrame = &mFrames[++mState.currentFrameNumber %= mMaxFramesInFlight];
-}
-
-void RendererEngine::drawScene() {
+void Engine::drawScene() {
   if (mState.currentScene == nullptr) {
     return;
   }
 
   if (!mState.shouldRender || !acquireNextFrame()) {
-    if (mSwapchain.isNotZeroPixels(mWindow)) {
+    if (mSwapchain.isValid(mWindow)) {
       mSwapchain.handleFrameBufferResize(mWindow);
     }
     return;
@@ -112,19 +82,45 @@ void RendererEngine::drawScene() {
 
   recorder.endRenderPass().end();
 
-  present();
+  constexpr VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  VkSubmitInfo submitInfo{};
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.pWaitDstStageMask = &waitStage;
+  submitInfo.waitSemaphoreCount = 1;
+  submitInfo.pWaitSemaphores = &mState.currentFrame->imageAvailableSemaphore;
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores = &mState.currentFrame->renderFinishedSemaphore;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &mState.currentFrame->commandBuffer;
+
+  validateVkResult(
+      vkQueueSubmit(mGPU.graphicsQueue, 1, &submitInfo, mState.currentFrame->renderFinishedFence));
+
+  VkPresentInfoKHR presentInfo{};
+  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores = &mState.currentFrame->renderFinishedSemaphore;
+  presentInfo.swapchainCount = 1;
+  presentInfo.pSwapchains = &mSwapchain.swapchain;
+  presentInfo.pImageIndices = &mState.imageIndex;
+
+  validateVkResult(vkQueuePresentKHR(mGPU.presentQueue, &presentInfo));
+
+  mState.currentFrame = &mFrames[++mState.currentFrameNumber %= mMaxFramesInFlight];
 }
 
-void RendererEngine::update() {
-  Time::tick();
-  mWindow.update();
-  mState.currentScene->update();
-  drawScene();
+void Engine::run() {
+  while (mWindow.isOpen()) {
+    Time::tick();
+    mWindow.update();
+    mState.currentScene->update();
+    drawScene();
+  }
 }
 
-bool RendererEngine::isRunning() { return mWindow.isOpen(); }
+bool Engine::isRunning() { return mWindow.isOpen(); }
 
-void RendererEngine::loadWorld(World &scene) {
+void Engine::loadWorld(World &scene) {
   if (mState.currentScene != nullptr) {
     unloadWorld();
   }
@@ -142,7 +138,7 @@ void RendererEngine::loadWorld(World &scene) {
       new ChunkMaterial{mGPU, mMemoryManager, mState.currentScene->shaders[0]});
 }
 
-void RendererEngine::unloadWorld() {
+void Engine::unloadWorld() {
   if (mState.currentScene == nullptr) {
     return;
   }

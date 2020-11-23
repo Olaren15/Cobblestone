@@ -16,8 +16,8 @@ private:
   GPU const &mGPU;
   VmaAllocator mAllocator{};
 
-  VkCommandPool mTransferCommandPool{};
-  VkCommandBuffer mTransferCommandBuffer{};
+  VkCommandPool mCommandPool{};
+  VkCommandBuffer mCommandBuffer{};
 
   void allocateBuffer(VkBufferCreateInfo const &bufferInfo,
                       VmaAllocationCreateInfo const &allocInfo, Buffer &buffer);

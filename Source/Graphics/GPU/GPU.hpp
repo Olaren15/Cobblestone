@@ -5,21 +5,19 @@
 
 #include "vulkan/vulkan.h"
 
-#include "Graphics/Render/Window/RenderWindow.hpp"
+#include "Graphics/Window/Window.hpp"
 
 namespace cbl::gfx {
 struct QueueFamilyIndices {
-  std::optional<uint32_t> graphics;
-  std::optional<uint32_t> transfer;
-  std::optional<uint32_t> present;
+  uint32_t graphics{};
+  uint32_t transfer{};
+  uint32_t present{};
 
   QueueFamilyIndices() = default;
   QueueFamilyIndices(QueueFamilyIndices const &queueFamilyIndices);
   explicit QueueFamilyIndices(VkPhysicalDevice const &physicalDevice, VkSurfaceKHR const &surface);
   ~QueueFamilyIndices() = default;
 
-  [[nodiscard]] bool isComplete() const;
-  [[nodiscard]] bool hasUniqueTransferQueue() const;
   [[nodiscard]] std::set<uint32_t> getUniqueIndices() const;
 };
 
@@ -29,7 +27,7 @@ private:
       VK_KHR_SWAPCHAIN_EXTENSION_NAME,
   };
 
-  void createInstance(RenderWindow const &renderWindow);
+  void createInstance(Window const &renderWindow);
   void selectPhysicalDevice();
   void createDevice();
   void retrieveQueues();
@@ -43,7 +41,7 @@ private:
 
 public:
   GPU() = default;
-  explicit GPU(RenderWindow const &window);
+  explicit GPU(Window const &window);
   ~GPU();
 
   VkInstance instance{};
@@ -60,4 +58,4 @@ public:
 
   [[nodiscard]] bool isDedicated() const;
 };
-} // namespace flex
+} // namespace cbl::gfx

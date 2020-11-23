@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-#include "Graphics/Render/Window/RenderWindow.hpp"
+#include "Graphics/Window/Window.hpp"
 #include "Math/Vector/Vector2/Vector2.hpp"
 
 namespace cbl::gfx {

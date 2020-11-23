@@ -23,8 +23,10 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
                                            queueFamilyProperties.data());
 
   uint32_t i = 0;
+  bool transferFound, graphicsFound, presentFound;
+
   for (VkQueueFamilyProperties const &queueFamilyProperty : queueFamilyProperties) {
-    if (queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT && !graphics.has_value()) {
+    if (queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT && !graphicsFound) {
       graphics = i;
     }
 
@@ -32,39 +34,30 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
     if (queueFamilyProperty.queueFlags & VK_QUEUE_TRANSFER_BIT &&
         !(queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT &&
           queueFamilyProperty.queueFlags & VK_QUEUE_COMPUTE_BIT) &&
-        !transfer.has_value()) {
+        !transferFound) {
       transfer = i;
     }
 
     VkBool32 surfaceSupported;
     vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &surfaceSupported);
-    if (surfaceSupported == VK_TRUE && !present.has_value()) {
+    if (surfaceSupported == VK_TRUE && !presentFound) {
       present = i;
     }
 
     i++;
   }
 
-  // did not find transfer-only queue
-  if (!transfer.has_value()) {
+  if (!transferFound) {
     // graphics queues always support transfer
     transfer = graphics;
   }
 }
 
-bool QueueFamilyIndices::isComplete() const {
-  return graphics.has_value() && transfer.has_value() && present.has_value();
-}
-
-bool QueueFamilyIndices::hasUniqueTransferQueue() const {
-  return graphics.value() != transfer.value();
-}
-
 std::set<uint32_t> QueueFamilyIndices::getUniqueIndices() const {
-  return std::set<uint32_t>{graphics.value(), transfer.value(), present.value()};
+  return std::set<uint32_t>{graphics, transfer, present};
 }
 
-GPU::GPU(RenderWindow const &window) {
+GPU::GPU(Window const &window) {
   createInstance(window);
   renderSurface = window.getDrawableVulkanSurface(instance);
   selectPhysicalDevice();
@@ -79,7 +72,7 @@ GPU::~GPU() {
   vkDestroyInstance(instance, nullptr);
 }
 
-void GPU::createInstance(RenderWindow const &renderWindow) {
+void GPU::createInstance(Window const &renderWindow) {
   VkApplicationInfo appInfo{};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   appInfo.pApplicationName = "Cobblestone";
@@ -160,9 +153,9 @@ void GPU::createDevice() {
 }
 
 void GPU::retrieveQueues() {
-  vkGetDeviceQueue(device, queueFamilyIndices.graphics.value(), 0, &graphicsQueue);
-  vkGetDeviceQueue(device, queueFamilyIndices.transfer.value(), 0, &transferQueue);
-  vkGetDeviceQueue(device, queueFamilyIndices.present.value(), 0, &presentQueue);
+  vkGetDeviceQueue(device, queueFamilyIndices.graphics, 0, &graphicsQueue);
+  vkGetDeviceQueue(device, queueFamilyIndices.transfer, 0, &transferQueue);
+  vkGetDeviceQueue(device, queueFamilyIndices.present, 0, &presentQueue);
 }
 
 unsigned int GPU::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
@@ -179,11 +172,6 @@ unsigned int GPU::ratePhysicalDevice(VkPhysicalDevice const &physicalDevice,
   VkPhysicalDeviceFeatures physicalDeviceFeatures;
   vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
   if (!physicalDeviceFeatures.samplerAnisotropy) {
-    return 0u;
-  }
-
-  if (QueueFamilyIndices const queueFamilyIndices{physicalDevice, vulkanSurface};
-      !queueFamilyIndices.isComplete()) {
     return 0u;
   }
 
@@ -232,4 +220,4 @@ bool GPU::isDedicated() const {
   return deviceProperties.deviceType & VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
 }
 
-} // namespace flex
+} // namespace cbl::gfx

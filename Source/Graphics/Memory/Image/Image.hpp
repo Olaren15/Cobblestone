@@ -22,6 +22,5 @@ public:
   static VkFormat findSupportedFormat(GPU const &gpu, std::vector<VkFormat> const &formatChoices,
                                       VkImageTiling const &requestedTiling,
                                       VkFormatFeatureFlags const &requestedFeatures);
-  static bool hasStencilComponent(VkFormat format);
 };
 } // namespace flex

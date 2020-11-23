@@ -6,7 +6,7 @@
 
 #include "Graphics/GPU/GPU.hpp"
 #include "Graphics/Memory/Image/Image.hpp"
-#include "Graphics/Render/Window/RenderWindow.hpp"
+#include "Graphics/Window/Window.hpp"
 
 namespace cbl::gfx {
 
@@ -33,7 +33,7 @@ private:
   chooseSwapchainPresentMode(std::vector<VkPresentModeKHR> const &availablePresentModes,
                              bool const &vsync);
   [[nodiscard]] static VkExtent2D getSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                                     RenderWindow const &window);
+                                                     Window const &window);
 
   [[nodiscard]] static VkSurfaceFormatKHR
   getSupportedSwapchainSurfaceFormat(SwapchainSupportDetails const &swapchainSupportDetails);
@@ -41,7 +41,7 @@ private:
 
   void createRenderPass();
 
-  void createSwapchain(RenderWindow const &window);
+  void createSwapchain(Window const &window);
   void cleanSwapchain();
 
 public:
@@ -54,12 +54,12 @@ public:
 
   Swapchain() = delete;
   Swapchain(Swapchain const &swapchain) = delete;
-  Swapchain(GPU const &gpu, RenderWindow const &window, mem::MemoryManager &memoryManager);
+  Swapchain(GPU const &gpu, Window const &window, mem::MemoryManager &memoryManager);
   ~Swapchain();
 
-  void handleFrameBufferResize(RenderWindow const &window);
+  void handleFrameBufferResize(Window const &window);
 
   [[nodiscard]] float getAspectRatio() const;
-  [[nodiscard]] bool isNotZeroPixels(RenderWindow const &window) const;
+  [[nodiscard]] bool isValid(Window const &window) const;
 };
 } // namespace cbl::gfx

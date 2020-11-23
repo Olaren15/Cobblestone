@@ -39,13 +39,11 @@ public:
   CommandBufferRecorder &pushCameraView(glm::mat4 const &view, BaseShader const &shader);
   CommandBufferRecorder &pushModelPosition(glm::mat4 const &position, BaseShader const &shader);
   CommandBufferRecorder &bindGraphicsShader(BaseShader const &shader);
-  CommandBufferRecorder &drawMesh(Mesh const &mesh);
   CommandBufferRecorder &bindMaterial(BaseShader const &shader, BaseMaterial const &material);
-  CommandBufferRecorder &drawMeshes(std::vector<Mesh> const &meshes);
+  CommandBufferRecorder &drawMesh(Mesh const &mesh);
   CommandBufferRecorder &endRenderPass();
 
   CommandBufferRecorder &end();
-  void submit(VkQueue const &submitQueue);
-  void submitWithFence(VkQueue const &submitQueue, VkFence const &fence);
+  void submit(VkQueue const &submitQueue, VkFence const &fence);
 };
 } // namespace cbl::gfx

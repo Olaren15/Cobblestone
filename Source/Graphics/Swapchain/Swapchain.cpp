@@ -38,7 +38,7 @@ bool SwapchainSupportDetails::isUsable() const {
   return !(formats.empty() || presentModes.empty());
 }
 
-Swapchain::Swapchain(const GPU &gpu, const RenderWindow &window, mem::MemoryManager &memoryManager)
+Swapchain::Swapchain(const GPU &gpu, const Window &window, mem::MemoryManager &memoryManager)
     : mMemoryManager{memoryManager}, mGPU{gpu} {
   swapchainSupportDetails = SwapchainSupportDetails{mGPU.physicalDevice, mGPU.renderSurface};
   createRenderPass();
@@ -73,7 +73,7 @@ Swapchain::chooseSwapchainPresentMode(std::vector<VkPresentModeKHR> const &avail
 }
 
 VkExtent2D Swapchain::getSwapchainExtent(VkSurfaceCapabilitiesKHR const &capabilities,
-                                         RenderWindow const &window) {
+                                         Window const &window) {
   if (capabilities.currentExtent.width != UINT32_MAX) {
     // Cannot decide on the extent size
     return capabilities.currentExtent;
@@ -171,7 +171,7 @@ void Swapchain::createRenderPass() {
   validateVkResult(vkCreateRenderPass(mGPU.device, &renderPassCreateInfo, nullptr, &renderPass));
 }
 
-void Swapchain::createSwapchain(RenderWindow const &window) {
+void Swapchain::createSwapchain(Window const &window) {
 
   VkSurfaceFormatKHR const surfaceFormat =
       getSupportedSwapchainSurfaceFormat(swapchainSupportDetails);
@@ -189,8 +189,8 @@ void Swapchain::createSwapchain(RenderWindow const &window) {
                      swapchainSupportDetails.capabilities.maxImageCount)
           : swapchainSupportDetails.capabilities.minImageCount + 1;
 
-  std::set<uint32_t> uniqueQueueFamilyIndices{mGPU.queueFamilyIndices.graphics.value(),
-                                              mGPU.queueFamilyIndices.present.value()};
+  std::set<uint32_t> uniqueQueueFamilyIndices{mGPU.queueFamilyIndices.graphics,
+                                              mGPU.queueFamilyIndices.present};
   std::vector<uint32_t> queueFamiliesIndices{uniqueQueueFamilyIndices.begin(),
                                              uniqueQueueFamilyIndices.end()};
 
@@ -269,7 +269,7 @@ void Swapchain::cleanSwapchain() {
   mMemoryManager.destroyImage(depthBufferImage);
 }
 
-void Swapchain::handleFrameBufferResize(RenderWindow const &window) {
+void Swapchain::handleFrameBufferResize(Window const &window) {
   cleanSwapchain();
 
   swapchainSupportDetails = SwapchainSupportDetails{mGPU.physicalDevice, mGPU.renderSurface};
@@ -285,7 +285,7 @@ float Swapchain::getAspectRatio() const {
          static_cast<float>(frameBufferImages[0].extent.height);
 }
 
-bool Swapchain::isNotZeroPixels(RenderWindow const &window) const {
+bool Swapchain::isValid(Window const &window) const {
 
   VkExtent2D extent = getSwapchainExtent(swapchainSupportDetails.capabilities, window);
 

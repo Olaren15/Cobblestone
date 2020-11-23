@@ -12,7 +12,7 @@ FIND_PACKAGE(glm REQUIRED)
 ADD_EXECUTABLE(
 		${PROJECT_NAME}
 
-		Source/Core/Input/InputHandler.cpp
+		Source/Core/Input/Input.cpp
 		Source/Core/Time/Time.cpp
 		Source/Core/World/World.cpp
 
@@ -24,6 +24,7 @@ ADD_EXECUTABLE(
 
 		Source/Graphics/Vertex/Vertex.cpp
 		Source/Graphics/CommandBufferRecorder/CommandBufferRecorder.cpp
+		Source/Graphics/Engine/Engine.cpp
 		Source/Graphics/Frame/Frame.cpp
 		Source/Graphics/GPU/GPU.cpp
 		Source/Graphics/Materials/ChunkMaterial/ChunkMaterial.cpp
@@ -33,11 +34,10 @@ ADD_EXECUTABLE(
 		Source/Graphics/Memory/MemoryManager/MemoryManager.cpp
 		Source/Graphics/Memory/Texture/Texture.cpp
 		Source/Graphics/Mesh/Mesh.cpp
-		Source/Graphics/Render/Engine/RendererEngine.cpp
-		Source/Graphics/Render/Window/RenderWindow.cpp
 		Source/Graphics/Shaders/DefaultShader/DefaultShader.cpp
 		Source/Graphics/Shaders/BaseShader.cpp
 		Source/Graphics/Swapchain/Swapchain.cpp
+		Source/Graphics/Window/Window.cpp
 		Source/Graphics/Utils/VulkanHelpers.cpp
 
 		Source/Math/Vector/Vector2/Vector2.cpp

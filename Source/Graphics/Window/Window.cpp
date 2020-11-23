@@ -1,42 +1,25 @@
-﻿#include "RenderWindow.hpp"
+﻿#include "Window.hpp"
 
 #include <stdexcept>
 
 #include <SDL2/SDL_vulkan.h>
 
-#include "Core/Input/InputHandler.hpp"
+#include "Core/Input/Input.hpp"
 
 namespace cbl::gfx {
-RenderWindow::RenderWindow() {
-  initSDL();
-  createSDLWindow(1280, 720, false);
-}
-
-RenderWindow::RenderWindow(int const &width, int const &height, bool const &fullscreen) {
-  initSDL();
-  createSDLWindow(width, height, fullscreen);
-}
-
-RenderWindow::~RenderWindow() {
-  SDL_DestroyWindow(mSDLWindow);
-  SDL_Quit();
-}
-
-void RenderWindow::initSDL() {
+Window::Window(int const &width, int const &height, bool const &fullscreen) {
   SDL_SetMainReady();
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
     throw std::runtime_error(std::string("Failed to initialize SDL ") + SDL_GetError());
   }
-}
 
-void RenderWindow::createSDLWindow(int const &width, int const &height, bool const &fullScreen) {
   uint32_t windowFlags = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
 
-  if (fullScreen) {
+  if (fullscreen) {
     windowFlags |= SDL_WINDOW_FULLSCREEN;
   }
 
-  mSDLWindow = SDL_CreateWindow("Flex Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+  mSDLWindow = SDL_CreateWindow("Cobblestone", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                 width, height, windowFlags);
 
   if (mSDLWindow == nullptr) {
@@ -44,7 +27,12 @@ void RenderWindow::createSDLWindow(int const &width, int const &height, bool con
   }
 }
 
-void RenderWindow::update() {
+Window::~Window() {
+  SDL_DestroyWindow(mSDLWindow);
+  SDL_Quit();
+}
+
+void Window::update() {
   SDL_Event event{};
   std::vector<SDL_Event> events;
   while (SDL_PollEvent(&event)) {
@@ -58,12 +46,12 @@ void RenderWindow::update() {
     }
   }
 
-  Input.updateEvents(events);
+  Input::updateEvents(events);
 }
 
-bool RenderWindow::isOpen() const { return mIsOpen; }
+bool Window::isOpen() const { return mIsOpen; }
 
-std::vector<char const *> RenderWindow::getRequiredVulkanExtensions() const {
+std::vector<char const *> Window::getRequiredVulkanExtensions() const {
   unsigned int count = 0;
 
   if (!SDL_Vulkan_GetInstanceExtensions(mSDLWindow, &count, nullptr)) {
@@ -79,7 +67,7 @@ std::vector<char const *> RenderWindow::getRequiredVulkanExtensions() const {
   return extensions;
 }
 
-VkSurfaceKHR RenderWindow::getDrawableVulkanSurface(VkInstance const &vulkanInstance) const {
+VkSurfaceKHR Window::getDrawableVulkanSurface(VkInstance const &vulkanInstance) const {
   VkSurfaceKHR surface{};
 
   if (SDL_Vulkan_CreateSurface(mSDLWindow, vulkanInstance, &surface) != SDL_TRUE) {
@@ -89,7 +77,7 @@ VkSurfaceKHR RenderWindow::getDrawableVulkanSurface(VkInstance const &vulkanInst
   return surface;
 }
 
-VkExtent2D RenderWindow::getDrawableVulkanSurfaceSize() const {
+VkExtent2D Window::getDrawableVulkanSurfaceSize() const {
   int width = 0;
   int height = 0;
   SDL_Vulkan_GetDrawableSize(mSDLWindow, &width, &height);

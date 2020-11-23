@@ -11,13 +11,12 @@
 #include "Graphics/Memory/Buffer/Buffer.hpp"
 #include "Graphics/Memory/MemoryManager/MemoryManager.hpp"
 #include "Graphics/Mesh/Mesh.hpp"
-#include "Graphics/Render/Window/RenderWindow.hpp"
 #include "Graphics/Swapchain/Swapchain.hpp"
+#include "Graphics/Window/Window.hpp"
 
 namespace cbl::gfx {
-enum struct QueueFamily;
 
-struct RendererEngine {
+struct Engine {
 private:
   struct {
     World *currentScene = nullptr;
@@ -27,7 +26,7 @@ private:
     bool shouldRender = true;
   } mState;
 
-  RenderWindow mWindow;
+  Window mWindow;
 
   GPU mGPU;
   mem::MemoryManager mMemoryManager;
@@ -38,18 +37,17 @@ private:
   std::array<Frame, mMaxFramesInFlight> mFrames;
 
   bool acquireNextFrame();
-  void present();
-
   void drawScene();
 
 public:
-  RendererEngine();
-  RendererEngine(RendererEngine const &) = delete;
+  Engine();
+  Engine(Engine const &) = delete;
 
-  void operator=(RendererEngine const &) = delete;
-  void operator=(RendererEngine) = delete;
+  void operator=(Engine const &) = delete;
+  void operator=(Engine) = delete;
 
-  void update();
+  void run();
+
   [[nodiscard]] bool isRunning();
 
   void loadWorld(World &scene);

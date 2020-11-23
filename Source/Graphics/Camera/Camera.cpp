@@ -4,23 +4,25 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Core/Input/InputHandler.hpp"
+#include "Core/Input/Input.hpp"
 #include "Core/Time/Time.hpp"
 
 namespace cbl::gfx {
 Camera::Camera() {
-  Input.grabCursor();
+  Input::grabCursor();
   updateVectors();
 }
 
 Camera::Camera(glm::vec3 const &position, glm::vec3 const &up, float const &yaw, float const &pitch)
-    : mPosition(position), mUp(up), mYaw(yaw), mPitch(pitch) {
-  Input.grabCursor();
-  updateVectors();
+    : Camera() {
+  mPosition = position;
+  mUp = up;
+  mYaw = yaw;
+  mPitch = pitch;
 }
 
 void Camera::handleMouse() {
-  Vector2<int> currentMousePosition = Input.getMouseMovement();
+  Vector2<int> currentMousePosition = Input::getMouseMovement();
   mYaw += currentMousePosition.x * mMouseSensitivity;
   mPitch -= currentMousePosition.y * mMouseSensitivity;
   mPitch = std::clamp(mPitch, -89.0f, 89.0f);
@@ -28,19 +30,19 @@ void Camera::handleMouse() {
 
 void Camera::handleKeyboard() {
   float velocity = Time::deltaSeconds() * mMovementSpeed;
-  if (Input.keyPressed("Left Shift"))
+  if (Input::keyPressed("Left Shift"))
     velocity *= 3.0f;
-  if (Input.keyPressed("w"))
+  if (Input::keyPressed("w"))
     mPosition += mFront * velocity;
-  if (Input.keyPressed("s"))
+  if (Input::keyPressed("s"))
     mPosition -= mFront * velocity;
-  if (Input.keyPressed("a"))
+  if (Input::keyPressed("a"))
     mPosition -= mRight * velocity;
-  if (Input.keyPressed("d"))
+  if (Input::keyPressed("d"))
     mPosition += mRight * velocity;
-  if (Input.keyPressed("q"))
+  if (Input::keyPressed("q"))
     mPosition -= mUp * velocity;
-  if (Input.keyPressed("e"))
+  if (Input::keyPressed("e"))
     mPosition += mUp * velocity;
 }
 
@@ -56,15 +58,15 @@ void Camera::updateVectors() {
 
 void Camera::update() {
   if (mControlsEnabled) {
-    if (Input.keyPressed("Escape")) {
-      Input.releaseCursor();
+    if (Input::keyPressed("Escape")) {
+      Input::releaseCursor();
       mControlsEnabled = false;
     }
     handleMouse();
     handleKeyboard();
   } else {
-    if (Input.mouseLeftClicked()) {
-      Input.grabCursor();
+    if (Input::mouseLeftClicked()) {
+      Input::grabCursor();
       mControlsEnabled = true;
     }
   }
@@ -80,4 +82,4 @@ glm::mat4 Camera::getViewMatrix(float const aspectRatio) const {
 
   return projection * view;
 }
-} // namespace flex
+} // namespace cbl::gfx

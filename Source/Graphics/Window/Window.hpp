@@ -9,22 +9,18 @@
 #include "Math/Vector/Vector2/Vector2.hpp"
 
 namespace cbl::gfx {
-struct RenderWindow {
+struct Window {
 private:
   SDL_Window *mSDLWindow{};
   bool mIsOpen = true;
 
-  static void initSDL();
-  void createSDLWindow(int const &width, int const &height, bool const &fullScreen);
-
 public:
-  RenderWindow();
-  RenderWindow(RenderWindow const &) = delete;
-  RenderWindow(int const &width, int const &height, bool const &fullscreen);
-  ~RenderWindow();
+  Window(Window const &) = delete;
+  explicit Window(int const &width = 1280, int const &height = 720, bool const &fullscreen = false);
+  ~Window();
 
-  void operator=(RenderWindow const &) = delete;
-  void operator=(RenderWindow) = delete;
+  void operator=(Window const &) = delete;
+  void operator=(Window) = delete;
 
   void update();
 

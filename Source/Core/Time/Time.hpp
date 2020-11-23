@@ -2,11 +2,16 @@
 
 #include <cstdint>
 
+#include "Graphics/Engine/Engine.hpp"
+
 namespace cbl {
 struct Time {
 private:
   static uint32_t mLastTick;
   static float mDeltaSeconds;
+
+  static void tick();
+  friend struct gfx::Engine;
 
 public:
   Time() = delete;
@@ -14,7 +19,6 @@ public:
   Time(Time const &) = delete;
   ~Time() = delete;
 
-  static void tick();
   static float deltaSeconds();
 };
-} // namespace flex
+} // namespace cbl
