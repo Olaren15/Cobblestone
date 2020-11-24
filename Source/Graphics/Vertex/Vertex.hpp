@@ -8,10 +8,9 @@
 namespace cbl::gfx {
 struct Vertex {
   glm::vec3 position;
-  glm::vec3 color;
-  glm::vec2 uv;
+  glm::vec3 uvw;
 
   static VkVertexInputBindingDescription getVulkanBindingDescription();
-  static std::array<VkVertexInputAttributeDescription, 3> getVulkanAttributeDescriptions();
+  static std::array<VkVertexInputAttributeDescription, 2> getVulkanAttributeDescriptions();
 };
 } // namespace cbl::gfx

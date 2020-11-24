@@ -18,9 +18,11 @@ public:
 
   VkFormat format{};
   VkExtent2D extent{};
+  VkImageAspectFlags aspect{};
+  uint32_t layers{1};
 
   static VkFormat findSupportedFormat(GPU const &gpu, std::vector<VkFormat> const &formatChoices,
                                       VkImageTiling const &requestedTiling,
                                       VkFormatFeatureFlags const &requestedFeatures);
 };
-} // namespace flex
+} // namespace cbl::gfx::mem

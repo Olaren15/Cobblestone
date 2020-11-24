@@ -34,7 +34,7 @@ ADD_EXECUTABLE(
 		Source/Graphics/Memory/MemoryManager/MemoryManager.cpp
 		Source/Graphics/Memory/Texture/Texture.cpp
 		Source/Graphics/Mesh/Mesh.cpp
-		Source/Graphics/Shaders/DefaultShader/DefaultShader.cpp
+		Source/Graphics/Shaders/ChunkShader/ChunkShader.cpp
 		Source/Graphics/Shaders/BaseShader.cpp
 		Source/Graphics/Swapchain/Swapchain.cpp
 		Source/Graphics/Window/Window.cpp

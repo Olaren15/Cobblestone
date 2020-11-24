@@ -35,13 +35,16 @@ public:
   void generateMeshBuffer(Mesh &mesh);
   void updateMeshBuffer(Mesh &mesh);
 
-  [[nodiscard]] Texture createTexture(std::filesystem::path const &texturePath);
+  [[nodiscard]] Texture createTexture(std::vector<std::filesystem::path> const &texturePaths,
+                                      bool const &arrayTexture);
   void destroyTexture(Texture &texture);
 
-  [[nodiscard]] Image createImage(VkExtent2D const &extent, VkFormat const &format,
-                                  VkImageTiling const &tiling, VkImageUsageFlags const &usage,
-                                  VkImageAspectFlags const &imageAspect);
-  void createImageView(Image &image, VkImageAspectFlags const &imageAspect) const;
+  [[nodiscard]] Image createImage(VkExtent2D const &extent, uint32_t const &layers,
+                                  VkFormat const &format, VkImageTiling const &tiling,
+                                  VkImageUsageFlags const &usage,
+                                  VkImageAspectFlags const &imageAspect,
+                                  VkImageViewType const &viewType);
+  void createImageView(Image &image, VkImageViewType const &viewType) const;
   void destroyImage(Image &image);
 };
-} // namespace flex
+} // namespace cbl::gfx::mem

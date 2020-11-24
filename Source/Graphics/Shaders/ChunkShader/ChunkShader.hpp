@@ -3,11 +3,11 @@
 #include "Graphics/Shaders/BaseShader.hpp"
 
 namespace cbl::gfx {
-struct DefaultShader : public BaseShader {
+struct ChunkShader : public BaseShader {
 private:
 public:
-  DefaultShader() = delete;
-  DefaultShader(GPU const &gpu, VkRenderPass const &renderPass);
+  ChunkShader() = delete;
+  ChunkShader(GPU const &gpu, VkRenderPass const &renderPass);
 
   [[nodiscard]] std::string getName() override;
 };

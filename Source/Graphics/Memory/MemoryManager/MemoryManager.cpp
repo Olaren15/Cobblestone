@@ -129,30 +129,46 @@ void MemoryManager::updateMeshBuffer(Mesh &mesh) {
   thread.detach();
 }
 
-Texture MemoryManager::createTexture(std::filesystem::path const &texturePath) {
-  int width, height, channels;
-  stbi_uc *pixels =
-      stbi_load(texturePath.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
-  if (pixels == nullptr) {
-    throw std::runtime_error("Failed to load image");
+Texture MemoryManager::createTexture(std::vector<std::filesystem::path> const &texturePaths,
+                                     bool const &arrayTexture) {
+  std::vector<stbi_uc *> imagesData;
+  imagesData.reserve(texturePaths.size());
+
+  int maxWidth{}, maxHeight{}, maxChannels{};
+
+  for (std::filesystem::path const &path : texturePaths) {
+    int width, height, channels;
+    stbi_uc *pixels = stbi_load(path.string().c_str(), &width, &height, &channels, STBI_rgb_alpha);
+
+    if (pixels == nullptr) {
+      throw std::runtime_error("Failed to load image : " + path.string());
+    }
+
+    maxWidth = std::max(width, maxWidth);
+    maxHeight = std::max(height, maxHeight);
+    maxChannels = std::max(channels, maxChannels);
+
+    imagesData.push_back(pixels);
   }
 
-  VkDeviceSize imageSize = width * height * channels;
+  VkDeviceSize imageSize = maxWidth * maxHeight * maxChannels;
+  VkDeviceSize bufferSize = imageSize * imagesData.size();
 
-  Texture texture{};
-  Buffer stagingBuffer = createStagingBuffer(imageSize);
+  Buffer stagingBuffer = createStagingBuffer(bufferSize);
 
   void *data;
   vmaMapMemory(mAllocator, stagingBuffer.allocation, &data);
-  memcpy(data, pixels, static_cast<size_t>(imageSize));
+  for (size_t i = 0, offset = 0; i < imagesData.size(); i++, offset += imageSize) {
+    memcpy(static_cast<char *>(data) + offset, imagesData[i], imageSize);
+  }
   vmaUnmapMemory(mAllocator, stagingBuffer.allocation);
 
-  stbi_image_free(pixels);
-
-  texture.image = createImage({static_cast<uint32_t>(width), static_cast<uint32_t>(height)},
-                              VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
-                              VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                              VK_IMAGE_ASPECT_COLOR_BIT);
+  Texture texture{};
+  texture.image = createImage(
+      {static_cast<uint32_t>(maxWidth), static_cast<uint32_t>(maxHeight)},
+      static_cast<uint32_t>(imagesData.size()), VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_IMAGE_ASPECT_COLOR_BIT,
+      arrayTexture ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D);
 
   VkFenceCreateInfo fenceCreateInfo{};
   fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -183,8 +199,8 @@ Texture MemoryManager::createTexture(std::filesystem::path const &texturePath) {
   samplerCreateInfo.maxAnisotropy = 16;
   samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
   samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
-  samplerCreateInfo.compareEnable = VK_FALSE;
-  samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+  samplerCreateInfo.compareEnable = VK_TRUE;
+  samplerCreateInfo.compareOp = VK_COMPARE_OP_LESS;
   samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   samplerCreateInfo.mipLodBias = 0.0f;
   samplerCreateInfo.minLod = 0.0f;
@@ -200,12 +216,16 @@ void MemoryManager::destroyTexture(Texture &texture) {
   destroyImage(texture.image);
 }
 
-Image MemoryManager::createImage(VkExtent2D const &extent, VkFormat const &format,
-                                 VkImageTiling const &tiling, VkImageUsageFlags const &usage,
-                                 VkImageAspectFlags const &imageAspect) {
+Image MemoryManager::createImage(VkExtent2D const &extent, uint32_t const &layers,
+                                 VkFormat const &format, VkImageTiling const &tiling,
+                                 VkImageUsageFlags const &usage,
+                                 VkImageAspectFlags const &imageAspect,
+                                 VkImageViewType const &viewType) {
   Image image{};
   image.format = format;
   image.extent = extent;
+  image.layers = layers;
+  image.aspect = imageAspect;
 
   // image memory
   VkImageCreateInfo imageCreateInfo{};
@@ -215,7 +235,7 @@ Image MemoryManager::createImage(VkExtent2D const &extent, VkFormat const &forma
   imageCreateInfo.extent.height = extent.height;
   imageCreateInfo.extent.depth = 1;
   imageCreateInfo.mipLevels = 1;
-  imageCreateInfo.arrayLayers = 1;
+  imageCreateInfo.arrayLayers = layers;
   imageCreateInfo.format = format;
   imageCreateInfo.tiling = tiling;
   imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -229,7 +249,7 @@ Image MemoryManager::createImage(VkExtent2D const &extent, VkFormat const &forma
   validateVkResult(vmaCreateImage(mAllocator, &imageCreateInfo, &allocationCreateInfo, &image.image,
                                   &image.allocation, nullptr));
 
-  createImageView(image, imageAspect);
+  createImageView(image, viewType);
 
   return image;
 }
@@ -239,13 +259,14 @@ void MemoryManager::destroyImage(Image &image) {
   vmaDestroyImage(mAllocator, image.image, image.allocation);
 }
 
-void MemoryManager::createImageView(Image &image, VkImageAspectFlags const &imageAspect) const {
+void MemoryManager::createImageView(Image &image, VkImageViewType const &viewType) const {
+
   VkImageSubresourceRange subresourceRange{};
-  subresourceRange.aspectMask = imageAspect;
+  subresourceRange.aspectMask = image.aspect;
   subresourceRange.baseMipLevel = 0;
   subresourceRange.levelCount = 1;
   subresourceRange.baseArrayLayer = 0;
-  subresourceRange.layerCount = 1;
+  subresourceRange.layerCount = image.layers;
 
   VkComponentMapping componentMapping{};
   componentMapping.r = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -256,12 +277,11 @@ void MemoryManager::createImageView(Image &image, VkImageAspectFlags const &imag
   VkImageViewCreateInfo imageViewCreateInfo{};
   imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   imageViewCreateInfo.image = image.image;
-  imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  imageViewCreateInfo.viewType = viewType;
   imageViewCreateInfo.format = image.format;
   imageViewCreateInfo.components = componentMapping;
   imageViewCreateInfo.subresourceRange = subresourceRange;
 
   validateVkResult(vkCreateImageView(mGPU.device, &imageViewCreateInfo, nullptr, &image.imageView));
 }
-
 } // namespace cbl::gfx::mem

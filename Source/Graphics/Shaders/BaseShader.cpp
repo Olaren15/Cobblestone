@@ -60,7 +60,7 @@ void BaseShader::createDefaultPipeline(VkRenderPass const &renderPass) {
   shaderStages[1].pName = "main";
 
   VkVertexInputBindingDescription bindingDescription = Vertex::getVulkanBindingDescription();
-  std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions =
+  std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions =
       Vertex::getVulkanAttributeDescriptions();
 
   VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo{};

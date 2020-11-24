@@ -70,11 +70,11 @@ CommandBufferRecorder &CommandBufferRecorder::transitionImageLayout(
   barrier.srcQueueFamilyIndex = queueFamilyIndices.transfer;
   barrier.dstQueueFamilyIndex = queueFamilyIndices.transfer;
   barrier.image = image.image;
-  barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier.subresourceRange.aspectMask = image.aspect;
   barrier.subresourceRange.baseMipLevel = 0;
   barrier.subresourceRange.levelCount = 1;
   barrier.subresourceRange.baseArrayLayer = 0;
-  barrier.subresourceRange.layerCount = 1;
+  barrier.subresourceRange.layerCount = image.layers;
 
   VkPipelineStageFlags sourceStage;
   VkPipelineStageFlags destinationStage;
@@ -108,10 +108,10 @@ CommandBufferRecorder &CommandBufferRecorder::copyBufferToImage(mem::Buffer cons
   region.bufferOffset = 0;
   region.bufferRowLength = 0;
   region.bufferImageHeight = 0;
-  region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.imageSubresource.aspectMask = dst.aspect;
   region.imageSubresource.mipLevel = 0;
   region.imageSubresource.baseArrayLayer = 0;
-  region.imageSubresource.layerCount = 1;
+  region.imageSubresource.layerCount = dst.layers;
   region.imageOffset = {0, 0, 0};
   region.imageExtent = {dst.extent.width, dst.extent.height, 1};
 

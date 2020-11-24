@@ -7,7 +7,8 @@ namespace cbl::gfx {
 ChunkMaterial::ChunkMaterial(GPU const &gpu, mem::MemoryManager &memoryManager,
                              BaseShader const *shader)
     : BaseMaterial(gpu, memoryManager, shader) {
-  texture = mMemoryManager.createTexture("Assets/grass_block_side.png");
+  texture = mMemoryManager.createTexture(
+      {"Assets/grass_block_side.png", "Assets/grass_block_top.png", "Assets/dirt.png"}, true);
 
   VkDescriptorSet textureDescriptor{};
 
@@ -26,8 +27,8 @@ ChunkMaterial::ChunkMaterial(GPU const &gpu, mem::MemoryManager &memoryManager,
   VkWriteDescriptorSet writeDescriptorSet{};
   writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorSet.dstSet = textureDescriptor;
-  writeDescriptorSet.dstBinding = 1;
   writeDescriptorSet.dstArrayElement = 0;
+  writeDescriptorSet.dstBinding = 1;
   writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   writeDescriptorSet.descriptorCount = 1;
   writeDescriptorSet.pImageInfo = &imageInfo;

@@ -228,12 +228,14 @@ void Swapchain::createSwapchain(Window const &window) {
     frameBufferImages[i].image = swapChainImages[i];
     frameBufferImages[i].format = format;
     frameBufferImages[i].extent = extent;
-    mMemoryManager.createImageView(frameBufferImages[i], VK_IMAGE_ASPECT_COLOR_BIT);
+    frameBufferImages[i].aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    mMemoryManager.createImageView(frameBufferImages[i], VK_IMAGE_VIEW_TYPE_2D);
   }
 
   depthBufferImage = mMemoryManager.createImage(
-      frameBufferImages[0].extent, getSupportedDepthBufferFormat(mGPU), VK_IMAGE_TILING_OPTIMAL,
-      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+      frameBufferImages[0].extent, 1, getSupportedDepthBufferFormat(mGPU), VK_IMAGE_TILING_OPTIMAL,
+      VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT,
+      VK_IMAGE_VIEW_TYPE_2D);
 
   framebuffers.resize(frameBufferImages.size());
 

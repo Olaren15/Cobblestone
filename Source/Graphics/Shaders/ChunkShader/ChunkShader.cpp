@@ -1,10 +1,10 @@
-#include "DefaultShader.hpp"
+#include "ChunkShader.hpp"
 
 #include "Graphics/Utils/VulkanHelpers.hpp"
 
 namespace cbl::gfx {
 
-DefaultShader::DefaultShader(GPU const &gpu, VkRenderPass const &renderPass)
+ChunkShader::ChunkShader(GPU const &gpu, VkRenderPass const &renderPass)
     : BaseShader(gpu, renderPass) {
 
   VkDescriptorSetLayoutBinding samplerBinding{};
@@ -49,6 +49,6 @@ DefaultShader::DefaultShader(GPU const &gpu, VkRenderPass const &renderPass)
   createDefaultPipeline(renderPass);
 }
 
-std::string DefaultShader::getName() { return "Default"; }
+std::string ChunkShader::getName() { return "Chunk"; }
 
 } // namespace cbl::gfx

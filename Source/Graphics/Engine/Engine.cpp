@@ -3,7 +3,7 @@
 #include "Core/Time/Time.hpp"
 #include "Graphics/CommandBufferRecorder/CommandBufferRecorder.hpp"
 #include "Graphics/Materials/ChunkMaterial/ChunkMaterial.hpp"
-#include "Graphics/Shaders/DefaultShader/DefaultShader.hpp"
+#include "Graphics/Shaders/ChunkShader/ChunkShader.hpp"
 #include "Graphics/Utils/VulkanHelpers.hpp"
 
 namespace cbl::gfx {
@@ -133,7 +133,7 @@ void Engine::loadWorld(World &scene) {
     }
   }
 
-  mState.currentScene->shaders.push_back(new DefaultShader{mGPU, mSwapchain.renderPass});
+  mState.currentScene->shaders.push_back(new ChunkShader{mGPU, mSwapchain.renderPass});
   mState.currentScene->materials.push_back(
       new ChunkMaterial{mGPU, mMemoryManager, mState.currentScene->shaders[0]});
 }
