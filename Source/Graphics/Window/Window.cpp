@@ -4,6 +4,8 @@
 
 #include <SDL2/SDL_vulkan.h>
 
+#include "External/imgui/backends/imgui_impl_sdl.h"
+
 #include "Core/Input/Input.hpp"
 
 namespace cbl::gfx {
@@ -32,11 +34,14 @@ Window::~Window() {
   SDL_Quit();
 }
 
+void Window::initImgui() { ImGui_ImplSDL2_InitForVulkan(mSDLWindow); }
+
 void Window::update() {
   SDL_Event event{};
   std::vector<SDL_Event> events;
   while (SDL_PollEvent(&event)) {
     events.push_back(event);
+    ImGui_ImplSDL2_ProcessEvent(&event);
     switch (event.type) {
     case SDL_QUIT:
       mIsOpen = false;
@@ -45,6 +50,8 @@ void Window::update() {
       break;
     }
   }
+
+  ImGui_ImplSDL2_NewFrame(mSDLWindow);
 
   Input::updateEvents(events);
 }

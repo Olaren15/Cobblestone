@@ -4,6 +4,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "External/imgui/imgui.h"
+
 #include "Core/Input/Input.hpp"
 #include "Core/Time/Time.hpp"
 

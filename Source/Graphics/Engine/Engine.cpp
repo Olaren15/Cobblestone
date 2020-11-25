@@ -1,5 +1,8 @@
 ﻿#include "Engine.hpp"
 
+#include "External/imgui/backends/imgui_impl_vulkan.h"
+#include "External/imgui/imgui.h"
+
 #include "Core/Time/Time.hpp"
 #include "Graphics/CommandBufferRecorder/CommandBufferRecorder.hpp"
 #include "Graphics/Materials/ChunkMaterial/ChunkMaterial.hpp"
@@ -12,6 +15,56 @@ Engine::Engine()
       mSwapchain{mGPU, mWindow, mMemoryManager}, mFrames{Frame{mGPU}, Frame{mGPU}} {
 
   mState.currentFrame = &mFrames[mState.currentFrameNumber];
+  initImgui();
+}
+
+Engine::~Engine() {
+  vkDestroyDescriptorPool(mGPU.device, imguiPool, nullptr);
+  ImGui_ImplVulkan_Shutdown();
+}
+
+void Engine::initImgui() {
+  // 1: create descriptor pool for IMGUI
+  VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                       {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                       {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                       {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                       {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                       {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                       {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+
+  VkDescriptorPoolCreateInfo pool_info = {};
+  pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+  pool_info.maxSets = 1000;
+  pool_info.poolSizeCount = std::size(pool_sizes);
+  pool_info.pPoolSizes = pool_sizes;
+
+  validateVkResult(vkCreateDescriptorPool(mGPU.device, &pool_info, nullptr, &imguiPool));
+
+  // 2: initialize imgui library
+  ImGui::CreateContext();
+  mWindow.initImgui();
+
+  ImGui_ImplVulkan_InitInfo init_info = {};
+  init_info.Instance = mGPU.instance;
+  init_info.PhysicalDevice = mGPU.physicalDevice;
+  init_info.Device = mGPU.device;
+  init_info.Queue = mGPU.graphicsQueue;
+  init_info.DescriptorPool = imguiPool;
+  init_info.MinImageCount = static_cast<uint32_t>(mSwapchain.frameBufferImages.size());
+  init_info.ImageCount = static_cast<uint32_t>(mSwapchain.frameBufferImages.size());
+
+  ImGui_ImplVulkan_Init(&init_info, mSwapchain.renderPass);
+
+  CommandBufferRecorder recorder{mState.currentFrame->commandBuffer};
+  recorder.beginOneTime();
+  ImGui_ImplVulkan_CreateFontsTexture(mState.currentFrame->commandBuffer);
+  recorder.end().submit(mGPU.graphicsQueue);
 }
 
 bool Engine::acquireNextFrame() {
@@ -43,6 +96,8 @@ void Engine::drawScene() {
     }
     return;
   }
+
+  ImGui::Render();
 
   VkRect2D renderArea;
   renderArea.offset = {0, 0};
@@ -80,6 +135,8 @@ void Engine::drawScene() {
     }
   }
 
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), mState.currentFrame->commandBuffer);
+
   recorder.endRenderPass().end();
 
   constexpr VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -112,7 +169,11 @@ void Engine::drawScene() {
 void Engine::run() {
   while (mWindow.isOpen()) {
     Time::tick();
+    ImGui_ImplVulkan_NewFrame();
     mWindow.update();
+    ImGui::NewFrame();
+    ImGui::ShowMetricsWindow();
+
     mState.currentScene->update();
     drawScene();
   }
@@ -161,5 +222,4 @@ void Engine::unloadWorld() {
 
   mState.currentScene = nullptr;
 }
-
 } // namespace cbl::gfx

@@ -213,8 +213,7 @@ CommandBufferRecorder &CommandBufferRecorder::end() {
   return *this;
 }
 
-void CommandBufferRecorder::submit(VkQueue const &submitQueue,
-                                   VkFence const &fence = VK_NULL_HANDLE) {
+void CommandBufferRecorder::submit(VkQueue const &submitQueue, VkFence const &fence) {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;

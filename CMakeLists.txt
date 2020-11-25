@@ -18,6 +18,12 @@ ADD_EXECUTABLE(
 
 		Source/External/stb_image/stb_image.cpp
 		Source/External/vk_mem_alloc/vk_mem_alloc.cpp
+		Source/External/imgui/imgui.cpp
+		Source/External/imgui/imgui_demo.cpp
+		Source/External/imgui/imgui_draw.cpp
+		Source/External/imgui/backends/imgui_impl_sdl.cpp
+		Source/External/imgui/backends/imgui_impl_vulkan.cpp
+		Source/External/imgui/imgui_widgets.cpp
 
 		Source/Game/Block/Block.cpp
 		Source/Game/Chunks/Generator/ChunkGenerator.cpp
@@ -60,4 +66,4 @@ TARGET_LINK_LIBRARIES(
 		pthread
 )
 
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source)
+TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Source ${CMAKE_CURRENT_SOURCE_DIR}/Source/External/imgui)

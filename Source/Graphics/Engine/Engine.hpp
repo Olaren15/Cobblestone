@@ -36,12 +36,16 @@ private:
   static constexpr unsigned int mMaxFramesInFlight = 2;
   std::array<Frame, mMaxFramesInFlight> mFrames;
 
+  VkDescriptorPool imguiPool;
+  void initImgui();
+
   bool acquireNextFrame();
   void drawScene();
 
 public:
   Engine();
   Engine(Engine const &) = delete;
+  ~Engine();
 
   void operator=(Engine const &) = delete;
   void operator=(Engine) = delete;

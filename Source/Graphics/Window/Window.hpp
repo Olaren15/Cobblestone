@@ -22,6 +22,8 @@ public:
   void operator=(Window const &) = delete;
   void operator=(Window) = delete;
 
+  void initImgui();
+
   void update();
 
   [[nodiscard]] bool isOpen() const;

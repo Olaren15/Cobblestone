@@ -44,6 +44,6 @@ public:
   CommandBufferRecorder &endRenderPass();
 
   CommandBufferRecorder &end();
-  void submit(VkQueue const &submitQueue, VkFence const &fence);
+  void submit(VkQueue const &submitQueue, VkFence const &fence = VK_NULL_HANDLE);
 };
 } // namespace cbl::gfx
