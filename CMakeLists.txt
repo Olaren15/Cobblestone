@@ -19,9 +19,12 @@ ADD_EXECUTABLE(
 		Source/External/stb_image/stb_image.cpp
 		Source/External/vk_mem_alloc/vk_mem_alloc.cpp
 
+		Source/Game/Block/Block.cpp
+		Source/Game/Chunks/Generator/ChunkGenerator.cpp
+		Source/Game/Chunks/Chunk.cpp
 		Source/Game/main.cpp
-		Source/Graphics/Camera/Camera.cpp
 
+		Source/Graphics/Camera/Camera.cpp
 		Source/Graphics/Vertex/Vertex.cpp
 		Source/Graphics/CommandBufferRecorder/CommandBufferRecorder.cpp
 		Source/Graphics/Engine/Engine.cpp
