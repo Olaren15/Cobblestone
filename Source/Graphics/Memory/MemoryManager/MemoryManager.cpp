@@ -123,10 +123,7 @@ void MemoryManager::updateMeshBuffer(Mesh &mesh) {
       .end()
       .submit(mGPU.transferQueue, bufferCopiedFence);
 
-  // wait until the transfer is complete before deleting the staging buffer
-  std::thread thread{&MemoryManager::destroyBufferOnFenceTrigger, this, stagingBuffer,
-                     bufferCopiedFence};
-  thread.detach();
+  destroyBufferOnFenceTrigger(stagingBuffer, bufferCopiedFence);
 }
 
 Texture MemoryManager::createTexture(std::vector<std::filesystem::path> const &texturePaths,

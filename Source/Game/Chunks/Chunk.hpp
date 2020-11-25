@@ -14,5 +14,6 @@ struct Chunk {
   std::array<std::array<std::array<Block::Type, BlocksZ>, BlocksY>, BlocksX> blocks{
       Block::Type::eAir};
   gfx::Mesh mesh{{}, {}};
+  glm::vec3 position{0};
 };
 } // namespace cbl

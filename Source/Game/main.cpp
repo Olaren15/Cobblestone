@@ -11,10 +11,12 @@ void setupScene(cbl::gfx::Engine &rendererEngine, cbl::World &scene) {}
 int main() {
   cbl::gfx::Engine renderEngine{};
 
-  cbl::Chunk chunk = cbl::ChunkGenerator::generate();
+  std::vector<cbl::Chunk> chunks = cbl::ChunkGenerator::generateMany(5, 5);
 
   cbl::World world;
-  world.meshes.push_back(chunk.mesh);
+  for (cbl::Chunk const &chunk : chunks) {
+    world.meshes.push_back(chunk.mesh);
+  }
 
   renderEngine.loadWorld(world);
 

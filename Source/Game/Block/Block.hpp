@@ -6,20 +6,14 @@
 #include "Graphics/Vertex/Vertex.hpp"
 
 namespace cbl {
+struct Chunk;
+
 struct Block {
+public:
   enum class Type { eAir, eGrass };
+  enum class Side { eFront, eRight, eBack, eLeft, eTop, eBottom };
 
   [[nodiscard]] static std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-  getFrontVertices(Type const &type);
-  [[nodiscard]] static std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-  getRightVertices(Type const &type);
-  [[nodiscard]] static std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-  getBackVertices(Type const &type);
-  [[nodiscard]] static std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-  getLeftVertices(Type const &type);
-  [[nodiscard]] static std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-  getTopVertices(Type const &type);
-  [[nodiscard]] static std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-  getBottomVertices(Type const &type);
+  getVertices(Side const &side, Chunk const &chunk, int const &x, int const &y, int const &z);
 };
 } // namespace cbl
