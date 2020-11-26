@@ -192,8 +192,8 @@ Texture MemoryManager::createTexture(std::vector<std::filesystem::path> const &t
   samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
   samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerCreateInfo.anisotropyEnable = VK_TRUE;
-  samplerCreateInfo.maxAnisotropy = 16;
+  samplerCreateInfo.anisotropyEnable = VK_FALSE;
+  samplerCreateInfo.maxAnisotropy = 0;
   samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
   samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
   samplerCreateInfo.compareEnable = VK_TRUE;
