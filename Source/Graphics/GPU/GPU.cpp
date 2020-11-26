@@ -23,7 +23,7 @@ QueueFamilyIndices::QueueFamilyIndices(VkPhysicalDevice const &physicalDevice,
                                            queueFamilyProperties.data());
 
   uint32_t i = 0;
-  bool transferFound, graphicsFound, presentFound;
+  bool transferFound{false}, graphicsFound{false}, presentFound{false};
 
   for (VkQueueFamilyProperties const &queueFamilyProperty : queueFamilyProperties) {
     if (queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT && !graphicsFound) {
