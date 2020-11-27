@@ -21,7 +21,7 @@ private:
   float mNearClip = 0.01f;
   float mFarClip = 500.0f;
 
-  float mMovementSpeed = 5.0f;
+  float mMovementSpeed = 10.0f;
   float mMouseSensitivity = 0.1f;
 
   bool mControlsEnabled = true;

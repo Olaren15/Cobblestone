@@ -24,6 +24,7 @@ ADD_EXECUTABLE(
 		Source/External/imgui/backends/imgui_impl_sdl.cpp
 		Source/External/imgui/backends/imgui_impl_vulkan.cpp
 		Source/External/imgui/imgui_widgets.cpp
+		Source/External/PerlinNoise/PerlinNoise.cpp
 
 		Source/Game/Block/Block.cpp
 		Source/Game/Chunks/Generator/ChunkGenerator.cpp
@@ -59,7 +60,7 @@ ELSE ()
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE glm)
 ENDIF ()
 
-if (NOT MSVC) 
+IF (NOT MSVC)
 	TARGET_LINK_LIBRARIES(${PROJECT_NAME} PRIVATE pthread)
 ENDIF ()
 

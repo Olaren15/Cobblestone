@@ -5,14 +5,12 @@
 namespace cbl {
 
 std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>>
-Block::getVertices(Block::Side const &side, Chunk const &chunk, int const &x, int const &y,
-                   int const &z) {
+Block::getVertices(Block::Side const &side, Type const &type) {
   std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>> sideData{{}, {}};
-  Type currentBlock = chunk.blocks[x][y][z];
 
   switch (side) {
   case Side::eFront:
-    switch (currentBlock) {
+    switch (type) {
     case Type::eAir:
       break;
     case Type::eGrass:
@@ -22,10 +20,17 @@ Block::getVertices(Block::Side const &side, Chunk const &chunk, int const &x, in
                    {{0.0f, 0.0f, 1.0f}, {0.0, 1.0f, 0.0f}},
                    {{1.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f}}}};
       break;
+    case Type::eDirt:
+      sideData = {{0, 1, 3, 3, 2, 0},
+                  {{{0.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 2.0f}},
+                   {{1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 2.0f}},
+                   {{0.0f, 0.0f, 1.0f}, {0.0, 1.0f, 2.0f}},
+                   {{1.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 2.0f}}}};
+      break;
     }
     break;
   case Side::eRight:
-    switch (currentBlock) {
+    switch (type) {
     case Type::eAir:
       break;
     case Type::eGrass:
@@ -35,10 +40,17 @@ Block::getVertices(Block::Side const &side, Chunk const &chunk, int const &x, in
                    {{1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
                    {{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f}}}};
       break;
+    case Type::eDirt:
+      sideData = {{0, 1, 3, 3, 2, 0},
+                  {{{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 2.0f}},
+                   {{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 2.0f}},
+                   {{1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 2.0f}},
+                   {{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 2.0f}}}};
+      break;
     }
     break;
   case Side::eBack:
-    switch (currentBlock) {
+    switch (type) {
     case Type::eAir:
       break;
     case Type::eGrass:
@@ -48,10 +60,17 @@ Block::getVertices(Block::Side const &side, Chunk const &chunk, int const &x, in
                    {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
                    {{0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f}}}};
       break;
+    case Type::eDirt:
+      sideData = {{0, 1, 3, 3, 2, 0},
+                  {{{1.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 2.0f}},
+                   {{0.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 2.0f}},
+                   {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 2.0f}},
+                   {{0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 2.0f}}}};
+      break;
     }
     break;
   case Side::eLeft:
-    switch (currentBlock) {
+    switch (type) {
     case Type::eAir:
       break;
     case Type::eGrass:
@@ -61,10 +80,17 @@ Block::getVertices(Block::Side const &side, Chunk const &chunk, int const &x, in
                    {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
                    {{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f}}}};
       break;
+    case Type::eDirt:
+      sideData = {{0, 1, 3, 3, 2, 0},
+                  {{{0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 2.0f}},
+                   {{0.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 2.0f}},
+                   {{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 2.0f}},
+                   {{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 2.0f}}}};
+      break;
     }
     break;
   case Side::eTop:
-    switch (currentBlock) {
+    switch (type) {
     case Type::eAir:
       break;
     case Type::eGrass:
@@ -74,13 +100,21 @@ Block::getVertices(Block::Side const &side, Chunk const &chunk, int const &x, in
                    {{0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
                    {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}}};
       break;
+    case Type::eDirt:
+      sideData = {{0, 1, 3, 3, 2, 0},
+                  {{{0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 2.0f}},
+                   {{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f, 2.0f}},
+                   {{0.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 2.0f}},
+                   {{1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 2.0f}}}};
+      break;
     }
     break;
   case Side::eBottom:
-    switch (currentBlock) {
+    switch (type) {
     case Type::eAir:
       break;
     case Type::eGrass:
+    case Type::eDirt:
       sideData = {{0, 1, 3, 3, 2, 0},
                   {{{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 2.0f}},
                    {{1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 2.0f}},

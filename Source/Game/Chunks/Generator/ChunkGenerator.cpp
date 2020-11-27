@@ -1,76 +1,35 @@
 #include "ChunkGenerator.hpp"
 
-#include <random>
+#include <ctime>
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "External/PerlinNoise/PerlinNoise.hpp"
+
 namespace cbl {
 
-void ChunkGenerator::addSideToChunk(
-    Chunk &chunk, int const &x, int const &y, int const &z, uint32_t &i,
-    std::pair<std::vector<uint32_t>, std::vector<gfx::Vertex>> const &sideData) {
-
-  for (uint32_t const &index : sideData.first) {
-    chunk.mesh.indices.push_back(index + i);
-  }
-
-  i += sideData.second.size();
-
-  for (gfx::Vertex const &vertex : sideData.second) {
-    chunk.mesh.vertices.push_back(gfx::Vertex{{vertex.position.x + static_cast<float>(x),
-                                               vertex.position.y + static_cast<float>(y),
-                                               vertex.position.z + static_cast<float>(z)},
-                                              {vertex.uvw}});
-  }
-}
-
-Chunk ChunkGenerator::generate() {
+Chunk ChunkGenerator::generate(int const &posX, int const &posZ) {
   Chunk chunk{};
+  chunk.position = glm::vec3{posX * Chunk::BlocksX, 0.0f, posZ * Chunk::BlocksZ};
+  chunk.mesh.position = glm::translate(glm::mat4{1.0f}, chunk.position);
 
-  std::default_random_engine random;
-
-  for (auto &x : chunk.blocks) {
-    for (auto &y : x) {
-      for (auto &z : y) {
-        if (random() % 2) {
-          z = Block::Type::eGrass;
-        } else {
-          z = Block::Type::eAir;
-        }
-      }
-    }
-  }
-
-  uint32_t i = 0;
+  siv::PerlinNoise perlin(std::time(nullptr));
+  double frequency = 50.0f;
 
   for (int x = 0; x < Chunk::BlocksX; x++) {
     for (int y = 0; y < Chunk::BlocksY; y++) {
       for (int z = 0; z < Chunk::BlocksZ; z++) {
-        if (x == 0 || chunk.blocks[x - 1][y][z] == Block::Type::eAir) {
-          addSideToChunk(chunk, x, y, z, i, Block::getVertices(Block::Side::eLeft, chunk, x, y, z));
-        }
+        double noiseValue = perlin.accumulatedOctaveNoise2D_0_1(
+            static_cast<double>(x + static_cast<int>(chunk.position.x)) / frequency,
+            static_cast<double>(z + static_cast<int>(chunk.position.z)) / frequency, 3);
+        int adjustedNoiseValue = floor(noiseValue * Chunk::BlocksY);
 
-        if (x == Chunk::BlocksX - 1 || chunk.blocks[x + 1][y][z] == Block::Type::eAir) {
-          addSideToChunk(chunk, x, y, z, i,
-                         Block::getVertices(Block::Side::eRight, chunk, x, y, z));
-        }
-
-        if (y == 0 || chunk.blocks[x][y - 1][z] == Block::Type::eAir) {
-          addSideToChunk(chunk, x, y, z, i,
-                         Block::getVertices(Block::Side::eBottom, chunk, x, y, z));
-        }
-
-        if (y == Chunk::BlocksY - 1 || chunk.blocks[x][y + 1][z] == Block::Type::eAir) {
-          addSideToChunk(chunk, x, y, z, i, Block::getVertices(Block::Side::eTop, chunk, x, y, z));
-        }
-
-        if (z == 0 || chunk.blocks[x][y][z - 1] == Block::Type::eAir) {
-          addSideToChunk(chunk, x, y, z, i, Block::getVertices(Block::Side::eBack, chunk, x, y, z));
-        }
-
-        if (z == Chunk::BlocksZ - 1 || chunk.blocks[x][y][z + 1] == Block::Type::eAir) {
-          addSideToChunk(chunk, x, y, z, i,
-                         Block::getVertices(Block::Side::eFront, chunk, x, y, z));
+        if (y > adjustedNoiseValue) {
+          chunk.blocks[x][y][z] = Block::Type::eAir;
+        } else if (y == adjustedNoiseValue) {
+          chunk.blocks[x][y][z] = Block::Type::eGrass;
+        } else {
+          chunk.blocks[x][y][z] = Block::Type::eDirt;
         }
       }
     }
@@ -79,16 +38,37 @@ Chunk ChunkGenerator::generate() {
   return chunk;
 }
 
-std::vector<Chunk> ChunkGenerator::generateMany(int const &numX, int const &numZ) {
-  std::vector<Chunk> chunks{};
+std::map<std::pair<int, int>, Chunk> ChunkGenerator::generateMany(int const &numX,
+                                                                  int const &numZ) {
+  std::map<std::pair<int, int>, Chunk> chunks{};
 
   for (int x = 0; x < numX; x++) {
     for (int z = 0; z < numZ; z++) {
-      Chunk chunk = generate();
-      chunk.position = glm::vec3{x * Chunk::BlocksX, 0.0f, z * Chunk::BlocksZ};
-      chunk.mesh.position = glm::translate(glm::mat4{1.0f}, chunk.position);
+      chunks[std::make_pair(x, z)] = generate(x, z);
+    }
+  }
 
-      chunks.push_back(chunk);
+  for (int x = 0; x < numX; x++) {
+    for (int z = 0; z < numZ; z++) {
+      Chunk &currentChunk = chunks[std::make_pair(x, z)];
+
+      if (x != 0) {
+        currentChunk.neighbourXMinus = &chunks[std::make_pair(x - 1, z)];
+      }
+
+      if (x != numX - 1) {
+        currentChunk.neighbourXPlus = &chunks[std::make_pair(x + 1, z)];
+      }
+
+      if (z != 0) {
+        currentChunk.neighbourZMinus = &chunks[std::make_pair(x, z - 1)];
+      }
+
+      if (z != numZ - 1) {
+        currentChunk.neighbourZPlus = &chunks[std::make_pair(x, z + 1)];
+      }
+
+      currentChunk.rebuildMesh();
     }
   }
 
