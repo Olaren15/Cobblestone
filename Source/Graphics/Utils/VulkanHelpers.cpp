@@ -64,8 +64,10 @@ void validateVkResult(VkResult const &result) {
     throw std::runtime_error("Validation failed");
   case VK_ERROR_INVALID_SHADER_NV:
     throw std::runtime_error("The shader is invalid");
+#if VK_HEADER_VERSION >= 135 && VK_HEADER_VERSION < 162
   case VK_ERROR_INCOMPATIBLE_VERSION_KHR:
     throw std::runtime_error("Incompatible version");
+#endif
   case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
     throw std::runtime_error("Invalid DRM format modifier plane layout");
   case VK_ERROR_NOT_PERMITTED_EXT:
