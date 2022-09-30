@@ -93,6 +93,7 @@ void Engine::drawScene() {
   if (!mState.shouldRender || !acquireNextFrame()) {
     if (mSwapchain.isValid(mWindow)) {
       mSwapchain.handleFrameBufferResize(mWindow);
+      ImGui::EndFrame();
     }
     return;
   }
